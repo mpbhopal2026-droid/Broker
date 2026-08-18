@@ -21,6 +21,58 @@ export const AdminClientPortfolioModal: React.FC<AdminClientPortfolioModalProps>
   const [editTP, setEditTP] = useState('');
   const [closingId, setClosingId] = useState('');
 
+  // Inject Trade State
+  const [showInjectModal, setShowInjectModal] = useState(false);
+  const [injectSymbol, setInjectSymbol] = useState('XAU/USD (Gold)');
+  const [injectSide, setInjectSide] = useState<'BUY' | 'SELL'>('BUY');
+  const [injectLotSize, setInjectLotSize] = useState<number>(0.10);
+  const [injectEntryPrice, setInjectEntryPrice] = useState<number>(2418.50);
+  const [injectMargin, setInjectMargin] = useState<number>(50.00);
+  const [injectPnl, setInjectPnl] = useState<number>(150.00);
+  const [injectStatus, setInjectStatus] = useState<'OPEN' | 'CLOSED'>('CLOSED');
+  const [injecting, setInjecting] = useState(false);
+
+  const handleInjectTrade = async () => {
+    if (!user) return;
+    setInjecting(true);
+    try {
+      const res = await fetch('/api/admin/trades', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          action: 'inject',
+          tradeId: `inj_${Date.now()}`,
+          updates: {
+            userId: user.id,
+            symbol: injectSymbol,
+            pairName: injectSymbol,
+            side: injectSide,
+            entryPrice: injectEntryPrice,
+            lotSize: injectLotSize,
+            margin: injectMargin,
+            leverage: 100,
+            pnl: injectPnl,
+            status: injectStatus,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        showToast({ type: 'success', title: 'Trade Injected', message: 'Position successfully added to client portfolio.' });
+        setShowInjectModal(false);
+        void fetchClientTrades();
+      } else {
+        showToast({ type: 'error', title: 'Injection Failed', message: data?.error || 'Could not inject position.' });
+      }
+    } catch {
+      showToast({ type: 'error', title: 'Error', message: 'Network error injecting trade.' });
+    } finally {
+      setInjecting(false);
+    }
+  };
+
   const fetchClientTrades = async () => {
     if (!user) return;
     setLoading(true);
@@ -86,41 +138,51 @@ export const AdminClientPortfolioModal: React.FC<AdminClientPortfolioModalProps>
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
+      <div className="relative w-full max-w-4xl my-auto max-h-[94vh] bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col">
         
         {/* Header */}
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-200 dark:border-purple-800 font-bold">
-              <Layers className="w-5 h-5" />
+        <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pr-2">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-200 dark:border-purple-800 font-bold shrink-0">
+              <Layers className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                  Client Portfolio: {user.fullName}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
+                  Portfolio: {user.fullName}
                 </h3>
-                <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-mono">
+                <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] sm:text-[11px] font-mono truncate">
                   {user.email}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Inspect active open positions and manage trade execution parameters.
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
+                Active positions and trade parameters
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <button
+              type="button"
+              onClick={() => setShowInjectModal(!showInjectModal)}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs active:scale-95 transition-all"
+            >
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span>+ Inject Position</span>
+            </button>
+            <button
+              type="button"
               onClick={fetchClientTrades}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title="Refresh Portfolio"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
             <button
+              type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -241,6 +303,120 @@ export const AdminClientPortfolioModal: React.FC<AdminClientPortfolioModalProps>
           )}
         </div>
 
+        {/* Inject Trade Form / Modal */}
+        {showInjectModal && (
+          <div className="p-4 sm:p-5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
+                <TrendingUp className="w-4 h-4 text-emerald-500" />
+                <span>Inject Custom Trade / Portfolio Position:</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowInjectModal(false)}
+                className="text-slate-400 hover:text-white text-xs font-bold"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div>
+                <label className="text-[10px] text-slate-400 font-bold block">Instrument</label>
+                <select
+                  value={injectSymbol}
+                  onChange={(e) => setInjectSymbol(e.target.value)}
+                  className="w-full p-2 rounded-xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-xs font-bold text-white"
+                >
+                  <option value="XAU/USD (Gold)">XAU/USD (Gold)</option>
+                  <option value="EUR/USD">EUR/USD</option>
+                  <option value="GBP/USD">GBP/USD</option>
+                  <option value="BTC/USD">BTC/USD</option>
+                  <option value="USD/JPY">USD/JPY</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-400 font-bold block">Order Side</label>
+                <select
+                  value={injectSide}
+                  onChange={(e) => setInjectSide(e.target.value as 'BUY' | 'SELL')}
+                  className="w-full p-2 rounded-xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-xs font-bold text-white"
+                >
+                  <option value="BUY">BUY (Long)</option>
+                  <option value="SELL">SELL (Short)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-400 font-bold block">Lot Size</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={injectLotSize}
+                  onChange={(e) => setInjectLotSize(parseFloat(e.target.value) || 0.1)}
+                  className="w-full p-2 rounded-xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-xs font-mono text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-400 font-bold block">Entry Price</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={injectEntryPrice}
+                  onChange={(e) => setInjectEntryPrice(parseFloat(e.target.value) || 2400)}
+                  className="w-full p-2 rounded-xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-xs font-mono text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-400 font-bold block">Margin Collateral ($)</label>
+                <input
+                  type="number"
+                  value={injectMargin}
+                  onChange={(e) => setInjectMargin(parseFloat(e.target.value) || 50)}
+                  className="w-full p-2 rounded-xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-xs font-mono text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-400 font-bold block">PnL ($ Profit/Loss)</label>
+                <input
+                  type="number"
+                  step="1"
+                  value={injectPnl}
+                  onChange={(e) => setInjectPnl(parseFloat(e.target.value) || 0)}
+                  className="w-full p-2 rounded-xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-xs font-mono font-bold text-emerald-400"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-400 font-bold block">Status</label>
+                <select
+                  value={injectStatus}
+                  onChange={(e) => setInjectStatus(e.target.value as 'OPEN' | 'CLOSED')}
+                  className="w-full p-2 rounded-xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-xs font-bold text-white"
+                >
+                  <option value="OPEN">OPEN (Floating P/L)</option>
+                  <option value="CLOSED">CLOSED (Finalized Profit)</option>
+                </select>
+              </div>
+
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  onClick={handleInjectTrade}
+                  disabled={injecting}
+                  className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xs active:scale-95 transition-all"
+                >
+                  {injecting ? 'Injecting…' : 'Confirm Inject'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Edit Trade Parameters Drawer/Modal */}
         {editingTrade && (
           <div className="p-5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
@@ -283,3 +459,4 @@ export const AdminClientPortfolioModal: React.FC<AdminClientPortfolioModalProps>
     </div>
   );
 };
+

@@ -417,10 +417,10 @@ export default function DeveloperPage() {
       )}
 
       {/* Navigation Tabs Bar */}
-      <div className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+      <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-x-auto no-scrollbar whitespace-nowrap">
         <button
           onClick={() => setTab('users')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
             tab === 'users'
               ? 'bg-white dark:bg-[#0f172a] text-purple-600 dark:text-purple-400 shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -432,7 +432,7 @@ export default function DeveloperPage() {
 
         <button
           onClick={() => setTab('notifications_lab')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
             tab === 'notifications_lab'
               ? 'bg-white dark:bg-[#0f172a] text-purple-600 dark:text-purple-400 shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -444,7 +444,7 @@ export default function DeveloperPage() {
 
         <button
           onClick={() => setTab('emails')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
             tab === 'emails'
               ? 'bg-white dark:bg-[#0f172a] text-slate-900 dark:text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -456,7 +456,7 @@ export default function DeveloperPage() {
 
         <button
           onClick={() => setTab('logins')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
             tab === 'logins'
               ? 'bg-white dark:bg-[#0f172a] text-slate-900 dark:text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -468,7 +468,7 @@ export default function DeveloperPage() {
 
         <button
           onClick={() => setTab('flags')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
             tab === 'flags'
               ? 'bg-white dark:bg-[#0f172a] text-slate-900 dark:text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -480,7 +480,7 @@ export default function DeveloperPage() {
 
         <button
           onClick={() => setTab('diagnostics')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
             tab === 'diagnostics'
               ? 'bg-white dark:bg-[#0f172a] text-slate-900 dark:text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'

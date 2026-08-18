@@ -100,37 +100,39 @@ export function AdminRolePromoteModal({ user, onClose, onSuccess }: AdminRolePro
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-lg bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-5 shadow-2xl animate-scale-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in overflow-y-auto">
+      <div className="relative w-full max-w-lg my-auto bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl animate-scale-in max-h-[94vh] flex flex-col">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-          <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Shield className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-              Manage User Role & Permissions
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+          <div className="min-w-0 pr-2">
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate">
+              <Shield className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />
+              <span>Role & Permissions</span>
             </h3>
-            <p className="text-xs text-slate-500 font-mono mt-0.5">
-              {user.fullName || 'User'} · {user.email}
+            <p className="text-[11px] sm:text-xs text-slate-500 font-mono mt-0.5 truncate">
+              {user.fullName ? `${user.fullName} · ` : ''}{user.email}
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+            aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs flex items-center gap-2">
+          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs flex items-center gap-2 shrink-0">
             <AlertTriangle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2.5">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto pr-1 flex-1 py-1">
+          <div className="space-y-2">
             {ROLES_INFO.map((item) => {
               const Icon = item.icon;
               const isSelected = selectedRole === item.role;
@@ -140,7 +142,7 @@ export function AdminRolePromoteModal({ user, onClose, onSuccess }: AdminRolePro
                 <div
                   key={item.role}
                   onClick={() => setSelectedRole(item.role)}
-                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
+                  className={`p-3 rounded-xl sm:rounded-2xl border transition-all cursor-pointer flex items-start gap-2.5 sm:gap-3 ${
                     isSelected
                       ? 'bg-purple-50/50 dark:bg-purple-950/30 border-purple-500/60 shadow-xs ring-1 ring-purple-500/50'
                       : 'bg-white dark:bg-[#131d33] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
@@ -153,16 +155,16 @@ export function AdminRolePromoteModal({ user, onClose, onSuccess }: AdminRolePro
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                      <div className="flex items-center gap-1.5">
                         <strong className="text-xs font-bold text-slate-900 dark:text-white">{item.title}</strong>
                         {isCurrent && (
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                             Current
                           </span>
                         )}
                       </div>
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase font-mono ${item.badgeColor}`}>
+                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase font-mono ${item.badgeColor}`}>
                         {item.badge}
                       </span>
                     </div>
@@ -175,14 +177,14 @@ export function AdminRolePromoteModal({ user, onClose, onSuccess }: AdminRolePro
             })}
           </div>
 
-          <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 flex items-start gap-2">
+          <div className="p-3 rounded-xl sm:rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
             <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed font-sans">
-              Changing this role will immediately revoke any active login sessions for <strong>{user.email}</strong> to enforce new permission boundaries.
+              Changing this role will immediately revoke active login sessions for <strong>{user.email}</strong> to enforce new permission boundaries.
             </p>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
             <button
               type="button"
               onClick={onClose}

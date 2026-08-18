@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { TrendingUp, ArrowUpRight, ArrowDownRight, CheckCircle2, FlaskConical, Sliders } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { formatUSD } from '@/lib/utils';
+import { InsufficientFundsModal } from '@/components/trading/InsufficientFundsModal';
 
 interface TradeTerminalProps {
   symbol?: string;
@@ -25,8 +26,17 @@ export const TradeTerminal: React.FC<TradeTerminalProps> = ({ symbol = 'XAU/USD'
   const [stopLoss, setStopLoss] = useState<string>('');
   const [takeProfit, setTakeProfit] = useState<string>('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [showInsufficientFundsModal, setShowInsufficientFundsModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'BUY' | 'SELL'>('BUY');
 
   const handlePlaceOrder = (type: 'BUY' | 'SELL') => {
+    // Gatekeeper: if live account has <= 0 balance, trigger high-converting deposit modal
+    if (!isDemo && (currentUser?.walletBalance ?? 0) <= 0) {
+      setPendingAction(type);
+      setShowInsufficientFundsModal(true);
+      return;
+    }
+
     openTrade(
       symbol,
       symbol,

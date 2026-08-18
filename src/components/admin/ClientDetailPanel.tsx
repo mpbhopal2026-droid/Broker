@@ -122,21 +122,21 @@ export const ClientDetailPanel: React.FC<{ client: UserProfile; onClose: () => v
     .slice(0, 2);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-fadeIn">
-      <div className="w-full max-w-4xl bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col max-h-[92vh] overflow-hidden animate-scale-in">
+    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto animate-fadeIn">
+      <div className="w-full max-w-4xl my-auto bg-white dark:bg-[#0f172a] rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col max-h-[94vh] overflow-hidden animate-scale-in">
         
         {/* TOP HEADER */}
-        <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-[#111827]/80 flex items-center justify-between gap-4 shrink-0">
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 text-white font-bold text-base flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-[#111827]/80 flex items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 pr-1">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 text-white font-bold text-sm sm:text-base flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
               {initials}
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base font-bold text-slate-900 dark:text-white truncate">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
                   {client.fullName || 'Unnamed Client'}
                 </h2>
-                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${
                   client.isActive !== false
                     ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
                     : 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
@@ -144,11 +144,11 @@ export const ClientDetailPanel: React.FC<{ client: UserProfile; onClose: () => v
                   <span className={`w-1.5 h-1.5 rounded-full ${client.isActive !== false ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
                   {client.isActive !== false ? 'Active Client' : 'Suspended'}
                 </span>
-                <span className="px-2 py-0.5 rounded-md bg-slate-200/70 dark:bg-slate-800 text-[10px] font-mono text-slate-600 dark:text-slate-300 uppercase">
+                <span className="px-1.5 py-0.5 rounded-md bg-slate-200/70 dark:bg-slate-800 text-[9px] sm:text-[10px] font-mono text-slate-600 dark:text-slate-300 uppercase">
                   {client.role || 'client'}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-mono truncate mt-0.5">
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono truncate mt-0.5">
                 {client.email} {client.phone ? `• ${client.phone}` : ''}
               </p>
             </div>
@@ -157,9 +157,9 @@ export const ClientDetailPanel: React.FC<{ client: UserProfile; onClose: () => v
           <button
             type="button"
             onClick={onClose}
-            className="w-9 h-9 rounded-xl bg-slate-200/60 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors shrink-0"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-200/60 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors shrink-0"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
 

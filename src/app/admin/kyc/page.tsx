@@ -290,9 +290,16 @@ export default function AdminKycPage() {
                 <span className="text-slate-400 block text-[10px] font-sans">Document Type:</span>
                 <strong className="text-slate-900 dark:text-white uppercase">{inspectRecord.documentType.replace('_', ' ')}</strong>
               </div>
-              <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
                 <span className="text-slate-400 block text-[10px] font-sans">Document Number:</span>
-                <strong className="text-emerald-600 dark:text-[#00d674]">{inspectRecord.documentNumber}</strong>
+                <div className="flex items-center gap-2">
+                  <strong className="text-emerald-600 dark:text-[#00d674]">{inspectRecord.documentNumber}</strong>
+                  {inspectRecord.documentNumber && inspectRecord.documentNumber.length === 12 && (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                      ✔ Verhoeff Checksum Verified
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 

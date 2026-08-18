@@ -540,48 +540,62 @@ export default function FundsPage() {
               </button>
             </div>
 
-            <div>
-              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 text-xs">
-                Amount Transferred (₹ INR)
-              </label>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-slate-700 dark:text-slate-300 font-bold text-xs">
+                  Deposit Amount (₹ INR)
+                </label>
+                <span className="text-slate-500 dark:text-slate-400 font-mono text-xs">
+                  ≈ ${Number((depositINR / (paymentSettings.usdToInrRate || 90.0)).toFixed(2))} USD
+                </span>
+              </div>
+
               <input
                 type="number"
                 required
                 min={500}
                 value={depositINR || ''}
                 onChange={(e) => setDepositINR(Number(e.target.value))}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-slate-900 dark:text-white font-medium text-sm focus:outline-none focus:border-slate-400 dark:focus:border-slate-700"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-slate-900 dark:text-white font-mono font-bold text-sm focus:outline-none focus:border-emerald-500"
               />
 
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {[10000, 25000, 50000, 100000].map((amt) => (
-                  <button
-                    key={amt}
-                    type="button"
-                    onClick={() => setDepositINR(amt)}
-                    className={`px-3 py-1 rounded-lg text-xs font-semibold border transition-all ${
-                      depositINR === amt
-                        ? 'bg-slate-950 dark:bg-emerald-600 text-white border-slate-950 dark:border-emerald-600 shadow-2xs'
-                        : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                    }`}
-                  >
-                    ₹{amt.toLocaleString('en-IN')}
-                  </button>
-                ))}
+              {/* Quick USD Presets */}
+              <div className="space-y-1 pt-1">
+                <span className="text-[10px] text-slate-400 font-semibold block">Quick USD Presets:</span>
+                <div className="grid grid-cols-6 gap-1">
+                  {[50, 100, 200, 500, 1000, 2000].map((usd) => {
+                    const rate = paymentSettings.usdToInrRate || 90.0;
+                    const calculatedINR = Math.round(usd * rate);
+                    return (
+                      <button
+                        key={usd}
+                        type="button"
+                        onClick={() => setDepositINR(calculatedINR)}
+                        className={`py-1 rounded-lg text-[11px] font-bold font-mono border transition-all ${
+                          depositINR === calculatedINR
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                            : 'bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
+                        }`}
+                      >
+                        ${usd}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
             {/* Estimated Conversion Summary */}
             <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
-              <span className="text-slate-500 dark:text-slate-400 font-medium">Est. Wallet Margin:</span>
-              <strong className="text-slate-900 dark:text-white font-bold text-sm font-mono">
-                ${Number((depositINR / (paymentSettings.usdToInrRate || 85.0)).toFixed(2))} USD
+              <span className="text-slate-500 dark:text-slate-400 font-medium">Est. Wallet Margin to Credit:</span>
+              <strong className="text-emerald-600 dark:text-emerald-400 font-bold text-sm font-mono">
+                +${Number((depositINR / (paymentSettings.usdToInrRate || 90.0)).toFixed(2))} USD
               </strong>
             </div>
 
             <div>
               <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 text-xs">
-                12-Digit UTR / Reference ID
+                12-Digit UTR / Bank Reference ID *
               </label>
               <input
                 type="text"

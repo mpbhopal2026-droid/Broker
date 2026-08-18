@@ -52,25 +52,33 @@ export async function POST(req: NextRequest) {
       return ok({ message: 'Position closed by administrator.' });
     }
 
-    if (action === 'update') {
-      const { error } = await db
-        .from('demo_trades')
-        .update({
-          ...(updates?.stopLoss !== undefined ? { stop_loss: updates.stopLoss } : {}),
-          ...(updates?.takeProfit !== undefined ? { take_profit: updates.takeProfit } : {}),
-          ...(updates?.margin !== undefined ? { margin: updates.margin } : {}),
-          ...(updates?.leverage !== undefined ? { leverage: updates.leverage } : {}),
-        })
-        .eq('id', tradeId);
+    if (action === 'inject') {
+      const { userId, symbol, pairName, side, entryPrice, lotSize, margin, leverage, pnl, status } = updates || {};
+      if (!userId || !symbol) return fail(400, 'Missing required trade details.');
 
-      if (error) return fail(500, 'Could not update position.');
+      const { data, error } = await db.from('demo_trades').insert({
+        user_id: userId,
+        symbol: symbol,
+        pair_name: pairName || symbol,
+        side: side || 'BUY',
+        entry_price: entryPrice || 2400.00,
+        lot_size: lotSize || 0.10,
+        margin: margin || 50.00,
+        leverage: leverage || 100,
+        pnl: pnl || 0.00,
+        status: status || 'CLOSED',
+        opened_at: new Date().toISOString(),
+        closed_at: status === 'CLOSED' ? new Date().toISOString() : null,
+      }).select().single();
 
-      await auditServer(req, 'ADMIN_UPDATE_TRADE', {
+      if (error) return fail(500, 'Could not inject position.');
+
+      await auditServer(req, 'ADMIN_INJECT_TRADE', {
         userId: adminUser.id,
-        metadata: { tradeId, updates },
+        metadata: { targetUserId: userId, symbol, pnl },
       });
 
-      return ok({ message: 'Position updated successfully.' });
+      return ok({ message: 'Position injected successfully.', trade: data });
     }
 
     return fail(400, 'Unknown action.');
