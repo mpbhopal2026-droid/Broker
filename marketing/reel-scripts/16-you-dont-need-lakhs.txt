@@ -1,0 +1,33 @@
+REEL 16 — "YOU DON'T NEED LAKHS"
+================================
+LENGTH   20 seconds
+PRESENTER Aisha
+ANGLE    Barrier removal. Corrects a real misconception.
+
+HOOK (0-3s)
+-----------
+        "People think you need two lakh rupees to start trading."
+        "You need zero. And I mean actually zero."
+
+SHOT LIST
+---------
+0-3s    HOOK
+
+3-9s    Screen: demo account, $100 virtual, DEMO badge visible
+        VO: "The practice account costs nothing and needs no deposit.
+             Virtual money, real prices."
+
+9-15s   Screen: placing a demo trade
+        VO: "You can spend a month here and never put in a rupee.
+             Most people should."
+
+15-18s  VO: "When you do fund it, you decide the amount. Not us."
+
+18-20s  TEXT: "Start on practice. globalforex.online"
+
+CAREFUL
+-------
+Do NOT state a specific minimum deposit figure in this reel. The
+minimum is a settings value that can change, and a number in a video
+you cannot edit becomes a complaint later. "You decide the amount" is
+true and stays true.

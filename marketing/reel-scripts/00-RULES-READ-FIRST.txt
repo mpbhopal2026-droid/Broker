@@ -1,0 +1,52 @@
+RULES — READ BEFORE PUBLISHING
+==============================
+
+NEVER PUT IN A REEL
+-------------------
+  x  Any number that looks like a return
+       "10,000 -> 40,000", profit screenshots, P&L figures
+  x  A named person claiming they made money
+       That is a testimonial. Unlicensed, it is the highest-risk
+       element you could publish.
+  x  The words: guaranteed / risk-free / assured / secure returns
+       Regulator keyword-matching finds these first.
+  x  Lifestyle content — cars, cash, watches, "financial freedom"
+  x  Any claim of live trading. It is not enabled yet.
+
+ALWAYS INCLUDE
+--------------
+  +  Burned-in risk line, visible for the FULL duration, bottom third:
+       "Leveraged trading carries a high risk of loss.
+        Most retail accounts lose money."
+     Small text. Costs nothing. It is the clearest single signal that
+     you are not a scam.
+  +  Disclosure that the presenter is AI-generated (bio or on-screen
+     tag). Meta's synthetic-media rules are tightening and undisclosed
+     AI faces in financial ads are what enforcement targets.
+
+THE TESTIMONIAL LINE
+--------------------
+An AI presenter as an obvious brand host is normal advertising.
+An AI presenter saying "I made money on this app" is a fabricated
+testimonial — deceptive, and the single riskiest thing you could
+publish without a licence.
+
+Every script here has her EXPLAINING or ASKING. Never claiming
+personal results. Keep it that way if you write more.
+
+FOOTAGE
+-------
+Do NOT let AI generate the app screens. Record the real app on a real
+phone. AI-generated trading UI invents impossible numbers and broken
+charts, and on a finance advert that one detail is what makes a viewer
+decide it is a scam. The real UI is good. Show it.
+
+FORMAT
+------
+  1080 x 1920 vertical
+  Hook inside the first 1.5 seconds
+  Burned-in captions — around 85% watch on mute
+  15-22 seconds is the sweet spot
+  Calm, factual voice. Every hype-energy forex reel sounds like the
+  scams people have been warned about. Sounding boring is a
+  competitive advantage in this category.

@@ -1,0 +1,55 @@
+REEL 11 — "FROM SIGNUP TO FIRST TRADE" (LONG FORM)
+==================================================
+LENGTH   60 seconds
+PRESENTER Aisha + screen recording
+ANGLE    Complete walkthrough. For Reels, YouTube Shorts and the
+         website hero. The one you pin to the profile.
+
+0-5s   HOOK — Aisha, direct to camera
+       VO: "I am going to open a trading account, start to finish,
+            and show you every screen. No cuts where it gets awkward."
+
+5-12s  STEP 1 — REGISTER
+       Screen: register page, name / email / phone
+       VO: "Name as it appears on your PAN. Email. Phone number.
+            One account per number — you cannot register the same
+            phone twice."
+
+12-20s STEP 2 — VERIFY EMAIL
+       Screen: OTP arrives, code entered
+       VO: "A six digit code, valid ten minutes, single use. No
+            password to forget and none for anyone to steal."
+
+20-32s STEP 3 — KYC
+       Screen: the five step form, documents uploading
+       VO: "PAN number, Aadhaar number, and a photo of each. It checks
+            the file before it uploads — a locked PDF gets rejected
+            here rather than three days later by a reviewer.
+            Then it waits. A human reads it."
+
+32-42s STEP 4 — WHILE YOU WAIT
+       Screen: demo terminal, DEMO badge visible
+       VO: "You do not sit and wait. The practice account opens with a
+            hundred virtual dollars. Real prices, fake money. Learn
+            where every button is before any of it matters."
+
+42-52s STEP 5 — FUNDING
+       Screen: deposit page, UPI QR, UTR field
+       VO: "When you are approved, you deposit by UPI. Scan the code,
+            pay, then paste the reference number from your bank.
+            Someone matches it against the statement before crediting.
+            It is manual, and that is deliberate."
+
+52-60s CLOSE — Aisha
+       VO: "That is the whole thing. No signals, no promises, no one
+            calling you. A platform, a ledger, and a practice account
+            to start on."
+       TEXT: "globalforex.online"
+
+RISK LINE  bottom third, full 60 seconds
+
+PRODUCTION NOTE
+---------------
+This is the trust asset. Do not speed-ramp, do not cut away from the
+slow parts, do not add music that builds. The value of this video is
+that it is unedited enough to be believed.

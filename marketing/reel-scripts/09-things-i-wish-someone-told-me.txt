@@ -1,0 +1,27 @@
+REEL 09 — "THINGS I WISH SOMEONE TOLD ME"
+=========================================
+LENGTH   20 seconds
+PRESENTER Aisha
+ANGLE    Educational. No product until the final 3 seconds.
+
+SHOT LIST
+---------
+0-3s    VO: "Three things nobody tells you before you start trading."
+
+3-8s    TEXT: "Most retail traders lose money"
+        VO:   "That is not pessimism. It is the published number."
+
+8-13s   TEXT: "Leverage cuts both ways"
+        VO:   "It multiplies losses exactly as fast as gains."
+
+13-17s  TEXT: "Practise before you fund"
+        VO:   "Demo accounts exist for a reason. Use one."
+
+17-20s  Logo, quiet
+        VO:   "We give you one free."
+
+WHY THIS PERFORMS
+-----------------
+Counter-intuitively the best performing script type in finance.
+Saying "most people lose" builds more trust than any promise can,
+because it is the one thing a scam will never say.

@@ -5,9 +5,6 @@ import { FlaskConical, Wallet } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { formatUSD } from '@/lib/utils';
 
-/**
- * Professional White & Black Demo / Live switch in the header with Dark Mode support.
- */
 export const AccountModeSwitch: React.FC = () => {
   const { accountMode, setAccountMode, isDemo, canUseDemo, demo, currentUser, showToast } = useApp();
 
@@ -40,10 +37,10 @@ export const AccountModeSwitch: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5 font-mono">
       {/* Sleek Minimalist Toggle */}
       <div
-        className="flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
+        className="flex items-center p-0.5 rounded-md bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
         role="group"
         aria-label="Account mode"
       >
@@ -52,12 +49,12 @@ export const AccountModeSwitch: React.FC = () => {
           onClick={handleSwitchToDemo}
           aria-pressed={isDemo}
           title={!canUseDemo ? 'Demo mode is disabled by developer policy' : 'Practice with virtual demo balance'}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+          className={`px-2.5 py-1 rounded text-xs transition-colors flex items-center gap-1.5 ${
             isDemo
-              ? 'bg-slate-950 dark:bg-slate-800 text-white shadow-2xs font-bold'
+              ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-bold'
               : !canUseDemo
-              ? 'opacity-40 cursor-not-allowed text-slate-400'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white'
+              ? 'opacity-40 cursor-not-allowed text-zinc-400'
+              : 'text-zinc-500 hover:text-zinc-950 dark:hover:text-white'
           }`}
         >
           <FlaskConical className="w-3.5 h-3.5" aria-hidden="true" />
@@ -68,10 +65,10 @@ export const AccountModeSwitch: React.FC = () => {
           type="button"
           onClick={handleSwitchToLive}
           aria-pressed={!isDemo}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+          className={`px-2.5 py-1 rounded text-xs transition-colors flex items-center gap-1.5 ${
             !isDemo
-              ? 'bg-slate-950 dark:bg-slate-800 text-white shadow-2xs font-bold'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white'
+              ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-bold'
+              : 'text-zinc-500 hover:text-zinc-950 dark:hover:text-white'
           }`}
         >
           <Wallet className="w-3.5 h-3.5" aria-hidden="true" />
@@ -80,11 +77,8 @@ export const AccountModeSwitch: React.FC = () => {
       </div>
 
       {/* Money Showcase Window */}
-      <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-900 dark:text-white shadow-2xs">
+      <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs font-bold text-zinc-950 dark:text-white tabular-nums">
         <span>{formatUSD(balance)}</span>
-        <span className="text-[10px] uppercase font-semibold text-slate-400 dark:text-slate-500">
-          {isDemo ? 'virtual' : 'real'}
-        </span>
       </div>
     </div>
   );
@@ -96,13 +90,11 @@ export const DemoModeBanner: React.FC = () => {
   if (!isDemo || !currentUser) return null;
 
   return (
-    <div className="hidden sm:block bg-slate-50 dark:bg-[#0b0f17] border-b border-slate-200 dark:border-slate-800/80">
-      <div className="max-w-7xl mx-auto px-4 py-1.5 flex items-center justify-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-        <FlaskConical className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
-        <span className="font-bold text-slate-800 dark:text-slate-200">DEMO MODE</span>
-        <span className="text-slate-500 dark:text-slate-400">
-          — Practicing with virtual funds. Demo profits cannot be withdrawn.
-        </span>
+    <div className="hidden sm:block bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="max-w-7xl mx-auto px-4 py-1 flex items-center justify-center gap-2 text-[11px] font-mono text-zinc-600 dark:text-zinc-400">
+        <FlaskConical className="w-3.5 h-3.5 text-zinc-500 shrink-0" aria-hidden="true" />
+        <span className="font-bold text-zinc-950 dark:text-white">DEMO PRACTICE ENVIRONMENT</span>
+        <span>— Virtual ledger funds. Real domestic settlement disabled.</span>
       </div>
     </div>
   );

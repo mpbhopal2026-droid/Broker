@@ -1,0 +1,30 @@
+STORY / SHORT SET — 15 SECONDS EACH
+===================================
+Four quick cuts for Stories, or as hooks tested against each other.
+Same risk line applies to all.
+
+A. "THE CHECK"
+   0-4s   TEXT: "Before you deposit anywhere, check one thing."
+   4-10s  Screen: UPI ID visible under the QR
+          VO: "Does the UPI ID match the name of the company?"
+   10-15s VO: "If it does not, do not pay. Anywhere. Not just here."
+
+B. "TWO MINUTES"
+   0-3s   TEXT: "How long does verification take?"
+   3-10s  Screen: KYC upload, real time, unedited
+          VO: "Uploading is two minutes. Review is a person, so it is
+               not instant. We would rather say that than pretend."
+   10-15s TEXT: "Practice account works while you wait."
+
+C. "DEMO IS NOT REAL"
+   0-4s   Screen: demo badge, virtual balance
+          VO: "This number is not money."
+   4-10s  VO: "Demo profit cannot be withdrawn. It is practice.
+               Anyone showing you demo gains as proof is misleading you."
+   10-15s TEXT: "Practice first anyway. It is free."
+
+D. "ONE NUMBER, ONE ACCOUNT"
+   0-4s   TEXT: "One phone number. One account."
+   4-10s  VO: "No duplicates, no second identity, no workarounds.
+               That is not a limitation, it is what KYC means."
+   10-15s Logo

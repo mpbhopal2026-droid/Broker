@@ -1,0 +1,35 @@
+PRESENTER PERSONA — "AISHA"
+===========================
+
+Use the SAME seed / character across every presenter reel. A recurring
+face builds recognition on Reels faster than any logo does.
+
+CHARACTER
+---------
+  Indian woman, late 20s
+  Shoulder-length dark hair, minimal makeup
+  Smart-casual: plain kurta, or blazer over a plain tee
+  Neutral home-office or quiet cafe background, soft daylight
+  Warm and unhurried. Speaks like she is explaining to a friend.
+  NOT high-energy hype delivery.
+
+AI GENERATION PROMPT (HeyGen / Synthesia / Kling)
+-------------------------------------------------
+Indian woman, late 20s, shoulder-length dark hair, minimal makeup,
+plain navy kurta. Seated, soft natural window light, neutral
+home-office background, shallow depth of field. Direct eye contact
+with camera. Calm conversational delivery, slight smile, natural
+hand gestures. Vertical 1080x1920, medium close-up, chest up.
+
+VOICE DIRECTION
+---------------
+  Pace: unhurried, roughly 150 words per minute
+  Tone: explaining, not selling
+  No rising "influencer" inflection at line ends
+  Pauses are allowed. They read as confidence.
+
+WHY SHE NEVER CLAIMS RESULTS
+----------------------------
+She is a brand host, not a customer. She explains, asks and answers.
+The moment an AI face says "I made money on this", it becomes a
+fabricated testimonial. See 00-RULES-READ-FIRST.txt.

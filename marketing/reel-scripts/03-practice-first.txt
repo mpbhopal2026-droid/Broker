@@ -1,0 +1,32 @@
+REEL 03 — "PRACTICE FIRST"
+==========================
+LENGTH   15 seconds
+ANGLE    Low commitment entry
+STYLE    Screen recording led
+
+SHOT LIST
+---------
+0-3s   Car keys, a moment of hesitation
+       VO:   "You would not drive without a licence."
+
+3-8s   Demo terminal, demo badge clearly visible
+       TEXT: "Demo account. $100 virtual."
+
+8-12s  Placing a demo trade
+       TEXT: "Learn the platform. Risk nothing."
+
+12-15s Close
+       TEXT: "Real money only when you are ready."
+
+CAPTION
+-------
+Practice with virtual funds. Demo profits are not withdrawable and do
+not predict real results.
+
+*Leveraged trading carries a high risk of loss.*
+
+NOTE
+----
+Keep the DEMO badge visible in every frame of app footage. If a viewer
+screenshots this reel, the badge is what stops the number being
+mistaken for a real balance.

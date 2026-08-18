@@ -3,50 +3,47 @@
 @tailwind utilities;
 
 @layer base {
-  /* Institutional White Theme (Default Pro) */
+  /* Strict Monochrome Design System (Institutional Fintech Standard) */
   :root, .light {
     --bg-main: #ffffff;
     --bg-header: #ffffff;
     --bg-card: #ffffff;
-    --bg-card-subtle: #f8fafc;
-    --bg-card-hover: #f1f5f9;
+    --bg-card-subtle: #fafafa;
+    --bg-card-hover: #f4f4f5;
     --bg-input: #ffffff;
-    --border-color: #e2e8f0;
-    --border-subtle: #cbd5e1;
-    --border-highlight: #94a3b8;
-    --text-main: #0f172a;
-    --text-muted: #64748b;
-    --text-subtle: #94a3b8;
-    --brand-emerald: #16a34a;
-    --brand-emerald-dim: rgba(22, 163, 74, 0.08);
-    --brand-crimson: #dc2626;
-    --brand-crimson-dim: rgba(220, 38, 38, 0.08);
-    --brand-gold: #d97706;
-    --brand-sky: #0284c7;
-    --brand-purple: #4f46e5;
+    --border-color: #e4e4e7;
+    --border-subtle: #d4d4d8;
+    --border-highlight: #a1a1aa;
+    --text-main: #09090b;
+    --text-muted: #71717a;
+    --text-subtle: #a1a1aa;
+
+    /* Controlled P&L Semantic Tones (Strictly for price delta percentages) */
+    --semantic-up: #10b981;
+    --semantic-up-subtle: rgba(16, 185, 129, 0.08);
+    --semantic-down: #ef4444;
+    --semantic-down-subtle: rgba(239, 68, 68, 0.08);
   }
 
-  /* Optional Dark Theme */
   .dark {
-    --bg-main: #0b0f17;
-    --bg-header: #0f172a;
-    --bg-card: #111827;
-    --bg-card-subtle: #1e293b;
-    --bg-card-hover: #1f2937;
-    --bg-input: #0f172a;
-    --border-color: #1e293b;
-    --border-subtle: #334155;
-    --border-highlight: #475569;
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
-    --text-subtle: #64748b;
-    --brand-emerald: #10b981;
-    --brand-emerald-dim: rgba(16, 185, 129, 0.12);
-    --brand-crimson: #ef4444;
-    --brand-crimson-dim: rgba(239, 68, 68, 0.12);
-    --brand-gold: #f59e0b;
-    --brand-sky: #38bdf8;
-    --brand-purple: #818cf8;
+    --bg-main: #000000;
+    --bg-header: #09090b;
+    --bg-card: #09090b;
+    --bg-card-subtle: #121214;
+    --bg-card-hover: #18181b;
+    --bg-input: #09090b;
+    --border-color: #27272a;
+    --border-subtle: #3f3f46;
+    --border-highlight: #52525b;
+    --text-main: #ffffff;
+    --text-muted: #a1a1aa;
+    --text-subtle: #71717a;
+
+    /* Controlled P&L Semantic Tones */
+    --semantic-up: #10b981;
+    --semantic-up-subtle: rgba(16, 185, 129, 0.12);
+    --semantic-down: #ef4444;
+    --semantic-down-subtle: rgba(239, 68, 68, 0.12);
   }
 }
 
@@ -58,11 +55,11 @@ html, body {
 body {
   background-color: var(--bg-main);
   color: var(--text-main);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
-  transition: background-color 0.25s ease, color 0.25s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 /* Touch & Native App Ergonomics */
@@ -71,162 +68,62 @@ button, a, input, select, textarea, [role="button"], [role="tab"] {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Tactile Active Tap Compression */
-.active-press {
-  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.12s ease;
-}
-.active-press:active {
-  transform: scale(0.96);
-  opacity: 0.92;
+/* High-Precision Numbers (Tabular Monospace Numerals) */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
-/* Institutional Fintech Cards */
-.card-clean {
+/* Hairline Structural Cards & Panels */
+.card-monochrome {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 0.75rem;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 0.5rem;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.card-clean:hover {
-  border-color: var(--border-subtle);
-}
-
-.card-elevated {
-  background-color: var(--bg-card);
+.card-monochrome-subtle {
+  background-color: var(--bg-card-subtle);
   border: 1px solid var(--border-color);
-  border-radius: 0.75rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  border-radius: 0.5rem;
 }
 
-.card-glow-emerald {
-  border-color: rgba(0, 214, 116, 0.35);
-  box-shadow: 0 0 20px -3px rgba(0, 214, 116, 0.2);
-}
-
-.card-glow-crimson {
-  border-color: rgba(255, 59, 87, 0.35);
-  box-shadow: 0 0 20px -3px rgba(255, 59, 87, 0.2);
-}
-
-/* Glassmorphism Panels */
-.glass-panel {
-  background: rgba(13, 18, 28, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border-color);
-}
-
-/* Inputs & Form Controls */
+/* Clean Input Controls */
 input, select, textarea {
   background-color: var(--bg-input);
   border-color: var(--border-color);
   color: var(--text-main);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease;
 }
 
 input:focus, select:focus, textarea:focus {
-  border-color: var(--brand-emerald) !important;
+  border-color: var(--text-main) !important;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(0, 214, 116, 0.15);
+  box-shadow: none;
 }
 
-/* Force Pure Crisp White for Pre-Login Auth Screens */
-.auth-page-clean {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
+/* Tactile Active Tap */
+.active-press {
+  transition: transform 0.08s ease, opacity 0.08s ease;
+}
+.active-press:active {
+  transform: scale(0.98);
+  opacity: 0.92;
 }
 
-.auth-page-clean input,
-.auth-page-clean select,
-.auth-page-clean textarea {
-  background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
-  color: #0f172a !important;
+/* High-Density Data Row */
+.data-row {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.1s ease;
 }
-
-/* Live Market Rate Flashing Animations */
-@keyframes flash-green-institutional {
-  0% {
-    background-color: rgba(0, 214, 116, 0.3);
-    color: #00ff88;
-    box-shadow: inset 0 0 12px rgba(0, 214, 116, 0.4);
-  }
-  100% {
-    background-color: transparent;
-  }
-}
-
-@keyframes flash-red-institutional {
-  0% {
-    background-color: rgba(255, 59, 87, 0.3);
-    color: #ff6b81;
-    box-shadow: inset 0 0 12px rgba(255, 59, 87, 0.4);
-  }
-  100% {
-    background-color: transparent;
-  }
-}
-
-.animate-flash-green {
-  animation: flash-green-institutional 0.8s ease-out;
-}
-
-.animate-flash-red {
-  animation: flash-red-institutional 0.8s ease-out;
-}
-
-/* Radar & Live Dots */
-@keyframes radar-ping {
-  0% {
-    transform: scale(0.95);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.6);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-}
-
-.radar-dot {
-  position: relative;
-}
-
-.radar-dot::after {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 9999px;
-  background-color: currentColor;
-  animation: radar-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
-  pointer-events: none;
-}
-
-/* Shimmer Loading Skeleton */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.skeleton-box {
-  background: linear-gradient(90deg, var(--bg-card-subtle) 25%, var(--border-color) 50%, var(--bg-card-subtle) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 0.375rem;
+.data-row:hover {
+  background-color: var(--bg-card-hover);
 }
 
 /* Custom Institutional Scrollbars */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -234,15 +131,15 @@ input:focus, select:focus, textarea:focus {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 4px;
+  background: var(--border-subtle);
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--border-subtle);
+  background: var(--border-highlight);
 }
 
-/* Utility for mobile safe bottom spacing */
+/* Safe areas */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -251,7 +148,7 @@ input:focus, select:focus, textarea:focus {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
-/* iOS & Android zoom lock prevention on focus */
+/* Mobile zoom prevention */
 @media (max-width: 640px) {
   input,
   select,

@@ -31,14 +31,14 @@ import {
 
 function UploadSpinner() {
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 bg-slate-50 dark:bg-[#0A0E17] text-slate-500">
-      <UploadCloud className="w-6 h-6 text-emerald-500 animate-pulse" aria-hidden="true" />
-      <span className="text-[11px] font-semibold">Uploading securely…</span>
+    <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-zinc-50 dark:bg-zinc-900 text-zinc-500 font-mono">
+      <UploadCloud className="w-5 h-5 text-zinc-950 dark:text-white animate-pulse" aria-hidden="true" />
+      <span className="text-[10px] font-bold">Uploading document…</span>
     </div>
   );
 }
 
-export default function KycPage() {
+export default function MonochromeKycPage() {
   const router = useRouter();
   const { currentUser, submitKYC, showToast, saveKycDraft, getKycDraft } = useApp();
 
@@ -199,31 +199,30 @@ export default function KycPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 text-slate-900 dark:text-white select-none">
+    <div className="max-w-2xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 text-zinc-950 dark:text-white select-none font-mono">
       
       {/* Top Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-[#1F293D]">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center gap-2.5">
           <Link
             href="/dashboard"
-            className="p-2 rounded-xl bg-white hover:bg-slate-100 dark:bg-[#121824] dark:hover:bg-[#1A2232] border border-slate-200 dark:border-[#1F293D] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white shadow-xs transition-colors"
+            className="p-1.5 rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-              <span>Institutional KYC & Bank Setup</span>
+            <h1 className="text-base sm:text-lg font-bold text-zinc-950 dark:text-white tracking-tight uppercase">
+              Identity Verification & Bank Setup
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
-              Verify your identity and link your payout bank account
+            <p className="text-[11px] text-zinc-500 font-sans">
+              Statutory KYC clearance and domestic payout account registration
             </p>
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-[#121824] border border-slate-200 dark:border-[#1F293D] text-[11px] font-mono text-slate-600 dark:text-slate-400 shadow-xs">
-          <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-          <span>256-Bit Encrypted</span>
+        <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[10px] text-zinc-600 dark:text-zinc-400">
+          <Lock className="w-3 h-3 text-zinc-700 dark:text-zinc-300" />
+          <span>256-Bit TLS</span>
         </div>
       </div>
 
@@ -231,38 +230,38 @@ export default function KycPage() {
       {currentStep < 3 && (
         <div className="grid grid-cols-2 gap-2">
           <div
-            className={`p-3 rounded-2xl border transition-all flex items-center gap-2.5 ${
+            className={`p-2.5 rounded-md border transition-colors flex items-center gap-2 ${
               currentStep === 1
-                ? 'bg-white dark:bg-[#121824] border-emerald-500 text-slate-900 dark:text-white shadow-sm'
-                : 'bg-slate-100 dark:bg-[#0A0E17] border-slate-200 dark:border-[#1F293D] text-slate-400'
+                ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 border-zinc-950 dark:border-white'
+                : 'bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-400'
             }`}
           >
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-              currentStep === 1 ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-[#121824] text-slate-500'
+            <div className={`w-5 h-5 rounded flex items-center justify-center text-xs font-bold ${
+              currentStep === 1 ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-950' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'
             }`}>
               1
             </div>
             <div className="min-w-0">
               <span className="text-xs font-bold block truncate">Aadhaar & PAN ID</span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">Verhoeff & Photo</span>
+              <span className="text-[10px] opacity-80 block truncate">Verhoeff & Photo</span>
             </div>
           </div>
 
           <div
-            className={`p-3 rounded-2xl border transition-all flex items-center gap-2.5 ${
+            className={`p-2.5 rounded-md border transition-colors flex items-center gap-2 ${
               currentStep === 2
-                ? 'bg-white dark:bg-[#121824] border-emerald-500 text-slate-900 dark:text-white shadow-sm'
-                : 'bg-slate-100 dark:bg-[#0A0E17] border-slate-200 dark:border-[#1F293D] text-slate-400'
+                ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 border-zinc-950 dark:border-white'
+                : 'bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-400'
             }`}
           >
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-              currentStep === 2 ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-[#121824] text-slate-500'
+            <div className={`w-5 h-5 rounded flex items-center justify-center text-xs font-bold ${
+              currentStep === 2 ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-950' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'
             }`}>
               2
             </div>
             <div className="min-w-0">
               <span className="text-xs font-bold block truncate">Payout Bank Account</span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">Double-Entry Verified</span>
+              <span className="text-[10px] opacity-80 block truncate">Double-Entry Verified</span>
             </div>
           </div>
         </div>
@@ -272,18 +271,18 @@ export default function KycPage() {
       {/* STEP 1: IDENTITY PROOF (AADHAAR + PAN + FRONT/BACK PHOTOS) */}
       {/* ========================================================================= */}
       {currentStep === 1 && (
-        <form onSubmit={handleStep1Submit} className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#121824] border border-slate-200 dark:border-[#1F293D] space-y-5 shadow-lg animate-fade-in">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1F293D]">
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Step 1: Government Identity Proof</span>
+        <form onSubmit={handleStep1Submit} className="p-4 sm:p-5 rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-4">
+          <div className="flex items-center justify-between pb-2.5 border-b border-zinc-100 dark:border-zinc-900">
+            <h2 className="text-xs font-bold text-zinc-950 dark:text-white uppercase tracking-wider flex items-center gap-2">
+              <CreditCard className="w-3.5 h-3.5" />
+              <span>Step 1: Government Identity Validation</span>
             </h2>
-            <span className="text-[11px] text-slate-500 font-medium">Step 1 of 2</span>
+            <span className="text-[10px] text-zinc-400">Step 1 of 2</span>
           </div>
 
           {/* Full Name */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+          <div className="space-y-1">
+            <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
               Full Legal Name (as per PAN & Aadhaar) *
             </label>
             <input
@@ -292,23 +291,23 @@ export default function KycPage() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="e.g. Rahul Sharma"
-              className="w-full bg-slate-50 focus:bg-white dark:bg-[#0A0E17] border border-slate-200 dark:border-[#1F293D] rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 font-semibold transition-colors"
+              className="w-full bg-zinc-50 focus:bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-950 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-zinc-950 dark:focus:border-zinc-100 font-sans transition-colors"
             />
           </div>
 
           {/* 12-Digit Aadhaar Input with Verhoeff Checksum */}
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
                 12-Digit Aadhaar Card Number *
               </label>
               {aadhaarNumber.length === 12 && (
-                <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                <span className={`text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded ${
                   isAadhaarValid
-                    ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-                    : 'bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400'
+                    ? 'bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700'
+                    : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
                 }`}>
-                  {isAadhaarValid ? '✔ Valid Verhoeff Checksum' : '⚠️ Invalid Aadhaar Sequence'}
+                  {isAadhaarValid ? '✔ Valid Verhoeff Checksum' : '✕ Invalid Sequence'}
                 </span>
               )}
             </div>
@@ -319,33 +318,30 @@ export default function KycPage() {
               maxLength={12}
               value={aadhaarNumber}
               onChange={(e) => setAadhaarNumber(e.target.value.replace(/\D/g, '').slice(0, 12))}
-              placeholder="Enter 12-digit number (e.g. 582910293847)"
-              className={`w-full bg-slate-50 focus:bg-white dark:bg-[#0A0E17] border rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-mono tracking-widest placeholder-slate-400 focus:outline-none transition-colors ${
+              placeholder="Enter 12-digit number"
+              className={`w-full bg-zinc-50 focus:bg-white dark:bg-zinc-900 border rounded-md px-3 py-2 text-xs text-zinc-950 dark:text-white tracking-widest placeholder-zinc-400 focus:outline-none transition-colors ${
                 aadhaarNumber.length === 12
                   ? isAadhaarValid
-                    ? 'border-emerald-500 focus:border-emerald-500'
-                    : 'border-rose-500 focus:border-rose-500'
-                  : 'border-slate-200 dark:border-[#1F293D] focus:border-emerald-500'
+                    ? 'border-zinc-950 dark:border-zinc-100'
+                    : 'border-rose-500'
+                  : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-950 dark:focus:border-zinc-100'
               }`}
             />
-            <p className="text-[10px] text-slate-500 leading-relaxed">
-              Mathematical Verhoeff checksum algorithm is verified instantly in your browser.
-            </p>
           </div>
 
           {/* PAN Card Number */}
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
                 Permanent Account Number (PAN) *
               </label>
               {panNumber.length === 10 && (
-                <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                <span className={`text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded ${
                   isPanValid
-                    ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-                    : 'bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400'
+                    ? 'bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700'
+                    : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
                 }`}>
-                  {isPanValid ? '✔ Valid PAN Format' : '⚠️ Invalid PAN Format'}
+                  {isPanValid ? '✔ Valid PAN Format' : '✕ Invalid Format'}
                 </span>
               )}
             </div>
@@ -357,51 +353,51 @@ export default function KycPage() {
               value={panNumber}
               onChange={(e) => setPanNumber(e.target.value.toUpperCase().slice(0, 10))}
               placeholder="e.g. ABCDE1234F"
-              className={`w-full bg-slate-50 focus:bg-white dark:bg-[#0A0E17] border rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-mono uppercase tracking-widest placeholder-slate-400 focus:outline-none transition-colors ${
+              className={`w-full bg-zinc-50 focus:bg-white dark:bg-zinc-900 border rounded-md px-3 py-2 text-xs text-zinc-950 dark:text-white uppercase tracking-widest placeholder-zinc-400 focus:outline-none transition-colors ${
                 panNumber.length === 10
                   ? isPanValid
-                    ? 'border-emerald-500 focus:border-emerald-500'
-                    : 'border-rose-500 focus:border-rose-500'
-                  : 'border-slate-200 dark:border-[#1F293D] focus:border-emerald-500'
+                    ? 'border-zinc-950 dark:border-zinc-100'
+                    : 'border-rose-500'
+                  : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-950 dark:focus:border-zinc-100'
               }`}
             />
           </div>
 
           {/* Front & Back Photo Uploaders */}
-          <div className="space-y-3 pt-1">
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-              Aadhaar Card Photos (Front & Back) *
+          <div className="space-y-2 pt-1">
+            <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
+              Aadhaar Card Document Photos (Front & Back) *
             </label>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {/* Front Photo */}
-              <div className="space-y-1.5">
-                <span className="text-[11px] text-slate-500 font-medium">Front Side (Photo & Aadhaar No.)</span>
+              <div className="space-y-1">
+                <span className="text-[10px] text-zinc-400 font-mono">Front Side (Photo & Number)</span>
                 {aadhaarFront ? (
-                  <div className="relative h-32 rounded-2xl overflow-hidden border border-emerald-500 group bg-slate-50 dark:bg-[#0A0E17]">
+                  <div className="relative h-28 rounded-md overflow-hidden border border-zinc-950 dark:border-white group bg-zinc-50 dark:bg-zinc-900">
                     <img src={aadhaarFront} alt="Aadhaar Front" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                       <button
                         type="button"
                         onClick={() => setAadhaarFront('')}
-                        className="p-1.5 rounded-lg bg-rose-600 text-white shadow-sm"
+                        className="p-1.5 rounded bg-zinc-900 text-white"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                    <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-emerald-500 text-white text-[9px] font-bold shadow-xs">
+                    <div className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-zinc-950 text-white text-[9px] font-bold">
                       ✓ Uploaded
                     </div>
                   </div>
                 ) : (
-                  <label className="h-32 rounded-2xl border-2 border-dashed border-slate-200 hover:border-emerald-500 dark:border-[#1F293D] bg-slate-50 hover:bg-slate-100/80 dark:bg-[#0A0E17] flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors p-3 text-center">
+                  <label className="h-28 rounded-md border border-dashed border-zinc-300 dark:border-zinc-700 hover:border-zinc-950 dark:hover:border-white bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-colors p-3 text-center">
                     {uploadingFront ? (
                       <UploadSpinner />
                     ) : (
                       <>
-                        <UploadCloud className="w-6 h-6 text-slate-400" />
-                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Upload Front Photo</span>
-                        <span className="text-[9px] text-slate-400">JPG, PNG or PDF (Max 5MB)</span>
+                        <UploadCloud className="w-5 h-5 text-zinc-400" />
+                        <span className="text-[11px] font-bold text-zinc-800 dark:text-zinc-200">Upload Front Side</span>
+                        <span className="text-[9px] text-zinc-400">JPG, PNG (Max 5MB)</span>
                         <input
                           type="file"
                           accept="image/*,.pdf"
@@ -415,33 +411,33 @@ export default function KycPage() {
               </div>
 
               {/* Back Photo */}
-              <div className="space-y-1.5">
-                <span className="text-[11px] text-slate-500 font-medium">Back Side (Address & QR)</span>
+              <div className="space-y-1">
+                <span className="text-[10px] text-zinc-400 font-mono">Back Side (Address & QR)</span>
                 {aadhaarBack ? (
-                  <div className="relative h-32 rounded-2xl overflow-hidden border border-emerald-500 group bg-slate-50 dark:bg-[#0A0E17]">
+                  <div className="relative h-28 rounded-md overflow-hidden border border-zinc-950 dark:border-white group bg-zinc-50 dark:bg-zinc-900">
                     <img src={aadhaarBack} alt="Aadhaar Back" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                       <button
                         type="button"
                         onClick={() => setAadhaarBack('')}
-                        className="p-1.5 rounded-lg bg-rose-600 text-white shadow-sm"
+                        className="p-1.5 rounded bg-zinc-900 text-white"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                    <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-emerald-500 text-white text-[9px] font-bold shadow-xs">
+                    <div className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-zinc-950 text-white text-[9px] font-bold">
                       ✓ Uploaded
                     </div>
                   </div>
                 ) : (
-                  <label className="h-32 rounded-2xl border-2 border-dashed border-slate-200 hover:border-emerald-500 dark:border-[#1F293D] bg-slate-50 hover:bg-slate-100/80 dark:bg-[#0A0E17] flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors p-3 text-center">
+                  <label className="h-28 rounded-md border border-dashed border-zinc-300 dark:border-zinc-700 hover:border-zinc-950 dark:hover:border-white bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-colors p-3 text-center">
                     {uploadingBack ? (
                       <UploadSpinner />
                     ) : (
                       <>
-                        <UploadCloud className="w-6 h-6 text-slate-400" />
-                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Upload Back Photo</span>
-                        <span className="text-[9px] text-slate-400">JPG, PNG or PDF (Max 5MB)</span>
+                        <UploadCloud className="w-5 h-5 text-zinc-400" />
+                        <span className="text-[11px] font-bold text-zinc-800 dark:text-zinc-200">Upload Back Side</span>
+                        <span className="text-[9px] text-zinc-400">JPG, PNG (Max 5MB)</span>
                         <input
                           type="file"
                           accept="image/*,.pdf"
@@ -459,9 +455,9 @@ export default function KycPage() {
           <button
             type="submit"
             disabled={!isAadhaarValid || !isPanValid || !aadhaarFront || !aadhaarBack}
-            className="w-full py-3.5 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+            className="w-full py-2.5 px-3 rounded-md bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-40 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
-            <span>Continue to Bank Details</span>
+            <span>Proceed to Payout Bank Details</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         </form>
@@ -471,35 +467,35 @@ export default function KycPage() {
       {/* STEP 2: DOUBLE-CHECKED PAYOUT BANK SETUP */}
       {/* ========================================================================= */}
       {currentStep === 2 && (
-        <form onSubmit={handleFinalSubmit} className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#121824] border border-slate-200 dark:border-[#1F293D] space-y-5 shadow-lg animate-fade-in">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1F293D]">
+        <form onSubmit={handleFinalSubmit} className="p-4 sm:p-5 rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-4">
+          <div className="flex items-center justify-between pb-2.5 border-b border-zinc-100 dark:border-zinc-900">
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setCurrentStep(1)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
+                className="p-1 rounded text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-sky-500" />
-                <span>Step 2: Client Payout Bank Details</span>
+              <h2 className="text-xs font-bold text-zinc-950 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Step 2: Client Payout Bank Account</span>
               </h2>
             </div>
-            <span className="text-[11px] text-slate-500 font-medium">Step 2 of 2</span>
+            <span className="text-[10px] text-zinc-400">Step 2 of 2</span>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 text-sky-800 dark:text-sky-300 text-xs flex items-start gap-2.5">
-            <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-sky-600 dark:text-sky-400" />
-            <p className="text-[11px] leading-relaxed">
-              To guarantee zero payout errors, enter your bank account number and IFSC code twice. Withdrawals will be wired directly to this account.
+          <div className="p-3 rounded-md bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs flex items-start gap-2">
+            <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-zinc-950 dark:text-white" />
+            <p className="text-[11px] leading-relaxed font-sans">
+              Enter bank account number and IFSC twice to guarantee zero-error settlement. Withdrawals are routed strictly to this verified destination.
             </p>
           </div>
 
           {/* Account Holder Name */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-              Account Holder Name (as registered with Bank) *
+          <div className="space-y-1">
+            <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
+              Account Holder Name (Registered with Bank) *
             </label>
             <input
               type="text"
@@ -507,20 +503,19 @@ export default function KycPage() {
               value={bankAccountName}
               onChange={(e) => setBankAccountName(e.target.value)}
               placeholder="e.g. Rahul Sharma"
-              className="w-full bg-slate-50 focus:bg-white dark:bg-[#0A0E17] border border-slate-200 dark:border-[#1F293D] rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 font-semibold transition-colors"
+              className="w-full bg-zinc-50 focus:bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-950 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-zinc-950 dark:focus:border-zinc-100 font-sans transition-colors"
             />
           </div>
 
-          {/* Bank Name / Auto Detected */}
-          <div className="space-y-1.5">
+          {/* Bank Name */}
+          <div className="space-y-1">
             <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
                 Bank Name *
               </label>
               {detectedBank && (
-                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                  <Check className="w-3 h-3" />
-                  Auto-Detected: {detectedBank}
+                <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400">
+                  Detected: {detectedBank}
                 </span>
               )}
             </div>
@@ -530,14 +525,14 @@ export default function KycPage() {
               value={bankName || detectedBank || ''}
               onChange={(e) => setBankName(e.target.value)}
               placeholder="e.g. HDFC Bank, State Bank of India"
-              className="w-full bg-slate-50 focus:bg-white dark:bg-[#0A0E17] border border-slate-200 dark:border-[#1F293D] rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-zinc-50 focus:bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-950 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-zinc-950 dark:focus:border-zinc-100 font-sans transition-colors"
             />
           </div>
 
           {/* Double-Entry Account Number */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="space-y-1">
+              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
                 Bank Account Number *
               </label>
               <input
@@ -546,18 +541,18 @@ export default function KycPage() {
                 value={bankAccountNumber}
                 onChange={(e) => setBankAccountNumber(e.target.value.replace(/\D/g, ''))}
                 placeholder="Enter account number"
-                className="w-full bg-slate-50 focus:bg-white dark:bg-[#0A0E17] border border-slate-200 dark:border-[#1F293D] rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-colors"
+                className="w-full bg-zinc-50 focus:bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-950 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-zinc-950 dark:focus:border-zinc-100 transition-colors"
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Re-enter Account Number *
+                <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                  Confirm Account Number *
                 </label>
                 {reBankAccountNumber && (
-                  <span className={`text-[10px] font-bold ${isAccountMatch ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                    {isAccountMatch ? '✔ Matched' : '✕ Mismatched'}
+                  <span className={`text-[10px] font-bold ${isAccountMatch ? 'text-zinc-950 dark:text-white' : 'text-rose-500'}`}>
+                    {isAccountMatch ? '✔ Match' : '✕ Mismatch'}
                   </span>
                 )}
               </div>
@@ -567,27 +562,27 @@ export default function KycPage() {
                 value={reBankAccountNumber}
                 onChange={(e) => setReBankAccountNumber(e.target.value.replace(/\D/g, ''))}
                 placeholder="Confirm account number"
-                className={`w-full bg-slate-50 focus:bg-white dark:bg-[#0A0E17] border rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:outline-none transition-colors ${
+                className={`w-full bg-zinc-50 focus:bg-white dark:bg-zinc-900 border rounded-md px-3 py-2 text-xs text-zinc-950 dark:text-white placeholder-zinc-400 focus:outline-none transition-colors ${
                   reBankAccountNumber
                     ? isAccountMatch
-                      ? 'border-emerald-500'
+                      ? 'border-zinc-950 dark:border-zinc-100'
                       : 'border-rose-500'
-                    : 'border-slate-200 dark:border-[#1F293D] focus:border-emerald-500'
+                    : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-950 dark:focus:border-zinc-100'
                 }`}
               />
             </div>
           </div>
 
           {/* Double-Entry IFSC Code */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
                   Bank IFSC Code *
                 </label>
                 {bankIfsc && (
-                  <span className={`text-[10px] font-bold ${isIfscValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                    {isIfscValid ? '✔ Valid Format' : '⚠️ Invalid IFSC'}
+                  <span className={`text-[10px] font-bold ${isIfscValid ? 'text-zinc-950 dark:text-white' : 'text-rose-500'}`}>
+                    {isIfscValid ? '✔ Format OK' : '✕ Invalid IFSC'}
                   </span>
                 )}
               </div>
@@ -598,18 +593,18 @@ export default function KycPage() {
                 value={bankIfsc}
                 onChange={(e) => setBankIfsc(e.target.value.toUpperCase().slice(0, 11))}
                 placeholder="e.g. HDFC0001234"
-                className="w-full bg-slate-50 focus:bg-white dark:bg-[#0A0E17] border border-slate-200 dark:border-[#1F293D] rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-mono uppercase tracking-widest placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-colors"
+                className="w-full bg-zinc-50 focus:bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-950 dark:text-white uppercase tracking-widest placeholder-zinc-400 focus:outline-none focus:border-zinc-950 dark:focus:border-zinc-100 transition-colors"
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Re-enter IFSC Code *
+                <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                  Confirm IFSC Code *
                 </label>
                 {reBankIfsc && (
-                  <span className={`text-[10px] font-bold ${isIfscMatch ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                    {isIfscMatch ? '✔ Matched' : '✕ Mismatched'}
+                  <span className={`text-[10px] font-bold ${isIfscMatch ? 'text-zinc-950 dark:text-white' : 'text-rose-500'}`}>
+                    {isIfscMatch ? '✔ Match' : '✕ Mismatch'}
                   </span>
                 )}
               </div>
@@ -620,53 +615,53 @@ export default function KycPage() {
                 value={reBankIfsc}
                 onChange={(e) => setReBankIfsc(e.target.value.toUpperCase().slice(0, 11))}
                 placeholder="Confirm IFSC code"
-                className={`w-full bg-slate-50 focus:bg-white dark:bg-[#0A0E17] border rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-mono uppercase tracking-widest placeholder-slate-400 focus:outline-none transition-colors ${
+                className={`w-full bg-zinc-50 focus:bg-white dark:bg-zinc-900 border rounded-md px-3 py-2 text-xs text-zinc-950 dark:text-white uppercase tracking-widest placeholder-zinc-400 focus:outline-none transition-colors ${
                   reBankIfsc
                     ? isIfscMatch
-                      ? 'border-emerald-500'
+                      ? 'border-zinc-950 dark:border-zinc-100'
                       : 'border-rose-500'
-                    : 'border-slate-200 dark:border-[#1F293D] focus:border-emerald-500'
+                    : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-950 dark:focus:border-zinc-100'
                 }`}
               />
             </div>
           </div>
 
           {/* Optional UPI ID for Fast Payouts */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-              Personal UPI ID (Optional for fast payouts)
+          <div className="space-y-1">
+            <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
+              Personal UPI ID (Optional for fast domestic routing)
             </label>
             <input
               type="text"
               value={userUpiId}
               onChange={(e) => setUserUpiId(e.target.value)}
               placeholder="e.g. name@okaxis"
-              className="w-full bg-slate-50 focus:bg-white dark:bg-[#0A0E17] border border-slate-200 dark:border-[#1F293D] rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 font-mono transition-colors"
+              className="w-full bg-zinc-50 focus:bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-950 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-zinc-950 dark:focus:border-zinc-100 transition-colors"
             />
           </div>
 
-          <div className="flex items-center gap-3 pt-2">
+          <div className="flex items-center gap-2 pt-2">
             <button
               type="button"
               onClick={() => setCurrentStep(1)}
-              className="px-4 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-[#0A0E17] dark:hover:bg-[#1A2232] border border-slate-200 dark:border-[#1F293D] text-slate-700 dark:text-slate-300 font-bold text-xs transition-colors"
+              className="px-3 py-2 rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-xs transition-colors"
             >
               Back
             </button>
             <button
               type="submit"
               disabled={loading || !isAccountMatch || !isIfscMatch}
-              className="flex-1 py-3.5 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+              className="flex-1 py-2 px-3 rounded-md bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-40 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               {loading ? (
                 <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Submitting to Clearing Desk…</span>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Submitting to Queue…</span>
                 </>
               ) : (
                 <>
-                  <Check className="w-4 h-4" />
-                  <span>Submit for Institutional Approval</span>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Submit for Verification</span>
                 </>
               )}
             </button>
@@ -678,52 +673,52 @@ export default function KycPage() {
       {/* STEP 3: 30-MINUTE INSTITUTIONAL HOLDING SCREEN */}
       {/* ========================================================================= */}
       {currentStep === 3 && (
-        <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#121824] border border-slate-200 dark:border-[#1F293D] space-y-6 text-center shadow-xl animate-scale-in">
-          <div className="w-16 h-16 mx-auto rounded-3xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 flex items-center justify-center">
-            <Clock className="w-8 h-8 text-amber-500 animate-pulse" />
+        <div className="p-6 rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-4 text-center">
+          <div className="w-12 h-12 mx-auto rounded-md bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center">
+            <Clock className="w-6 h-6 text-zinc-950 dark:text-white" />
           </div>
 
-          <div className="space-y-2">
-            <span className="px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-400 text-[10px] font-black uppercase tracking-wider font-mono inline-block">
-              ⏳ Compliance Review In Progress
+          <div className="space-y-1">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-800 inline-block">
+              Compliance Queue Active
             </span>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              KYC Under Verification
+            <h2 className="text-base sm:text-lg font-bold text-zinc-950 dark:text-white uppercase tracking-tight">
+              Verification in Progress
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
-              Your Aadhaar and Payout Bank account details have been recorded. Our compliance clearing desk is verifying your records.
+            <p className="text-xs text-zinc-500 font-sans max-w-sm mx-auto leading-relaxed">
+              Your identity and settlement bank details are currently being verified by our compliance desk.
             </p>
           </div>
 
           {/* 30-Minute Estimated Timer */}
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#0A0E17] border border-slate-200 dark:border-[#1F293D] max-w-sm mx-auto space-y-2.5">
+          <div className="p-3 rounded-md bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 max-w-xs mx-auto space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-600 dark:text-slate-400 font-semibold">Estimated Completion</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">~30 Minutes</span>
+              <span className="text-zinc-500">Estimated Duration</span>
+              <span className="text-zinc-950 dark:text-white font-bold">~30 Minutes</span>
             </div>
-            <div className="h-2 rounded-full bg-slate-200 dark:bg-[#121824] overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 w-3/4 animate-pulse rounded-full" />
+            <div className="h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+              <div className="h-full bg-zinc-950 dark:bg-white w-3/4 rounded-full" />
             </div>
-            <p className="text-[10px] text-slate-400 text-left">
-              You will receive an automated notification once approved.
+            <p className="text-[10px] text-zinc-400 text-left font-sans">
+              Automated notifications will dispatch upon approval.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-2 gap-2 pt-2 max-w-sm mx-auto">
             <Link
               href="/funds?tab=deposit"
-              className="py-3 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+              className="py-2 px-3 rounded-md bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors"
             >
-              <Wallet className="w-4 h-4" />
-              <span>Add Funds (Deposit)</span>
+              <Wallet className="w-3.5 h-3.5" />
+              <span>Add Funds</span>
             </Link>
 
             <Link
               href="/dashboard"
-              className="py-3 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-[#0A0E17] dark:hover:bg-[#1A2232] border border-slate-200 dark:border-[#1F293D] text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all"
+              className="py-2 px-3 rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
             >
-              <span>Explore Dashboard</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>Dashboard</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>

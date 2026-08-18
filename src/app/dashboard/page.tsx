@@ -11,13 +11,15 @@ import {
   ArrowDownRight,
   ChevronRight,
   Clock,
+  Layers,
+  ArrowRight
 } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { formatUSD } from '@/lib/utils';
 import { MiniSparkline } from '@/components/charts/MiniSparkline';
 import { ExactMarketCandleChart } from '@/components/charts/ExactMarketCandleChart';
 
-export default function FormalWhiteDashboard() {
+export default function MonochromeInstitutionalDashboard() {
   const router = useRouter();
   const {
     currentUser,
@@ -45,7 +47,7 @@ export default function FormalWhiteDashboard() {
       marketAssets.slice(0, 4).map((a) => ({
         symbol: a.symbol,
         price: a.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 5 }),
-        change: `${a.change >= 0 ? '+' : ''}${a.change.toFixed(2)} (${a.changePercent >= 0 ? '+' : ''}${a.changePercent.toFixed(2)}%)`,
+        change: `${a.change >= 0 ? '▲ +' : '▼ -'}${Math.abs(a.changePercent).toFixed(2)}%`,
         isPositive: a.changePercent >= 0,
         sparkline: [a.low24h ?? a.price, a.price, a.high24h ?? a.price],
       })),
@@ -60,53 +62,70 @@ export default function FormalWhiteDashboard() {
   const totalOpenPnl = userOpenTrades.reduce((acc, t) => acc + (t.pnl || 0), 0);
 
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto select-none">
+    <div className="space-y-4 max-w-[1400px] mx-auto select-none">
       
-      {/* Page Title */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Home</h1>
+      {/* Top Title & Quick Action Strip */}
+      <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-zinc-800">
+        <div>
+          <h1 className="text-lg font-bold font-mono uppercase tracking-tight text-zinc-950 dark:text-white">
+            Trading Desk Overview
+          </h1>
+          <p className="text-[11px] text-zinc-500 font-mono">
+            Live institutional FX, metals & indices ledger
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Link
+            href="/trade?symbol=XAU/USD"
+            className="px-3 py-1.5 rounded-md bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-mono font-bold hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors flex items-center gap-1.5"
+          >
+            <span>Live Terminal</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
       </div>
 
       {/* Main 2-Column Grid Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
         
         {/* Left 8-Column Zone */}
-        <div className="xl:col-span-8 space-y-6">
+        <div className="xl:col-span-8 space-y-4">
           
-          {/* Market Overview Top Section */}
-          <div className="space-y-3">
+          {/* Market Overview Top 4 Cards */}
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Market Overview</h2>
+              <span className="text-[10px] font-bold font-mono uppercase text-zinc-400">
+                Market Pulse
+              </span>
               <Link
                 href="/markets"
-                className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold flex items-center gap-1 transition-colors"
+                className="text-[11px] text-zinc-500 hover:text-zinc-950 dark:hover:text-white font-mono flex items-center gap-1 transition-colors"
               >
                 <span>View All Markets</span>
-                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
 
             {/* 4 Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
               {marketOverviewCards.map((card) => (
                 <div
                   key={card.symbol}
                   onClick={() => setSelectedChartSymbol(card.symbol)}
-                  className={`bg-white dark:bg-[#0f172a] border rounded-2xl p-4 transition-all cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between min-w-0 overflow-hidden ${
+                  className={`bg-white dark:bg-zinc-950 border rounded-md p-3 transition-colors cursor-pointer flex flex-col justify-between ${
                     selectedChartSymbol === card.symbol
-                      ? 'border-slate-900 dark:border-white ring-1 ring-slate-900 dark:ring-white'
-                      : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                      ? 'border-zinc-950 dark:border-white ring-1 ring-zinc-950 dark:ring-white'
+                      : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-1 mb-2">
-                    <span className="font-bold text-xs text-slate-900 dark:text-white truncate font-mono">
+                  <div className="flex items-center justify-between gap-1 mb-1.5">
+                    <span className="font-mono font-bold text-xs text-zinc-950 dark:text-white truncate">
                       {card.symbol}
                     </span>
                     <span
-                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded font-mono shrink-0 ${
-                        card.isPositive
-                          ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400'
-                          : 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400'
+                      className={`text-[10px] font-mono font-semibold tabular-nums ${
+                        card.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                       }`}
                     >
                       {card.change}
@@ -114,15 +133,15 @@ export default function FormalWhiteDashboard() {
                   </div>
 
                   <div className="space-y-1">
-                    <span className="text-lg font-black text-slate-900 dark:text-white font-mono tracking-tight block">
+                    <span className="text-base font-bold font-mono tabular-nums text-zinc-950 dark:text-white block">
                       ${card.price}
                     </span>
-                    <div className="h-6 w-full opacity-80 flex items-center justify-center">
+                    <div className="h-4 w-full opacity-60 flex items-center justify-center">
                       <MiniSparkline
                         data={card.sparkline}
                         isPositive={card.isPositive}
-                        width={120}
-                        height={24}
+                        width={100}
+                        height={16}
                       />
                     </div>
                   </div>
@@ -132,25 +151,25 @@ export default function FormalWhiteDashboard() {
           </div>
 
           {/* Interactive Chart Section */}
-          <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-base font-bold text-slate-900 dark:text-white">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md p-3.5 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-zinc-100 dark:border-zinc-900">
+              <div className="flex items-center gap-2.5">
+                <span className="font-mono text-sm font-bold text-zinc-950 dark:text-white">
                   {selectedChartSymbol}
                 </span>
-                <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800">
                   Live Feed
                 </span>
               </div>
               <button
                 onClick={() => router.push(`/trade?symbol=${encodeURIComponent(selectedChartSymbol)}`)}
-                className="px-3 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-2xs self-start sm:self-auto"
+                className="px-2.5 py-1 rounded-md bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-mono font-bold hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors self-start sm:self-auto"
               >
-                Trade {selectedChartSymbol}
+                Trade {selectedChartSymbol} →
               </button>
             </div>
 
-            <div className="w-full">
+            <div className="w-full min-h-[340px]">
               <ExactMarketCandleChart
                 selectedSymbol={selectedChartSymbol}
                 onSymbolChange={setSelectedChartSymbol}
@@ -158,197 +177,182 @@ export default function FormalWhiteDashboard() {
             </div>
           </div>
 
-          {/* Bottom Grid: Open Positions */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-12 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Open Positions</h3>
-                <Link href="/orders" className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold">
-                  View All ({userOpenTrades.length})
-                </Link>
+          {/* High-Density Open Positions Table */}
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md p-3.5 space-y-2">
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-900">
+              <div className="flex items-center gap-2">
+                <Layers className="w-3.5 h-3.5 text-zinc-400" />
+                <h3 className="text-xs font-mono font-bold uppercase text-zinc-950 dark:text-white">
+                  Active Positions ({userOpenTrades.length})
+                </h3>
               </div>
-
-              {userOpenTrades.length === 0 ? (
-                <div className="py-8 text-center space-y-1">
-                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400">No open positions</p>
-                  <p className="text-[11px] text-slate-400">Open a position from the Live Trading Desk</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="text-slate-400 font-medium border-b border-slate-100 dark:border-slate-800">
-                        <th className="pb-2">Symbol</th>
-                        <th className="pb-2">Side</th>
-                        <th className="pb-2">Lots</th>
-                        <th className="pb-2">Open</th>
-                        <th className="pb-2 text-right">P&L</th>
-                        <th className="pb-2 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
-                      {userOpenTrades.slice(0, 4).map((trade) => (
-                        <tr key={trade.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                          <td className="py-2.5 font-bold text-slate-900 dark:text-white">{trade.symbol}</td>
-                          <td className="py-2.5">
-                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${trade.type === 'BUY' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                              {trade.type}
-                            </span>
-                          </td>
-                          <td className="py-2.5 text-slate-600 dark:text-slate-300">{trade.lotSize}</td>
-                          <td className="py-2.5 text-slate-600 dark:text-slate-300">{trade.entryPrice.toFixed(2)}</td>
-                          <td className={`py-2.5 text-right font-bold ${(trade.pnl || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                            {(trade.pnl || 0) >= 0 ? `+$${trade.pnl?.toFixed(2)}` : `-$${Math.abs(trade.pnl || 0).toFixed(2)}`}
-                          </td>
-                          <td className="py-2.5 text-right font-sans">
-                            <button
-                              onClick={() => closeTrade(trade.id)}
-                              className="text-[11px] text-slate-500 hover:text-rose-600 font-semibold"
-                            >
-                              Close
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot className="border-t border-slate-100 dark:border-slate-800">
-                      <tr>
-                        <td colSpan={5} className="pt-3 font-bold text-slate-900 dark:text-white font-sans">Total P&L</td>
-                        <td className="pt-3 text-right font-black text-emerald-600 dark:text-emerald-400 text-sm font-mono">+${totalOpenPnl.toFixed(2)}</td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              )}
+              <Link href="/orders" className="text-[11px] text-zinc-500 hover:text-zinc-950 dark:hover:text-white font-mono">
+                View All
+              </Link>
             </div>
+
+            {userOpenTrades.length === 0 ? (
+              <div className="py-8 text-center space-y-1">
+                <p className="text-xs text-zinc-500 font-mono">No active positions open</p>
+                <p className="text-[10px] text-zinc-400 font-mono">Open live contracts from the Trading Desk</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs font-mono">
+                  <thead>
+                    <tr className="text-zinc-400 text-[10px] uppercase font-bold border-b border-zinc-100 dark:border-zinc-900">
+                      <th className="py-2 px-2">Symbol</th>
+                      <th className="py-2 px-2">Side</th>
+                      <th className="py-2 px-2">Lots</th>
+                      <th className="py-2 px-2">Entry</th>
+                      <th className="py-2 px-2 text-right">P&L</th>
+                      <th className="py-2 px-2 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+                    {userOpenTrades.slice(0, 5).map((trade) => (
+                      <tr key={trade.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/60 transition-colors">
+                        <td className="py-2 px-2 font-bold text-zinc-950 dark:text-white">{trade.symbol}</td>
+                        <td className="py-2 px-2">
+                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                            trade.type === 'BUY' ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10' : 'text-rose-600 dark:text-rose-400 bg-rose-500/10'
+                          }`}>
+                            {trade.type}
+                          </span>
+                        </td>
+                        <td className="py-2 px-2 tabular-nums text-zinc-700 dark:text-zinc-300">{trade.lotSize}</td>
+                        <td className="py-2 px-2 tabular-nums text-zinc-700 dark:text-zinc-300">{trade.entryPrice.toFixed(2)}</td>
+                        <td className={`py-2 px-2 text-right font-bold tabular-nums ${(trade.pnl || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                          {(trade.pnl || 0) >= 0 ? `+$${trade.pnl?.toFixed(2)}` : `-$${Math.abs(trade.pnl || 0).toFixed(2)}`}
+                        </td>
+                        <td className="py-2 px-2 text-right">
+                          <button
+                            onClick={() => closeTrade(trade.id)}
+                            className="px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-800 text-[10px] text-zinc-600 dark:text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 transition-colors"
+                          >
+                            Close
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="border-t border-zinc-200 dark:border-zinc-800 font-bold">
+                    <tr>
+                      <td colSpan={4} className="py-2 px-2 text-zinc-950 dark:text-white">Floating P&L</td>
+                      <td className={`py-2 px-2 text-right tabular-nums ${totalOpenPnl >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                        {totalOpenPnl >= 0 ? `+$${totalOpenPnl.toFixed(2)}` : `-$${Math.abs(totalOpenPnl).toFixed(2)}`}
+                      </td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
           </div>
 
         </div>
 
-        {/* Right 4-Column Zone (Sidebar Cards) */}
-        <div className="xl:col-span-4 space-y-5">
+        {/* Right 4-Column Zone (Summary Cards) */}
+        <div className="xl:col-span-4 space-y-4">
           
           {/* 1. Account Summary Card */}
-          <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-2xs space-y-4">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md p-4 space-y-3">
             
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Account Summary</h3>
+              <span className="text-[10px] font-bold font-mono uppercase text-zinc-400">
+                Capital Ledger
+              </span>
               <button
                 onClick={() => setHideBalance(!hideBalance)}
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                className="text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors"
                 title={hideBalance ? 'Show balance' : 'Hide balance'}
               >
-                {hideBalance ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {hideBalance ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
             </div>
 
             {/* Total Balance */}
-            <div className="space-y-1">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium block">Total Balance</span>
-              <div className="text-3xl font-black font-mono text-slate-900 dark:text-white tracking-tight">
+            <div className="space-y-0.5">
+              <span className="text-[11px] text-zinc-500 font-mono block">Net Equity</span>
+              <div className="text-2xl font-bold font-mono tabular-nums text-zinc-950 dark:text-white tracking-tight">
                 {hideBalance ? '••••••••' : formatUSD(totalBalance)}
               </div>
-              <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                <span>{totalOpenPnl !== 0 ? `${totalOpenPnl >= 0 ? '↑ +' : '↓ -'}${formatUSD(Math.abs(totalOpenPnl))}` : '$0.00 (0.00%)'}</span>
+              <div className="text-[11px] font-mono font-semibold tabular-nums text-zinc-500">
+                Floating: <span className={totalOpenPnl >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
+                  {totalOpenPnl !== 0 ? `${totalOpenPnl >= 0 ? '▲ +' : '▼ -'}${formatUSD(Math.abs(totalOpenPnl))}` : '$0.00'}
+                </span>
               </div>
             </div>
 
             {/* Split Metrics */}
-            <div className="grid grid-cols-2 gap-4 py-3 border-t border-b border-slate-100 dark:border-slate-800 text-xs">
+            <div className="grid grid-cols-2 gap-2 py-2.5 border-t border-b border-zinc-100 dark:border-zinc-900 text-xs font-mono">
               <div>
-                <span className="text-[11px] text-slate-400 block">Available Balance</span>
-                <span className="font-bold text-slate-900 dark:text-white font-mono text-sm">
+                <span className="text-[10px] text-zinc-400 block uppercase">Available</span>
+                <span className="font-bold tabular-nums text-zinc-950 dark:text-white">
                   {hideBalance ? '••••' : formatUSD(availableBalance)}
                 </span>
               </div>
               <div>
-                <span className="text-[11px] text-slate-400 block">Pending</span>
-                <span className="font-bold text-slate-500 font-mono text-sm">
+                <span className="text-[10px] text-zinc-400 block uppercase">In Clearing</span>
+                <span className="font-bold tabular-nums text-zinc-400">
                   {hideBalance ? '••••' : formatUSD(pendingDeposits)}
                 </span>
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* High-Contrast Solid Action Buttons */}
             <div className="space-y-2 pt-1">
               <button
                 onClick={() => router.push('/funds?tab=deposit')}
-                className="w-full py-2.5 rounded-xl bg-slate-950 dark:bg-emerald-600 text-white hover:bg-slate-800 dark:hover:bg-emerald-500 text-xs font-bold transition-colors shadow-2xs flex items-center justify-center gap-1.5 active:scale-[0.99]"
+                className="w-full py-2 rounded-md bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-xs font-mono font-bold transition-colors flex items-center justify-center gap-1.5"
               >
-                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>+ Add Funds</span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>Deposit Funds</span>
               </button>
 
               <button
                 onClick={() => router.push('/funds?tab=withdraw')}
-                className="w-full py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-colors active:scale-[0.99]"
+                className="w-full py-2 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 text-zinc-900 dark:text-zinc-100 text-xs font-mono font-semibold transition-colors"
               >
-                Withdraw
+                Withdrawal Payout
               </button>
             </div>
 
           </div>
 
-          {/* 2. Recent Activity Card */}
-          <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-2xs space-y-3.5">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Recent Activity</h3>
-              <Link href="/funds" className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold">
+          {/* 2. Recent Ledger Transactions Card */}
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md p-4 space-y-2.5">
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-900">
+              <span className="text-[10px] font-bold font-mono uppercase text-zinc-400">
+                Recent Settlement Logs
+              </span>
+              <Link href="/funds" className="text-[10px] text-zinc-500 hover:text-zinc-950 dark:hover:text-white font-mono">
                 View All
               </Link>
             </div>
 
-            <div className="space-y-3 text-xs">
+            <div className="space-y-1.5 text-xs font-mono">
               {recentTransactions.length === 0 ? (
-                <div className="py-6 text-center space-y-2">
-                  <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
-                    <Clock className="w-4 h-4" />
-                  </div>
-                  <p className="text-slate-500 text-[11px]">No recent transactions</p>
+                <div className="py-4 text-center text-[11px] text-zinc-400">
+                  No recent ledger activity
                 </div>
               ) : (
                 recentTransactions.map((tx) => (
-                  <div key={tx.id} className="flex items-center justify-between py-1.5">
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-                          tx.type === 'deposit'
-                            ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400'
-                            : 'bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400'
-                        }`}
-                      >
-                        {tx.type === 'deposit' ? (
-                          <ArrowDownRight className="w-3.5 h-3.5" />
-                        ) : (
-                          <ArrowUpRight className="w-3.5 h-3.5" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-900 dark:text-white capitalize">
-                          {tx.type} {tx.paymentMode ? `• ${tx.paymentMode}` : ''}
-                        </p>
-                        <p className="text-[10px] text-slate-400 font-mono">
-                          {new Date(tx.createdAt).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </p>
-                      </div>
+                  <div key={tx.id} className="flex items-center justify-between py-1.5 border-b border-zinc-50 dark:border-zinc-900/50 last:border-0">
+                    <div>
+                      <p className="font-bold text-zinc-950 dark:text-white capitalize">
+                        {tx.type} {tx.paymentMode ? `(${tx.paymentMode})` : ''}
+                      </p>
+                      <p className="text-[10px] text-zinc-400">
+                        {new Date(tx.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      </p>
                     </div>
 
                     <div className="text-right">
-                      <p className="font-bold font-mono text-slate-900 dark:text-white">
+                      <p className="font-bold tabular-nums text-zinc-950 dark:text-white">
                         {tx.type === 'deposit' ? '+' : '-'}${tx.amount.toFixed(2)}
                       </p>
-                      <span
-                        className={`text-[9px] font-bold uppercase tracking-wider ${
-                          tx.status === 'completed'
-                            ? 'text-emerald-600'
-                            : tx.status === 'pending'
-                            ? 'text-amber-600'
-                            : 'text-rose-600'
-                        }`}
-                      >
+                      <span className="text-[9px] uppercase font-bold text-zinc-500">
                         {tx.status}
                       </span>
                     </div>
@@ -358,41 +362,24 @@ export default function FormalWhiteDashboard() {
             </div>
           </div>
 
-          {/* 3. Account Status & Limits Card */}
-          <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-2xs space-y-3.5">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white pb-2 border-b border-slate-100 dark:border-slate-800">
-              Account Status
-            </h3>
+          {/* 3. Account Verification Badge Card */}
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md p-4 space-y-2 text-xs font-mono">
+            <span className="text-[10px] font-bold uppercase text-zinc-400 block pb-1 border-b border-zinc-100 dark:border-zinc-900">
+              Account Governance
+            </span>
             
-            <div className="space-y-2.5 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 dark:text-slate-400">KYC Status</span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                  currentUser?.kycStatus === 'approved'
-                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                    : currentUser?.kycStatus === 'pending'
-                    ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
-                    : currentUser?.kycStatus === 'rejected'
-                    ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-                }`}>
-                  {currentUser?.kycStatus === 'approved' ? 'Verified' : currentUser?.kycStatus === 'pending' ? 'Under Review' : currentUser?.kycStatus === 'rejected' ? 'Action Required' : 'Unverified'}
-                </span>
-              </div>
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-500">KYC Status</span>
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-800">
+                {currentUser?.kycStatus === 'approved' ? 'Verified' : currentUser?.kycStatus === 'pending' ? 'Under Review' : 'Pending KYC'}
+              </span>
+            </div>
 
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 dark:text-slate-400">Account Type</span>
-                <span className="font-bold text-slate-900 dark:text-white">
-                  {currentUser?.role === 'admin' ? 'Administrator' : currentUser?.role === 'developer' ? 'Developer' : 'Standard FX'}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 dark:text-slate-400">Member Since</span>
-                <span className="font-mono text-slate-700 dark:text-slate-300">
-                  {currentUser?.createdAt ? new Date(currentUser.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently'}
-                </span>
-              </div>
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-500">Account Classification</span>
+              <span className="font-bold text-zinc-950 dark:text-white">
+                {currentUser?.role === 'admin' ? 'Operator' : 'Institutional FX'}
+              </span>
             </div>
           </div>
 

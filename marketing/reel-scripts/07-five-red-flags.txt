@@ -1,0 +1,33 @@
+REEL 07 — "5 RED FLAGS"
+=======================
+LENGTH   24 seconds
+PRESENTER Aisha
+ANGLE    Educator positioning. Strongest trust builder in the folder.
+
+SHOT LIST
+---------
+0-3s    Aisha, direct
+        VO: "Five things that mean a trading app is lying to you."
+
+3-7s    TEXT: "1. Guaranteed returns"
+        VO:   "Nobody can guarantee a market."
+
+7-11s   TEXT: "2. Profit screenshots"
+        VO:   "Anyone can edit a screenshot."
+
+11-15s  TEXT: "3. No risk warning"
+        VO:   "If they hide the risk, that IS the risk."
+
+15-19s  TEXT: "4. You cannot see where your money went"
+        VO:   "You should be able to see a ledger."
+
+19-22s  TEXT: "5. Pressure to deposit fast"
+        VO:   "Real platforms let you practise first."
+
+22-24s  VO:   "Ask us all five. We will answer."
+
+WHY IT WORKS
+------------
+Double duty. It educates, and every item on the list is something the
+app genuinely does correctly. You are positioning by contrast rather
+than by claim, which needs no licence to say.
