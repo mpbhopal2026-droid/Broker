@@ -55,7 +55,7 @@ export const AdminSidebar: React.FC = () => {
   return (
     <>
       <aside
-        className={`hidden md:flex flex-col border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black select-none h-screen sticky top-0 shrink-0 z-30 justify-between transition-all duration-200 font-mono ${
+        className={`hidden md:flex flex-col border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black select-none h-screen sticky top-0 shrink-0 z-30 justify-between transition-all duration-200 ${
           isCollapsed ? 'w-16' : 'w-60'
         }`}
       >

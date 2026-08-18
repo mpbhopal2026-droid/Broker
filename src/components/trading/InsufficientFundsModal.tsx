@@ -36,7 +36,7 @@ export const InsufficientFundsModal: React.FC<InsufficientFundsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs font-mono" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs" onClick={onClose}>
       <div 
         className="relative w-full max-w-sm my-auto bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md p-4 sm:p-5 shadow-2xl text-zinc-950 dark:text-white space-y-4"
         onClick={(e) => e.stopPropagation()}
@@ -68,7 +68,7 @@ export const InsufficientFundsModal: React.FC<InsufficientFundsModalProps> = ({
           </h3>
           
           <p className="text-xs text-zinc-500 font-sans leading-relaxed max-w-xs mx-auto">
-            Live balance is <strong className="text-zinc-950 dark:text-white font-mono">$0.00 USD</strong>. Fund capital via domestic UPI or bank wire to execute live positions on <span className="font-bold font-mono">{symbol}</span>.
+            Live balance is <strong className="text-zinc-950 dark:text-white">$0.00 USD</strong>. Fund capital via domestic UPI or bank wire to execute live positions on <span className="font-bold">{symbol}</span>.
           </p>
         </div>
 

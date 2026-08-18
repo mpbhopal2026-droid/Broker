@@ -14,7 +14,7 @@ export default function MonochromeWatchlistPage() {
   const watchlistAssets = marketAssets.filter((a) => watchlist.includes(a.symbol));
 
   return (
-    <div className="space-y-4 max-w-5xl mx-auto font-mono select-none">
+    <div className="space-y-4 max-w-5xl mx-auto select-none">
       
       {/* Header */}
       <div className="flex items-center justify-between gap-3 pb-3 border-b border-zinc-200 dark:border-zinc-800">
@@ -107,7 +107,7 @@ export default function MonochromeWatchlistPage() {
 
             {/* Desktop Table View */}
             <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left text-xs font-mono">
+              <table className="w-full text-left text-xs">
                 <thead className="bg-zinc-50/50 dark:bg-zinc-900/50 text-zinc-400 border-b border-zinc-100 dark:border-zinc-900 text-[10px] uppercase font-bold">
                   <tr>
                     <th className="py-2.5 px-3 w-8"></th>

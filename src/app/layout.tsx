@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { AppProvider } from '@/lib/store';
 import { ErrorReporter } from '@/components/system/ErrorReporter';
@@ -12,7 +12,6 @@ import { InstallAppPrompt } from '@/components/pwa/InstallAppPrompt';
 import { NetworkStatusDetector } from '@/components/system/NetworkStatusDetector';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
-const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono', display: 'swap' });
 
 export const metadata: Metadata = {
   title: 'Global Forex',
@@ -51,7 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     // theme. The store swaps this class from the user's saved preference.
     <html
       lang="en"
-      className={`light ${inter.variable} ${jetbrainsMono.variable}`}
+      className={`light ${inter.variable}`}
       suppressHydrationWarning
     >
       {/*

@@ -37,7 +37,7 @@ export const AccountModeSwitch: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center gap-1.5 font-mono">
+    <div className="flex items-center gap-1.5">
       {/* Sleek Minimalist Toggle */}
       <div
         className="flex items-center p-0.5 rounded-md bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
@@ -91,7 +91,7 @@ export const DemoModeBanner: React.FC = () => {
 
   return (
     <div className="hidden sm:block bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-      <div className="max-w-7xl mx-auto px-4 py-1 flex items-center justify-center gap-2 text-[11px] font-mono text-zinc-600 dark:text-zinc-400">
+      <div className="max-w-7xl mx-auto px-4 py-1 flex items-center justify-center gap-2 text-[11px] text-zinc-600 dark:text-zinc-400">
         <FlaskConical className="w-3.5 h-3.5 text-zinc-500 shrink-0" aria-hidden="true" />
         <span className="font-bold text-zinc-950 dark:text-white">DEMO PRACTICE ENVIRONMENT</span>
         <span>— Virtual ledger funds. Real domestic settlement disabled.</span>

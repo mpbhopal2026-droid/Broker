@@ -190,7 +190,7 @@ export default function MonochromeFundsPage() {
   };
 
   return (
-    <div className="space-y-4 max-w-5xl select-none font-mono">
+    <div className="space-y-4 max-w-5xl select-none">
       
       {/* Header & Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-200 dark:border-zinc-800">
@@ -306,7 +306,7 @@ export default function MonochromeFundsPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs font-mono">
+                <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="text-zinc-400 text-[10px] uppercase font-bold border-b border-zinc-100 dark:border-zinc-900 bg-zinc-50/50 dark:bg-zinc-900/50">
                       <th className="py-2 px-3">Date</th>

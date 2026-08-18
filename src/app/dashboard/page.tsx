@@ -68,7 +68,7 @@ export default function MonochromeInstitutionalDashboard() {
   const totalOpenPnl = userOpenTrades.reduce((acc, t) => acc + (t.pnl || 0), 0);
 
   return (
-    <div className="space-y-4 max-w-[1400px] mx-auto select-none font-mono">
+    <div className="space-y-4 max-w-[1400px] mx-auto select-none">
       
       {/* Top Title & Quick Action Strip */}
       <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-zinc-800">

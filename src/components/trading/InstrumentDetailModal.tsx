@@ -95,7 +95,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-xs font-mono select-none"
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-xs select-none"
         onClick={onClose}
       >
         <div
@@ -156,7 +156,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
           </div>
 
           {/* Additional Quote Metrics */}
-          <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+          <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="p-2 rounded bg-zinc-50/60 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 flex justify-between">
               <span className="text-zinc-400">24h High:</span>
               <span className="font-bold tabular-nums text-zinc-950 dark:text-white">${(asset.high24h ?? asset.price * 1.01).toFixed(decimals)}</span>
@@ -184,7 +184,7 @@ export const InstrumentDetailModal: React.FC<InstrumentDetailModalProps> = ({
           <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-900">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase text-zinc-400">Contract Lot Size</span>
-              <span className="text-[10px] text-zinc-500 font-mono">100x Leverage</span>
+              <span className="text-[10px] text-zinc-500">100x Leverage</span>
             </div>
 
             <div className="flex items-center gap-2">

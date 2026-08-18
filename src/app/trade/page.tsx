@@ -174,7 +174,7 @@ function TradePageInner() {
   };
 
   return (
-    <div className="fixed inset-0 z-20 flex flex-col bg-black text-white select-none overflow-hidden font-mono">
+    <div className="fixed inset-0 z-20 flex flex-col bg-black text-white select-none overflow-hidden">
       
       {/* ═══════════════════════════════════════════════════════════════
           HEADER BAR — Strict Monochrome Single Strip

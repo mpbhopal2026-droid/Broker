@@ -199,7 +199,7 @@ export default function MonochromeKycPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 text-zinc-950 dark:text-white select-none font-mono">
+    <div className="max-w-2xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 text-zinc-950 dark:text-white select-none">
       
       {/* Top Header */}
       <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-800">
