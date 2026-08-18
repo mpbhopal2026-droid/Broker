@@ -1,155 +1,184 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Star, ChevronRight, TrendingUp, Plus } from 'lucide-react';
+import { Star, ChevronRight, Plus, ExternalLink } from 'lucide-react';
 import { useApp } from '@/lib/store';
+import { MarketAsset } from '@/lib/types';
+import { InstrumentDetailModal } from '@/components/trading/InstrumentDetailModal';
 
-export default function WatchlistPage() {
-  const router = useRouter();
+export default function MonochromeWatchlistPage() {
   const { marketAssets, watchlist, toggleWatchlist } = useApp();
+  const [selectedAsset, setSelectedAsset] = useState<MarketAsset | null>(null);
 
   const watchlistAssets = marketAssets.filter((a) => watchlist.includes(a.symbol));
 
   return (
-    <div className="space-y-5 max-w-5xl">
+    <div className="space-y-4 max-w-5xl mx-auto font-mono select-none">
       
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex items-center justify-between gap-3 pb-3 border-b border-zinc-200 dark:border-zinc-800">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-            Watchlist
+          <h1 className="text-base sm:text-lg font-bold uppercase tracking-tight text-zinc-950 dark:text-white">
+            Custom Watchlist ({watchlistAssets.length})
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Track your favorite instruments and monitor real-time price movements.
+          <p className="text-[11px] text-zinc-500 font-sans mt-0.5">
+            Click any instrument for order placement or launch live candlestick charts in a new tab.
           </p>
         </div>
 
         <Link
           href="/markets"
-          className="px-3.5 py-2 rounded-xl bg-slate-950 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 shrink-0"
+          className="px-2.5 py-1.5 rounded-md bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold transition-colors flex items-center gap-1 shrink-0"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>Add Instruments</span>
         </Link>
       </div>
 
-      {/* Watchlist Content Section */}
-      <div className="rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xs">
+      {/* Watchlist Table */}
+      <div className="rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 overflow-hidden">
         {watchlistAssets.length === 0 ? (
-          <div className="p-10 sm:p-12 text-center text-xs text-slate-400 dark:text-slate-500 space-y-3">
+          <div className="p-10 text-center text-xs text-zinc-400 space-y-2.5">
             <p>Your watchlist is currently empty.</p>
             <Link
               href="/markets"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-950 dark:bg-emerald-600 text-white font-bold text-xs shadow-2xs hover:bg-slate-800 dark:hover:bg-emerald-500 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-bold text-xs"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Browse All Markets</span>
+              <span>Browse All Instruments</span>
             </Link>
           </div>
         ) : (
           <>
-            {/* Mobile View (sm:hidden) */}
-            <div className="sm:hidden divide-y divide-slate-100 dark:divide-slate-800 p-2 space-y-1.5">
+            {/* Mobile View */}
+            <div className="sm:hidden divide-y divide-zinc-100 dark:divide-zinc-900">
               {watchlistAssets.map((asset) => {
                 const isUp = asset.changePercent >= 0;
+                const decimals = asset.symbol.includes('JPY') ? 2 : asset.symbol.includes('EUR') || asset.symbol.includes('GBP') ? 4 : 2;
 
                 return (
                   <div
                     key={asset.symbol}
-                    onClick={() => router.push(`/trade?symbol=${encodeURIComponent(asset.symbol)}`)}
-                    className="p-3 bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-xl flex items-center justify-between cursor-pointer active:scale-[0.99] transition-all"
+                    onClick={() => setSelectedAsset(asset)}
+                    className="p-3 flex items-center justify-between cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleWatchlist(asset.symbol);
                         }}
-                        className="p-1 rounded text-amber-400 fill-amber-400 hover:text-slate-400"
+                        className="p-1 rounded text-zinc-950 dark:text-white"
                       >
                         <Star className="w-3.5 h-3.5 fill-current" />
                       </button>
                       <div>
-                        <strong className="text-slate-900 dark:text-white font-bold text-sm block">{asset.symbol}</strong>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400 block truncate max-w-[140px]">{asset.name}</span>
+                        <strong className="text-zinc-950 dark:text-white font-bold text-xs block">{asset.symbol}</strong>
+                        <span className="text-[10px] text-zinc-500 font-sans block truncate max-w-[130px]">{asset.name}</span>
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <span className="font-bold text-slate-900 dark:text-white text-sm block">
-                        ${(asset.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: asset.price > 100 ? 2 : 4 })}
-                      </span>
-                      <span className={`text-xs font-semibold ${isUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                        {isUp ? '+' : ''}{asset.changePercent}%
-                      </span>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <span className="font-bold tabular-nums text-zinc-950 dark:text-white text-xs block">
+                          ${asset.price.toFixed(decimals)}
+                        </span>
+                        <span className={`text-[10px] font-semibold tabular-nums ${isUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                          {isUp ? '▲ +' : '▼ -'}{Math.abs(asset.changePercent).toFixed(2)}%
+                        </span>
+                      </div>
+
+                      <a
+                        href={`/trade?symbol=${encodeURIComponent(asset.symbol)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-1.5 rounded border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        title="Open Chart in New Tab"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            {/* Desktop Table View (hidden sm:block) */}
+            {/* Desktop Table View */}
             <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 text-[11px] uppercase font-sans">
+              <table className="w-full text-left text-xs font-mono">
+                <thead className="bg-zinc-50/50 dark:bg-zinc-900/50 text-zinc-400 border-b border-zinc-100 dark:border-zinc-900 text-[10px] uppercase font-bold">
                   <tr>
-                    <th className="py-3 px-4 w-10"></th>
-                    <th className="py-3 px-4 font-semibold">Instrument</th>
-                    <th className="py-3 px-4 font-semibold">Bid</th>
-                    <th className="py-3 px-4 font-semibold">Ask</th>
-                    <th className="py-3 px-4 font-semibold">24h Change</th>
-                    <th className="py-3 px-4 font-semibold text-right">Action</th>
+                    <th className="py-2.5 px-3 w-8"></th>
+                    <th className="py-2.5 px-3">Instrument</th>
+                    <th className="py-2.5 px-3">Bid</th>
+                    <th className="py-2.5 px-3">Ask</th>
+                    <th className="py-2.5 px-3">24h Delta</th>
+                    <th className="py-2.5 px-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
                   {watchlistAssets.map((asset) => {
                     const isUp = asset.changePercent >= 0;
+                    const decimals = asset.symbol.includes('JPY') ? 2 : asset.symbol.includes('EUR') || asset.symbol.includes('GBP') ? 4 : 2;
 
                     return (
                       <tr
                         key={asset.symbol}
-                        onClick={() => router.push(`/trade?symbol=${encodeURIComponent(asset.symbol)}`)}
-                        className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
+                        onClick={() => setSelectedAsset(asset)}
+                        className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer group"
                       >
-                        <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
+                        <td className="py-2.5 px-3" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => toggleWatchlist(asset.symbol)}
-                            className="p-1 rounded text-amber-400 fill-amber-400 hover:text-slate-400 transition-colors"
+                            className="p-1 rounded text-zinc-950 dark:text-white transition-colors"
                           >
                             <Star className="w-3.5 h-3.5 fill-current" />
                           </button>
                         </td>
 
-                        <td className="py-3.5 px-4">
-                          <strong className="text-slate-900 dark:text-white font-bold block group-hover:text-slate-950 dark:group-hover:text-emerald-400 transition-colors">
+                        <td className="py-2.5 px-3">
+                          <strong className="text-zinc-950 dark:text-white font-bold block">
                             {asset.symbol}
                           </strong>
-                          <span className="text-[11px] text-slate-500 dark:text-slate-400 block truncate max-w-xs">{asset.name}</span>
+                          <span className="text-[10px] text-zinc-500 font-sans block truncate max-w-xs">{asset.name}</span>
                         </td>
 
-                        <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white">
-                          ${(asset.bid ?? asset.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: (asset.bid ?? asset.price) > 100 ? 2 : 4 })}
+                        <td className="py-2.5 px-3 font-bold tabular-nums text-zinc-950 dark:text-white">
+                          ${(asset.bid ?? asset.price).toFixed(decimals)}
                         </td>
 
-                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 font-semibold">
-                          ${(asset.ask ?? asset.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: (asset.ask ?? asset.price) > 100 ? 2 : 4 })}
+                        <td className="py-2.5 px-3 text-zinc-500 tabular-nums font-semibold">
+                          ${(asset.ask ?? asset.price).toFixed(decimals)}
                         </td>
 
-                        <td className="py-3.5 px-4">
-                          <span className={`inline-flex items-center gap-0.5 font-bold ${
-                            isUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                          }`}>
-                            {isUp ? '+' : ''}{asset.changePercent}%
+                        <td className="py-2.5 px-3">
+                          <span className={`font-bold tabular-nums ${isUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                            {isUp ? '▲ +' : '▼ -'}{Math.abs(asset.changePercent).toFixed(2)}%
                           </span>
                         </td>
 
-                        <td className="py-3.5 px-4 text-right">
-                          <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white font-semibold text-xs transition-colors">
-                            <span>Trade</span>
-                            <ChevronRight className="w-3.5 h-3.5" />
-                          </span>
+                        <td className="py-2.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="inline-flex items-center gap-1.5">
+                            <button
+                              onClick={() => setSelectedAsset(asset)}
+                              className="px-2 py-1 rounded bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-[11px] font-bold transition-colors"
+                            >
+                              Quote & Order
+                            </button>
+
+                            <a
+                              href={`/trade?symbol=${encodeURIComponent(asset.symbol)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2 py-1 rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-[11px] font-bold inline-flex items-center gap-1 transition-colors"
+                              title="Open Real-Time Candlestick Chart in New Tab"
+                            >
+                              <span>Chart</span>
+                              <ExternalLink className="w-3 h-3 text-zinc-400" />
+                            </a>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -160,6 +189,13 @@ export default function WatchlistPage() {
           </>
         )}
       </div>
+
+      {/* Interactive Asset Detail & Order Modal */}
+      <InstrumentDetailModal
+        asset={selectedAsset}
+        isOpen={Boolean(selectedAsset)}
+        onClose={() => setSelectedAsset(null)}
+      />
 
     </div>
   );
