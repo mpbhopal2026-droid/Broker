@@ -36,18 +36,21 @@ export const InsufficientFundsModal: React.FC<InsufficientFundsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto">
-      <div className="relative w-full max-w-md my-auto bg-[#0A0E17] border border-[#1F293D] rounded-3xl p-5 sm:p-6 shadow-2xl shadow-black/80 animate-scale-in text-white space-y-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-fade-in overflow-y-auto" onClick={onClose}>
+      <div 
+        className="relative w-full max-w-md my-auto bg-white dark:bg-[#121824] border border-slate-200 dark:border-[#1F293D] rounded-3xl p-5 sm:p-6 shadow-2xl animate-scale-in text-slate-900 dark:text-white space-y-5"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#1F293D]">
-          <div className="flex items-center gap-2 text-amber-400">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1F293D]">
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
             <AlertCircle className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-wider">Trading Gatekeeper</span>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-[#121824] transition-colors"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1A2232] transition-colors"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -56,28 +59,28 @@ export const InsufficientFundsModal: React.FC<InsufficientFundsModalProps> = ({
 
         {/* Icon & Title */}
         <div className="text-center space-y-2 pt-1">
-          <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-tr from-amber-500/20 to-orange-500/10 border border-amber-500/30 flex items-center justify-center shadow-inner">
-            <Wallet className="w-8 h-8 text-amber-400" />
+          <div className="w-16 h-16 mx-auto rounded-3xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 flex items-center justify-center shadow-inner">
+            <Wallet className="w-8 h-8 text-amber-500 animate-pulse" />
           </div>
           
-          <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
+          <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
             Deposit Required to Trade
           </h3>
           
-          <p className="text-xs text-slate-400 leading-relaxed max-w-xs mx-auto">
-            Your live trading balance is <strong className="text-white font-mono">$0.00 USD</strong>. Fund your account with INR or UPI to execute real positions on <span className="text-sky-400 font-bold">{symbol}</span>.
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs mx-auto">
+            Your live trading balance is <strong className="text-slate-900 dark:text-white font-mono">$0.00 USD</strong>. Fund your account with INR or UPI to execute real positions on <span className="text-sky-600 dark:text-sky-400 font-bold">{symbol}</span>.
           </p>
         </div>
 
         {/* Key Features Pill */}
-        <div className="grid grid-cols-2 gap-2 p-3 rounded-2xl bg-[#121824] border border-[#1F293D] text-[11px]">
+        <div className="grid grid-cols-2 gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-[#0A0E17] border border-slate-200 dark:border-[#1F293D] text-[11px]">
           <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span className="text-slate-300">Instant UPI & QR</span>
+            <Zap className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span className="text-slate-700 dark:text-slate-300 font-medium">Instant UPI & QR</span>
           </div>
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
-            <span className="text-slate-300">0% Deposit Fees</span>
+            <ShieldCheck className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" />
+            <span className="text-slate-700 dark:text-slate-300 font-medium">0% Deposit Fees</span>
           </div>
         </div>
 
@@ -86,7 +89,7 @@ export const InsufficientFundsModal: React.FC<InsufficientFundsModalProps> = ({
           <button
             type="button"
             onClick={handleGoToDeposit}
-            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 active:scale-95 transition-all cursor-pointer"
+            className="w-full py-3.5 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 active:scale-95 transition-all cursor-pointer"
           >
             <span>Proceed to Deposit (पैसे जमा करें)</span>
             <ArrowRight className="w-4 h-4" />
@@ -96,9 +99,9 @@ export const InsufficientFundsModal: React.FC<InsufficientFundsModalProps> = ({
             <button
               type="button"
               onClick={handleSwitchToDemo}
-              className="w-full py-2.5 px-4 rounded-xl bg-[#121824] hover:bg-[#1A2232] border border-[#1F293D] text-slate-300 text-xs font-semibold flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
+              className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#0A0E17] dark:hover:bg-[#1A2232] border border-slate-200 dark:border-[#1F293D] text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
             >
-              <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
+              <FlaskConical className="w-3.5 h-3.5 text-amber-500" />
               <span>Practise on Demo Sandbox ($10,000)</span>
             </button>
           )}

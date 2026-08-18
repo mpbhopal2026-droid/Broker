@@ -43,6 +43,7 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
   const isPublic = PUBLIC_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`));
   const isAuthPage = pathname === '/login' || pathname === '/register';
   const isKycPage = pathname === '/kyc';
+  const isTradePage = pathname === '/trade';
 
   // Operator areas get the admin sidebar. Presentation only — access is enforced
   // in middleware and again in every route handler.
@@ -77,6 +78,15 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
 
   if (isPublic && !isAuthenticated) {
     return <main className="min-h-screen w-full">{children}</main>;
+  }
+
+  // Dedicated Full-Screen OctaFX Trading Terminal — zero chrome overlap
+  if (isTradePage) {
+    return (
+      <div className="h-screen w-full overflow-hidden bg-[#0b1018] text-white">
+        {children}
+      </div>
+    );
   }
 
   // Isolated Distraction-Free Institutional KYC Portal
