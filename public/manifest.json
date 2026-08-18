@@ -1,0 +1,58 @@
+{
+  "name": "Global Forex",
+  "short_name": "Global Forex",
+  "description": "Global Forex — forex, commodities and market trading.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#123f7d",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/logo-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": [
+    "finance",
+    "business",
+    "productivity"
+  ],
+  "shortcuts": [
+    {
+      "name": "Live Market",
+      "url": "/market",
+      "description": "View real-time forex & gold charts"
+    },
+    {
+      "name": "Deposit Funds",
+      "url": "/deposit",
+      "description": "Add funds via third-party broker bank/UPI"
+    },
+    {
+      "name": "KYC Verification",
+      "url": "/kyc",
+      "description": "Complete identity verification"
+    }
+  ]
+}
