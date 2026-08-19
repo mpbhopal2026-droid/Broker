@@ -17,13 +17,29 @@ import { formatUSD, formatINR, formatDate } from '@/lib/utils';
 import { Transaction } from '@/lib/types';
 
 export default function AdminDepositsPage() {
-  const { transactions, approveDeposit, rejectDeposit, deleteTransaction, paymentSettings } = useAdmin();
+  const { transactions, approveDeposit, rejectDeposit, deleteTransaction, paymentSettings, getClientPaymentConfig } = useAdmin();
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [customCreditUSD, setCustomCreditUSD] = useState<string>('');
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
 
   const deposits = transactions.filter((t) => t.type === 'deposit');
+
+  const getRoutingInfo = (tx: Transaction) => {
+    const custom = getClientPaymentConfig(tx.userId);
+    if (custom && custom.isCustom && (custom.upiId || custom.accountNumber)) {
+      return {
+        isCustom: true,
+        label: custom.upiId ? `UPI: ${custom.upiId}` : `${custom.bankName || 'Bank'}: ${custom.accountNumber}`,
+        holder: custom.accountHolder || 'Custom Client Account',
+      };
+    }
+    return {
+      isCustom: false,
+      label: tx.paymentMode || paymentSettings.upiId || 'Primary Desk UPI',
+      holder: paymentSettings.accountHolder || 'Broker Desk',
+    };
+  };
 
   useEffect(() => {
     if (selectedTx) {
@@ -50,16 +66,17 @@ export default function AdminDepositsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6 animate-fade-in text-slate-900 dark:text-slate-100">
       
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+      {/* Page Title & Stats */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2 font-sans">
+            <CreditCard className="w-6 h-6 text-emerald-600 dark:text-[#00d674]" />
             Deposit Ledger & Approvals
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Verify 12-digit UTRs and approve domestic bank/UPI deposits for instant wallet margin credit.
+          <p className="text-xs text-slate-500 font-sans mt-0.5">
+            Audit and verify incoming domestic INR transfers, inspect client-specific payment destinations, and credit capital ledgers.
           </p>
         </div>
 
@@ -81,6 +98,7 @@ export default function AdminDepositsPage() {
               {deposits.map((tx) => {
                 const isPending = tx.status === 'pending';
                 const isCompleted = tx.status === 'completed';
+                const routing = getRoutingInfo(tx);
 
                 return (
                   <div
@@ -114,6 +132,19 @@ export default function AdminDepositsPage() {
                       </div>
                     </div>
 
+                    {/* Paid Destination Routing in Mobile Card */}
+                    <div className="flex items-center gap-1.5 text-[11px] font-mono p-2 rounded-lg bg-slate-50 dark:bg-slate-900/70 border border-slate-100 dark:border-slate-800">
+                      <span className="text-slate-400 font-sans text-[10px] uppercase font-bold">Paid To:</span>
+                      <span className={`font-semibold truncate ${routing.isCustom ? 'text-purple-600 dark:text-purple-400 font-bold' : 'text-slate-700 dark:text-slate-300'}`}>
+                        {routing.label}
+                      </span>
+                      {routing.isCustom && (
+                        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 shrink-0">
+                          Custom VIP
+                        </span>
+                      )}
+                    </div>
+
                     <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800/80 text-[11px]">
                       <span className="text-slate-400 font-mono">{formatDate(tx.createdAt)}</span>
                       <button
@@ -144,6 +175,7 @@ export default function AdminDepositsPage() {
                     <th className="py-3 px-4">Client</th>
                     <th className="py-3 px-4">INR Amount</th>
                     <th className="py-3 px-4">12-Digit UTR</th>
+                    <th className="py-3 px-4">Paid Destination / Routing</th>
                     <th className="py-3 px-4">Submitted</th>
                     <th className="py-3 px-4">Status</th>
                     <th className="py-3 px-4 text-right">Action</th>
@@ -153,6 +185,7 @@ export default function AdminDepositsPage() {
                   {deposits.map((tx) => {
                     const isPending = tx.status === 'pending';
                     const isCompleted = tx.status === 'completed';
+                    const routing = getRoutingInfo(tx);
 
                     return (
                       <tr
@@ -167,6 +200,25 @@ export default function AdminDepositsPage() {
                           {formatINR(tx.amountINR || 0)}
                         </td>
                         <td className="py-3.5 px-4 text-slate-800 dark:text-slate-200 font-bold">{tx.utrNumber}</td>
+                        <td className="py-3.5 px-4">
+                          <div className="flex flex-col gap-0.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`font-bold font-mono text-xs ${
+                                routing.isCustom ? 'text-purple-600 dark:text-purple-400' : 'text-slate-800 dark:text-slate-200'
+                              }`}>
+                                {routing.label}
+                              </span>
+                              {routing.isCustom && (
+                                <span className="px-1.5 py-0.2 rounded text-[8px] font-bold uppercase bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300">
+                                  Custom
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-sans">
+                              {routing.isCustom ? `VIP Routing (${routing.holder})` : `Default Desk (${routing.holder})`}
+                            </span>
+                          </div>
+                        </td>
                         <td className="py-3.5 px-4 text-slate-400 text-[11px]">{formatDate(tx.createdAt)}</td>
                         <td className="py-3.5 px-4">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
@@ -279,10 +331,29 @@ export default function AdminDepositsPage() {
                   ${((selectedTx.amountINR || 0) / paymentSettings.usdToInrRate * (1 - (paymentSettings.commissionPercent ?? 0) / 100)).toFixed(2)} USD
                 </span>
               </div>
-              <div className="flex justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                <span className="text-slate-500 font-sans">Paid Destination (UPI/Bank):</span>
-                <span className="font-bold text-slate-900 dark:text-white font-mono">{selectedTx.paymentMode || 'Desk Primary UPI'}</span>
-              </div>
+              {(() => {
+                const modalRouting = getRoutingInfo(selectedTx);
+                return (
+                  <div className="flex justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 items-center">
+                    <span className="text-slate-500 font-sans">Paid Destination (UPI/Bank):</span>
+                    <div className="text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <span className={`font-bold font-mono ${modalRouting.isCustom ? 'text-purple-600 dark:text-purple-400' : 'text-slate-900 dark:text-white'}`}>
+                          {modalRouting.label}
+                        </span>
+                        {modalRouting.isCustom && (
+                          <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300">
+                            Custom VIP
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-sans block">
+                        Holder: {modalRouting.holder}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
               <div className="flex justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
                 <span className="text-slate-500 font-sans">Submitted On:</span>
                 <span className="text-slate-700 dark:text-slate-300 font-sans">{formatDate(selectedTx.createdAt)}</span>

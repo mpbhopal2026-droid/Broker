@@ -8,7 +8,8 @@ import {
   ExternalLink,
   ShieldCheck,
   Loader2,
-  DollarSign
+  DollarSign,
+  CreditCard
 } from 'lucide-react';
 import { KycDocumentImage } from '@/components/admin/KycDocumentImage';
 import { useAdmin } from '@/lib/admin-store';
@@ -26,7 +27,7 @@ export const AdminReviewDepositModal: React.FC<AdminReviewDepositModalProps> = (
   isOpen,
   onClose,
 }) => {
-  const { approveDeposit, rejectDeposit, deleteTransaction, paymentSettings, showToast } = useAdmin();
+  const { approveDeposit, rejectDeposit, deleteTransaction, paymentSettings, getClientPaymentConfig, showToast } = useAdmin();
   const [rejectReason, setRejectReason] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +51,15 @@ export const AdminReviewDepositModal: React.FC<AdminReviewDepositModalProps> = (
   }, [deposit, rate, commPercent]);
 
   if (!isOpen || !deposit) return null;
+
+  const customConfig = getClientPaymentConfig(deposit.userId);
+  const isCustomRouting = Boolean(customConfig && customConfig.isCustom && (customConfig.upiId || customConfig.accountNumber));
+  const routingLabel = isCustomRouting
+    ? (customConfig?.upiId ? `UPI: ${customConfig.upiId}` : `${customConfig?.bankName || 'Bank'}: ${customConfig?.accountNumber}`)
+    : (deposit.paymentMode || paymentSettings.upiId || 'Primary Desk UPI');
+  const routingHolder = isCustomRouting
+    ? (customConfig?.accountHolder || 'Custom Client Desk')
+    : (paymentSettings.accountHolder || 'Broker Desk Account');
 
   const handleApprove = () => {
     setIsLoading(true);
@@ -82,21 +92,24 @@ export const AdminReviewDepositModal: React.FC<AdminReviewDepositModalProps> = (
       setIsRejecting(false);
       onClose();
       showToast({
-        type: 'warning',
+        type: 'info',
         title: 'Deposit Rejected',
-        message: `Marked as rejected: ${rejectReason}`,
+        message: 'Rejection notice sent to client.',
       });
-    }, 800);
+    }, 500);
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl w-full max-w-lg my-auto shadow-2xl overflow-hidden animate-scale-in max-h-[94vh] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-[#0d121c] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-scale-in flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
-          <div className="min-w-0 pr-2">
-            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">Review Deposit #{deposit.id.slice(0, 8)}</h3>
+        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span>Review Deposit Request</span>
+            </h3>
             <p className="text-[11px] sm:text-xs text-slate-500 font-mono truncate">Client: {deposit.userFullName || deposit.userId}</p>
           </div>
           <button
@@ -131,10 +144,43 @@ export const AdminReviewDepositModal: React.FC<AdminReviewDepositModalProps> = (
             </div>
           </div>
 
-          {/* Net Credit Box */}
-          <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between">
-            <span className="font-bold text-emerald-950 dark:text-emerald-300">Net USD Margin Credited to User:</span>
-            <span className="text-lg font-black font-mono text-emerald-700 dark:text-emerald-400">+{formatUSD(netUSD)}</span>
+          {/* Paid Destination Routing Box */}
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <div>
+              <span className="text-[10px] text-slate-400 uppercase font-semibold block">Client Paid Destination / Routing</span>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className={`font-bold font-mono text-xs ${isCustomRouting ? 'text-purple-600 dark:text-purple-400' : 'text-slate-900 dark:text-white'}`}>
+                  {routingLabel}
+                </span>
+                {isCustomRouting && (
+                  <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300">
+                    VIP Custom
+                  </span>
+                )}
+              </div>
+            </div>
+            <span className="text-[10px] text-slate-400 font-sans text-right">
+              {routingHolder}
+            </span>
+          </div>
+
+          {/* Net Credit Box & Custom Editable Input */}
+          <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-emerald-950 dark:text-emerald-300 text-xs">USD Amount to Credit Client Ledger:</span>
+              <span className="text-[10px] text-slate-500 font-mono">Calculated: ${netUSD.toFixed(2)}</span>
+            </div>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-500 font-mono">$</span>
+              <input
+                type="number"
+                step="0.01"
+                value={customCreditUSD}
+                onChange={(e) => setCustomCreditUSD(e.target.value)}
+                placeholder="0.00"
+                className="w-full bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-700 rounded-lg pl-7 pr-3 py-1.5 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
+              />
+            </div>
           </div>
 
           {/* Payment Screenshot Proof */}
