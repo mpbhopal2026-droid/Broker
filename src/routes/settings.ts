@@ -24,6 +24,20 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET() {
   try {
+    // SIGNED-IN CLIENTS ONLY. Do not remove this again.
+    //
+    // This row is the company's payment identity: account number, IFSC, UPI id
+    // and USDT address. It was made public once before and the columns were
+    // empty, so nothing leaked. They are populated now, and a live check found
+    // the full banking details readable by anyone who knew the URL.
+    //
+    // The realistic abuse is impersonation rather than theft: scrape the real
+    // account name and UPI id, then send clients "updated deposit instructions"
+    // that are convincing because every detail matches except the destination.
+    // Requiring a session does not make that impossible; it stops the details
+    // being harvestable by anyone who finds the endpoint.
+    await requireUser();
+
     const db = getServiceClient();
     if (!db) return fail(503, 'Not available.');
 
