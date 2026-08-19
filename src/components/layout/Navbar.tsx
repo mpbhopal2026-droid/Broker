@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { formatUSD, formatINR } from '@/lib/utils';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
@@ -42,17 +43,8 @@ export const Navbar: React.FC = () => {
         
         {/* Brand Logo & Main Nav */}
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#00d674] to-emerald-400 text-slate-950 flex items-center justify-center font-black text-sm shadow-md shadow-[#00d674]/20 group-hover:scale-105 transition-transform">
-              ▲
-            </div>
-            <div className="flex flex-col">
-              <span className="font-extrabold text-sm tracking-tight text-white flex items-center gap-1">
-                Global<span className="text-[#2f8f3c]"> Forex</span>
-                <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-mono font-normal">PRO</span>
-              </span>
-              <span className="text-[9px] text-slate-400 -mt-0.5 font-medium hidden sm:inline">Institutional Forex & Advisory</span>
-            </div>
+          <Link href="/" className="flex items-center group">
+            <BrandLogo size="sm" />
           </Link>
 
           {/* Desktop Navigation Links */}

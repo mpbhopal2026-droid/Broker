@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useAdmin } from '@/lib/admin-store';
 import { AdminWalletWithdrawModal } from '@/components/admin/modals/AdminWalletWithdrawModal';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 
 export const AdminSidebar: React.FC = () => {
   const pathname = usePathname();
@@ -65,15 +66,8 @@ export const AdminSidebar: React.FC = () => {
           
           {/* Brand Header */}
           <div className="px-1 flex items-center justify-between">
-            <Link href="/admin" className="flex items-center gap-2 overflow-hidden">
-              <div className="w-7 h-7 rounded-md bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center font-bold text-xs shrink-0">
-                OP
-              </div>
-              {!isCollapsed && (
-                <span className="font-bold text-xs text-zinc-950 dark:text-white uppercase tracking-tight whitespace-nowrap">
-                  GLOBAL FOREX <span className="text-zinc-400 font-normal">ADMIN</span>
-                </span>
-              )}
+            <Link href="/admin" className="overflow-hidden">
+              <BrandLogo isCollapsed={isCollapsed} size="sm" isAdmin={true} />
             </Link>
 
             <button

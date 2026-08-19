@@ -24,6 +24,7 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 import { useApp } from '@/lib/store';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 
 export const AppSidebar: React.FC = () => {
   const pathname = usePathname();
@@ -53,10 +54,12 @@ export const AppSidebar: React.FC = () => {
 
   // Nav definitions for Admin View
   const adminNav = [
-    { label: 'Overview', href: '/admin', icon: LayoutDashboard },
-    { label: 'Clients & KYC', href: '/admin/users', icon: Users },
-    { label: 'Deposits', href: '/admin/deposits', icon: Wallet },
-    { label: 'Withdrawals', href: '/admin/withdrawals', icon: CreditCard },
+    { label: 'Admin Terminal', href: '/admin', icon: LayoutDashboard },
+    { label: 'Clients Roster', href: '/admin/users', icon: Users },
+    { label: 'KYC Vault', href: '/admin/kyc', icon: ShieldCheck },
+    { label: 'Live Trades', href: '/admin/trades', icon: LineChart },
+    { label: 'Deposit Ops', href: '/admin/deposits', icon: Wallet },
+    { label: 'Withdrawal Ops', href: '/admin/withdrawals', icon: CreditCard },
     { label: 'Payment Config', href: '/admin/payments', icon: Building },
     { label: 'Ledger Audit', href: '/admin/ledger', icon: FileSpreadsheet },
     { label: 'Broadcasts', href: '/admin/settings', icon: Radio },
@@ -75,15 +78,8 @@ export const AppSidebar: React.FC = () => {
         
         {/* Brand Header */}
         <div className="px-1 flex items-center justify-between">
-          <Link href={isAdmin ? '/admin' : '/dashboard'} className="flex items-center gap-2 overflow-hidden">
-            <div className="w-7 h-7 rounded-md bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center font-mono font-bold text-xs shrink-0">
-              GF
-            </div>
-            {!isCollapsed && (
-              <span className="font-bold text-sm text-zinc-950 dark:text-white uppercase tracking-tight font-mono whitespace-nowrap">
-                GLOBAL FOREX
-              </span>
-            )}
+          <Link href={isAdmin ? '/admin' : '/dashboard'} className="overflow-hidden">
+            <BrandLogo isCollapsed={isCollapsed} size="sm" isAdmin={isAdmin} />
           </Link>
 
           <button

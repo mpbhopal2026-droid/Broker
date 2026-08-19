@@ -14,6 +14,7 @@ import {
   LogOut
 } from 'lucide-react';
 import { useApp } from '@/lib/store';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 
 export const AppHeader: React.FC = () => {
   const router = useRouter();
@@ -23,13 +24,13 @@ export const AppHeader: React.FC = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
-  const filteredSymbols = marketAssets
-    .filter(
-      (a) =>
-        a.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        a.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .slice(0, 8);
+  const filteredSymbols = searchQuery.trim()
+    ? marketAssets.filter(
+        (a) =>
+          a.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          a.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
 
   const firstName = currentUser?.fullName?.split(' ')[0] ?? '';
   const initial = firstName.charAt(0).toUpperCase() || '·';
@@ -43,18 +44,8 @@ export const AppHeader: React.FC = () => {
       <div className="flex items-center justify-between gap-3">
         
         {/* Left: Mobile Brand */}
-        <Link href={isOperator ? '/admin' : '/dashboard'} className="md:hidden flex items-center gap-2 overflow-hidden shrink-0">
-          <div className="w-6 h-6 rounded-md bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center font-mono font-bold text-xs">
-            GF
-          </div>
-          <span className="font-bold text-sm tracking-tight text-zinc-950 dark:text-white uppercase font-mono">
-            GLOBAL FOREX
-          </span>
-          {isOperator && (
-            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700">
-              Admin
-            </span>
-          )}
+        <Link href={isOperator ? '/admin' : '/dashboard'} className="md:hidden flex items-center overflow-hidden shrink-0">
+          <BrandLogo size="sm" isAdmin={isOperator} />
         </Link>
 
         {/* Center/Desktop: Search Trigger Input */}
