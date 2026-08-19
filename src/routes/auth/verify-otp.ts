@@ -74,76 +74,89 @@ export async function POST(req: NextRequest) {
     const secret = process.env.SESSION_SECRET;
     if (!db || !secret) return fail(503, 'Authentication is not configured on this server.');
 
-    // Look up active, unexpired, unconsumed OTP
-    const query = db
-      .from('auth_otps')
-      .select('id, code_hash, attempts, expires_at, purpose')
-      .is('consumed_at', null)
-      .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: false })
-      .limit(1);
+    // Look up ALL active, unexpired, unconsumed OTPs for this user
+    const { data: activeOtps } = await (channel === 'email'
+      ? db
+          .from('auth_otps')
+          .select('id, code_hash, attempts, expires_at, purpose, created_at')
+          .is('consumed_at', null)
+          .gt('expires_at', new Date().toISOString())
+          .or(`identifier.eq.${identifier},email.eq.${identifier}`)
+          .order('created_at', { ascending: false })
+      : db
+          .from('auth_otps')
+          .select('id, code_hash, attempts, expires_at, purpose, created_at')
+          .is('consumed_at', null)
+          .gt('expires_at', new Date().toISOString())
+          .eq('identifier', identifier)
+          .order('created_at', { ascending: false }));
 
-    const { data: otp } = await (channel === 'email'
-      ? query.or(`identifier.eq.${identifier},email.eq.${identifier}`).maybeSingle()
-      : query.eq('identifier', identifier).maybeSingle());
+    let matchedOtp: any = null;
 
-    if (!otp) {
-      // Check if there is an expired or consumed record to give exact feedback
-      const { data: pastOtp } = await (channel === 'email'
-        ? db.from('auth_otps').select('id, expires_at, consumed_at').or(`identifier.eq.${identifier},email.eq.${identifier}`).order('created_at', { ascending: false }).limit(1).maybeSingle()
-        : db.from('auth_otps').select('id, expires_at, consumed_at').eq('identifier', identifier).order('created_at', { ascending: false }).limit(1).maybeSingle());
+    if (activeOtps && activeOtps.length > 0) {
+      for (const otp of activeOtps) {
+        if ((otp.attempts || 0) >= MAX_ATTEMPTS) continue;
 
-      await auditServer(req, 'AUTH_OTP_VERIFY_FAILED', { metadata: { email, reason: 'no_live_code' } });
+        const otpPurpose = otp.purpose || 'login';
+        const candPrimary = await hmacSign(`${cleanCode}:${identifier}:${otpPurpose}`, secret);
+        const candLogin = await hmacSign(`${cleanCode}:${identifier}:login`, secret);
+        const candVerify = await hmacSign(`${cleanCode}:${identifier}:email_verify`, secret);
+        const candNoPurpose = await hmacSign(`${cleanCode}:${identifier}`, secret);
+        const candBare = await hmacSign(`${cleanCode}`, secret);
+        const candSha = await sha256(`${cleanCode}:${identifier}:${otpPurpose}`);
+        const candShaNoPurp = await sha256(`${cleanCode}:${identifier}`);
+        const candShaBare = await sha256(`${cleanCode}`);
+        const candRaw = await hmacSign(`${rawCode.trim()}:${identifier}:${otpPurpose}`, secret);
 
-      if (pastOtp?.consumed_at) {
-        return fail(401, 'This verification code has already been used. Please request a new code.');
+        const isMatch =
+          timingSafeEqual(candPrimary, otp.code_hash) ||
+          timingSafeEqual(candLogin, otp.code_hash) ||
+          timingSafeEqual(candVerify, otp.code_hash) ||
+          timingSafeEqual(candNoPurpose, otp.code_hash) ||
+          timingSafeEqual(candBare, otp.code_hash) ||
+          timingSafeEqual(candSha, otp.code_hash) ||
+          timingSafeEqual(candShaNoPurp, otp.code_hash) ||
+          timingSafeEqual(candShaBare, otp.code_hash) ||
+          timingSafeEqual(candRaw, otp.code_hash) ||
+          timingSafeEqual(cleanCode, otp.code_hash) ||
+          timingSafeEqual(rawCode.trim(), otp.code_hash);
+
+        if (isMatch) {
+          matchedOtp = otp;
+          break;
+        }
       }
-      if (pastOtp && new Date(pastOtp.expires_at) <= new Date()) {
-        return fail(401, 'This verification code has expired. Please request a new code.');
-      }
-      return fail(401, 'No active verification code found. Please request a new code.');
     }
 
-    if (otp.attempts >= MAX_ATTEMPTS) {
-      await db.from('auth_otps').update({ consumed_at: new Date().toISOString() }).eq('id', otp.id);
-      await auditServer(req, 'AUTH_OTP_LOCKED', { metadata: { email } });
-      return fail(429, 'Too many incorrect attempts. Please request a new code.');
-    }
+    if (!matchedOtp) {
+      if (activeOtps && activeOtps.length > 0) {
+        await db.from('auth_otps').update({ attempts: (activeOtps[0].attempts || 0) + 1 }).eq('id', activeOtps[0].id);
+      } else {
+        // Check past consumed/expired
+        const { data: pastOtp } = await (channel === 'email'
+          ? db.from('auth_otps').select('id, expires_at, consumed_at').or(`identifier.eq.${identifier},email.eq.${identifier}`).order('created_at', { ascending: false }).limit(1).maybeSingle()
+          : db.from('auth_otps').select('id, expires_at, consumed_at').eq('identifier', identifier).order('created_at', { ascending: false }).limit(1).maybeSingle());
 
-    const otpPurpose = otp.purpose || 'login';
-    const candPrimary = await hmacSign(`${cleanCode}:${identifier}:${otpPurpose}`, secret);
-    const candLogin = await hmacSign(`${cleanCode}:${identifier}:login`, secret);
-    const candVerify = await hmacSign(`${cleanCode}:${identifier}:email_verify`, secret);
-    const candNoPurpose = await hmacSign(`${cleanCode}:${identifier}`, secret);
-    const candBare = await hmacSign(`${cleanCode}`, secret);
-    const candSha = await sha256(`${cleanCode}:${identifier}:${otpPurpose}`);
-    const candShaNoPurp = await sha256(`${cleanCode}:${identifier}`);
-    const candShaBare = await sha256(`${cleanCode}`);
-    const candRaw = await hmacSign(`${rawCode.trim()}:${identifier}:${otpPurpose}`, secret);
+        if (pastOtp?.consumed_at) {
+          return fail(401, 'This verification code has already been used. Please request a new code.');
+        }
+        if (pastOtp && new Date(pastOtp.expires_at) <= new Date()) {
+          return fail(401, 'This verification code has expired. Please request a new code.');
+        }
+      }
 
-    const isMatch =
-      timingSafeEqual(candPrimary, otp.code_hash) ||
-      timingSafeEqual(candLogin, otp.code_hash) ||
-      timingSafeEqual(candVerify, otp.code_hash) ||
-      timingSafeEqual(candNoPurpose, otp.code_hash) ||
-      timingSafeEqual(candBare, otp.code_hash) ||
-      timingSafeEqual(candSha, otp.code_hash) ||
-      timingSafeEqual(candShaNoPurp, otp.code_hash) ||
-      timingSafeEqual(candShaBare, otp.code_hash) ||
-      timingSafeEqual(candRaw, otp.code_hash) ||
-      timingSafeEqual(cleanCode, otp.code_hash) ||
-      timingSafeEqual(rawCode.trim(), otp.code_hash);
-
-    if (!isMatch) {
-      await db.from('auth_otps').update({ attempts: otp.attempts + 1 }).eq('id', otp.id);
       await auditServer(req, 'AUTH_OTP_VERIFY_FAILED', {
-        metadata: { email, attempt: otp.attempts + 1 },
+        metadata: { email, reason: 'no_match' },
       });
-      return fail(401, 'Incorrect verification code. Please check the code in your email or request a new one.');
+      return fail(401, 'Incorrect verification code. Please check your latest email and enter the 6-digit code.');
     }
 
-    // Single-use: burn the code before issuing anything.
-    await db.from('auth_otps').update({ consumed_at: new Date().toISOString() }).eq('id', otp.id);
+    // Single-use: burn all pending codes for this user immediately
+    await db
+      .from('auth_otps')
+      .update({ consumed_at: new Date().toISOString() })
+      .or(`identifier.eq.${identifier},email.eq.${identifier}`)
+      .is('consumed_at', null);
 
     // --- resolve or create the account ---------------------------------------
     // Look up on whichever identifier was verified.

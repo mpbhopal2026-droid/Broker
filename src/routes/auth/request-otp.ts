@@ -94,12 +94,11 @@ export async function POST(req: NextRequest) {
     const codeHash = await hmacSign(`${code}:${identifier}:${purpose}`, secret);
     const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60_000);
 
-    // One live code per identifier + purpose.
+    // Invalidate any previous unconsumed codes for this user
     await db
       .from('auth_otps')
       .update({ consumed_at: new Date().toISOString() })
-      .eq('identifier', identifier)
-      .eq('purpose', purpose)
+      .or(`identifier.eq.${identifier},email.eq.${identifier}`)
       .is('consumed_at', null);
 
     const { error: insertError } = await db.from('auth_otps').insert({
