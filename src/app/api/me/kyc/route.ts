@@ -61,12 +61,15 @@ export async function POST(req: NextRequest) {
     }
 
     for (const path of filePaths) {
-      // A storage path, never a URL. Without this an attacker submits
-      // "https://attacker.example/pan.png": the broker stores a link instead of
-      // a document, the reviewer's browser fetches attacker-controlled bytes at
-      // review time, and the content can be swapped or withdrawn afterwards —
-      // leaving an approved account with no retained evidence of identity.
-      if (path.includes('://')) return fail(400, 'One of the uploaded files is invalid.');
+      // The blanket "no ://" rule lived here. It was right when uploads went to
+      // Supabase and returned a bare path, but storage now returns a Cloudinary
+      // public id — and while it briefly returned a URL, this rule rejected
+      // every submission, which is why KYC stopped working entirely.
+      //
+      // The check it was standing in for — that a client cannot pass off an
+      // arbitrary external URL as their identity document — is enforced inside
+      // verifyUploadedFile, which accepts only our own Cloudinary cloud and only
+      // inside the caller's own folder. One place, not two that can disagree.
 
       // Unconditional. This previously ran only for paths that already began
       // with the caller's id, so a path pointing at somebody else's folder

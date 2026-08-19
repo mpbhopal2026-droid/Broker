@@ -4,7 +4,7 @@ import { getServiceClient } from './supabase-server';
 import { randomUUID } from './crypto';
 import { log } from './logger';
 import { validateFileBytes } from './file-validation';
-import { uploadToCloudinary } from './cloudinary';
+import { uploadToCloudinary, CLOUDINARY_CONFIG, generateSignedDeliveryUrl } from './cloudinary';
 
 /**
  * Private file storage for KYC documents and payment proofs.
@@ -65,8 +65,13 @@ export async function ensureBucketExists(bucket: BucketName): Promise<boolean> {
     const { data: buckets } = await db.storage.listBuckets();
     const found = (buckets ?? []).some((b) => b.name === bucket);
     if (!found) {
+      // public-assets holds logos and is meant to be readable. Everything else
+      // holds identity documents and payment proofs, and was being created
+      // PUBLIC — a Supabase public URL is permanent and derivable from the
+      // object path, so an Aadhaar card in a public bucket is a standing
+      // breach, exactly as the comment at the top of this file warns.
       const { error } = await db.storage.createBucket(bucket, {
-        public: true,
+        public: bucket === BUCKETS.assets,
         fileSizeLimit: 5242880,
       });
       if (error) {
@@ -96,7 +101,13 @@ export async function uploadBufferToStorage(params: {
     });
 
     if (cloudinaryRes.ok) {
-      return { ok: true, path: cloudinaryRes.secureUrl };
+      // Store the public id, not the secure_url. Authenticated assets are not
+      // served from a plain URL, so a stored secure_url would 401 at review
+      // time. The id also keeps the caller's folder visible — which is what
+      // verifyUploadedFile checks ownership against — and lets delivery be
+      // signed fresh on each view rather than baking in a link that never
+      // expires.
+      return { ok: true, path: cloudinaryRes.publicId };
     }
   } catch (cErr) {
     log.warn('storage', 'Cloudinary upload attempt failed, falling back to Supabase', { error: String(cErr) });
@@ -185,6 +196,14 @@ export async function createSignedReadUrl(
     return path;
   }
 
+  // Cloudinary public id, e.g. "kyc-documents/<userId>/<file>". Uploads are
+  // authenticated, so a plain delivery URL returns 401 — it has to be signed.
+  // Without this branch the reviewer saw an empty frame for every document,
+  // because the lookup fell through to Supabase, which has never held the file.
+  if (CLOUDINARY_CONFIG.cloudName && /^(kyc-documents|payment-proofs|support-screenshots)\//.test(path)) {
+    return generateSignedDeliveryUrl(path);
+  }
+
   try {
     const { data, error } = await db.storage.from(bucket).createSignedUrl(path, expiresInSeconds);
     if (!error && data?.signedUrl) {
@@ -261,16 +280,36 @@ export async function verifyUploadedFile(
     return { ok: true };
   }
 
+  // A bare `return { ok: true }` for anything starting http:// used to sit here,
+  // which accepted ANY external URL as an identity document. A client could
+  // submit https://attacker.example/pan.png: we would store a link rather than
+  // a document, the reviewer's browser would fetch attacker-controlled bytes at
+  // review time, and the content could be swapped afterwards — leaving an
+  // approved account with no retained evidence of identity.
+  //
+  // Only our own Cloudinary cloud is accepted, and only inside the caller's own
+  // folder.
   if (path.startsWith('http://') || path.startsWith('https://')) {
+    const ourCloud = `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/`;
+    if (!CLOUDINARY_CONFIG.cloudName || !path.startsWith(ourCloud)) {
+      return { ok: false, error: 'That file was not uploaded through this application.' };
+    }
+    if (!path.includes(`/${userId}/`)) {
+      return { ok: false, error: 'That file belongs to another user.' };
+    }
     return { ok: true };
   }
 
-  // Scoped to the caller's folder
-  if (!path.startsWith(`${userId}/`)) {
-    return { ok: false, error: 'That file belongs to another user.' };
+  // Cloudinary public id, e.g. "kyc-documents/<userId>/<file>". Scoped the same
+  // way as a Supabase path: the caller's own id must appear as a folder segment.
+  if (path.includes('/')) {
+    if (!path.startsWith(`${userId}/`) && !path.includes(`/${userId}/`)) {
+      return { ok: false, error: 'That file belongs to another user.' };
+    }
+    return { ok: true };
   }
 
-  return { ok: true };
+  return { ok: false, error: 'Document path is not recognised.' };
 }
 
 /** Used by the DPDP erasure flow. Runs under the service role. */
