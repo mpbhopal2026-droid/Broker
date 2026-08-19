@@ -35,6 +35,10 @@ interface AdminContextValue {
   deleteUser: (userId: string) => Promise<ActionResult>;
   deleteTransaction: (transactionId: string) => Promise<ActionResult>;
 
+  // Role & Staff Operations
+  updateUserRole: (userId: string, role: 'client' | 'staff' | 'admin') => Promise<ActionResult>;
+  addStaffMember: (data: { email: string; fullName: string; phone?: string }) => Promise<ActionResult>;
+
   // Client Portfolio & Trade Management
   closeClientTrade: (tradeId: string, userId: string) => Promise<ActionResult>;
   updateClientTrade: (tradeId: string, updates: Partial<TradeOrder>) => Promise<ActionResult>;
@@ -322,6 +326,28 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         showToast({ type: 'error', title: 'Network Error', message: 'Check your connection.' });
         return { success: false, error: 'Network error.' };
       }
+    },
+
+    updateUserRole: async (userId, role) => {
+      const res = await post('/api/admin/users', { userId, action: 'update_role', role });
+      if (!res.ok) {
+        showToast({ type: 'error', title: 'Update Failed', message: res.data?.error || 'Could not update role.' });
+        return { success: false, error: res.data?.error || 'Could not update role.' };
+      }
+      await refreshAdminData();
+      showToast({ type: 'success', title: 'Role Updated', message: `User role updated to ${role}.` });
+      return { success: true, message: res.data?.message };
+    },
+
+    addStaffMember: async (data) => {
+      const res = await post('/api/admin/users', { action: 'add_staff', ...data });
+      if (!res.ok) {
+        showToast({ type: 'error', title: 'Action Failed', message: res.data?.error || 'Could not add staff member.' });
+        return { success: false, error: res.data?.error || 'Could not add staff member.' };
+      }
+      await refreshAdminData();
+      showToast({ type: 'success', title: 'Staff Onboarded', message: res.data?.message || 'Staff operator added.' });
+      return { success: true, message: res.data?.message };
     },
 
     setClientPaymentConfig,

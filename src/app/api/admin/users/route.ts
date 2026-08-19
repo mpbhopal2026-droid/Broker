@@ -162,6 +162,77 @@ export async function POST(req: NextRequest) {
         });
       }
 
+      case 'update_role': {
+        const newRole = cleanString(body?.role, 32);
+        if (!newRole || !['client', 'staff', 'admin'].includes(newRole)) {
+          return fail(400, 'Invalid role specified.');
+        }
+
+        if (target.id === admin.id && newRole !== 'admin') {
+          return fail(400, 'You cannot remove your own admin privileges.');
+        }
+
+        const { error } = await db.from('profiles').update({ role: newRole, updated_at: new Date().toISOString() }).eq('id', userId);
+        if (error) return fail(500, 'Could not update user role.');
+
+        await auditServer(req, 'ADMIN_USER_ROLE_UPDATED', {
+          userId: admin.id,
+          metadata: { targetUserId: userId, targetEmail: target.email, previousRole: target.role, newRole },
+        });
+
+        return ok({ message: `User role updated to ${newRole}.` });
+      }
+
+      case 'add_staff': {
+        const staffEmail = cleanString(body?.email, 120)?.toLowerCase().trim();
+        const staffName = cleanString(body?.fullName, 120)?.trim();
+        const staffPhone = cleanString(body?.phone, 24)?.trim();
+
+        if (!staffEmail || !staffName) {
+          return fail(400, 'Staff email and full name are required.');
+        }
+
+        const { data: existingUser } = await db.from('profiles').select('id, email, role').eq('email', staffEmail).maybeSingle();
+
+        if (existingUser) {
+          await db.from('profiles').update({
+            role: 'staff',
+            full_name: staffName,
+            ...(staffPhone ? { phone: staffPhone } : {}),
+            updated_at: new Date().toISOString(),
+          }).eq('id', existingUser.id);
+
+          await auditServer(req, 'ADMIN_STAFF_PROMOTED', {
+            userId: admin.id,
+            metadata: { targetUserId: existingUser.id, targetEmail: staffEmail },
+          });
+
+          return ok({ message: `Existing user promoted to Staff Operator.` });
+        } else {
+          const newId = crypto.randomUUID();
+          const { error: createError } = await db.from('profiles').insert({
+            id: newId,
+            email: staffEmail,
+            full_name: staffName,
+            phone: staffPhone || null,
+            role: 'staff',
+            is_active: true,
+            email_verified: true,
+            wallet_balance: 0,
+            kyc_status: 'approved',
+          });
+
+          if (createError) return fail(500, 'Could not create staff record: ' + createError.message);
+
+          await auditServer(req, 'ADMIN_STAFF_CREATED', {
+            userId: admin.id,
+            metadata: { targetUserId: newId, targetEmail: staffEmail },
+          });
+
+          return ok({ message: `Staff operator onboarded successfully.` });
+        }
+      }
+
       case 'delete_user': {
         if (userId === admin.id) return fail(400, 'You cannot delete your own admin account.');
 

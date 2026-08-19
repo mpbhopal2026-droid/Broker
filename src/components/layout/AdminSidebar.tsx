@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutGrid,
   Users,
+  UserCheck,
   ShieldCheck,
   CreditCard,
   Clock,
@@ -47,6 +48,7 @@ export const AdminSidebar: React.FC = () => {
   const adminNav = [
     { href: '/admin', label: 'Console Overview', icon: LayoutGrid },
     { href: '/admin/users', label: 'Users & Portfolios', icon: Users },
+    { href: '/admin/staff', label: 'Staff Team', icon: UserCheck },
     { href: '/admin/kyc', label: 'KYC Queue', icon: ShieldCheck, badge: pendingKyc },
     { href: '/admin/deposits', label: 'Deposit Clearing', icon: CreditCard, badge: pendingDeposits },
     { href: '/admin/withdrawals', label: 'Payout Queue', icon: Clock, badge: pendingWithdrawals },
@@ -60,6 +62,7 @@ export const AdminSidebar: React.FC = () => {
   const staffNav = [
     { href: '/admin', label: 'Operations Desk', icon: LayoutGrid },
     { href: '/admin/users', label: 'Users & Portfolios', icon: Users },
+    { href: '/admin/staff', label: 'Staff Team', icon: UserCheck },
     { href: '/admin/kyc', label: 'KYC Queue', icon: ShieldCheck, badge: pendingKyc },
     { href: '/admin/deposits', label: 'Deposit Clearing', icon: CreditCard, badge: pendingDeposits },
     { href: '/admin/withdrawals', label: 'Payout Queue', icon: Clock, badge: pendingWithdrawals },

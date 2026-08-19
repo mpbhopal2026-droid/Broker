@@ -52,12 +52,13 @@ export async function POST(req: NextRequest) {
         : normaliseEmail(body?.email);
 
     const email = channel === 'email' ? identifier : null;
-    const code = cleanString(body?.code, 12);
+    const rawCode = cleanString(body?.code, 20) ?? '';
+    const cleanCode = rawCode.replace(/\D/g, '');
     const fullNameInput = cleanString(body?.fullName, 120);
     const phoneInput = cleanString(body?.phone, 24);
 
-    if (!identifier || !code) {
-      return fail(400, channel === 'sms' ? 'Enter your mobile number and the code we sent.' : 'Enter your email and the code we sent.');
+    if (!identifier || cleanCode.length !== 6) {
+      return fail(400, channel === 'sms' ? 'Enter your mobile number and the 6-digit code.' : 'Enter your email and the 6-digit code.');
     }
 
     const idLimit = rateLimit(`otp:verify:id:${identifier}`, 10, 15 * 60);
@@ -67,39 +68,52 @@ export async function POST(req: NextRequest) {
     const secret = process.env.SESSION_SECRET;
     if (!db || !secret) return fail(503, 'Authentication is not configured on this server.');
 
-    const { data: otp } = await db
+    // Look up active, unexpired, unconsumed OTP
+    const query = db
       .from('auth_otps')
       .select('id, code_hash, attempts, expires_at, purpose')
-      // Match on identifier, not email — an SMS code has no email to match on.
-      .eq('identifier', identifier)
       .is('consumed_at', null)
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
 
-    const GENERIC = 'That code is invalid or has expired. Request a new one.';
+    const { data: otp } = await (channel === 'email'
+      ? query.or(`identifier.eq.${identifier},email.eq.${identifier}`).maybeSingle()
+      : query.eq('identifier', identifier).maybeSingle());
 
     if (!otp) {
+      // Check if there is an expired or consumed record to give exact feedback
+      const { data: pastOtp } = await (channel === 'email'
+        ? db.from('auth_otps').select('id, expires_at, consumed_at').or(`identifier.eq.${identifier},email.eq.${identifier}`).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        : db.from('auth_otps').select('id, expires_at, consumed_at').eq('identifier', identifier).order('created_at', { ascending: false }).limit(1).maybeSingle());
+
       await auditServer(req, 'AUTH_OTP_VERIFY_FAILED', { metadata: { email, reason: 'no_live_code' } });
-      return fail(401, GENERIC);
+
+      if (pastOtp?.consumed_at) {
+        return fail(401, 'This verification code has already been used. Please request a new code.');
+      }
+      if (pastOtp && new Date(pastOtp.expires_at) <= new Date()) {
+        return fail(401, 'This verification code has expired. Please request a new code.');
+      }
+      return fail(401, 'No active verification code found. Please request a new code.');
     }
 
     if (otp.attempts >= MAX_ATTEMPTS) {
       await db.from('auth_otps').update({ consumed_at: new Date().toISOString() }).eq('id', otp.id);
       await auditServer(req, 'AUTH_OTP_LOCKED', { metadata: { email } });
-      return fail(429, 'Too many incorrect attempts. Request a new code.');
+      return fail(429, 'Too many incorrect attempts. Please request a new code.');
     }
 
     const otpPurpose = otp.purpose || 'login';
-    const candidate = await hmacSign(`${code}:${identifier}:${otpPurpose}`, secret);
+    const candidate = await hmacSign(`${cleanCode}:${identifier}:${otpPurpose}`, secret);
 
     let isMatch = timingSafeEqual(candidate, otp.code_hash);
     if (!isMatch) {
-      // Fallback cross-check against alternate purposes
-      const candLogin = await hmacSign(`${code}:${identifier}:login`, secret);
-      const candVerify = await hmacSign(`${code}:${identifier}:email_verify`, secret);
-      isMatch = timingSafeEqual(candLogin, otp.code_hash) || timingSafeEqual(candVerify, otp.code_hash);
+      // Fallback cross-check against alternate purposes and raw inputs
+      const candLogin = await hmacSign(`${cleanCode}:${identifier}:login`, secret);
+      const candVerify = await hmacSign(`${cleanCode}:${identifier}:email_verify`, secret);
+      const candRaw = await hmacSign(`${rawCode.trim()}:${identifier}:${otpPurpose}`, secret);
+      isMatch = timingSafeEqual(candLogin, otp.code_hash) || timingSafeEqual(candVerify, otp.code_hash) || timingSafeEqual(candRaw, otp.code_hash);
     }
 
     if (!isMatch) {
@@ -107,7 +121,7 @@ export async function POST(req: NextRequest) {
       await auditServer(req, 'AUTH_OTP_VERIFY_FAILED', {
         metadata: { email, attempt: otp.attempts + 1 },
       });
-      return fail(401, GENERIC);
+      return fail(401, 'Incorrect verification code. Please check the code in your email or request a new one.');
     }
 
     // Single-use: burn the code before issuing anything.
