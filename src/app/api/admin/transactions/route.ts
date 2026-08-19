@@ -256,3 +256,28 @@ export async function POST(req: NextRequest) {
     return handleRouteError(err);
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const admin = await requireAdmin();
+    const db = getServiceClient();
+    if (!db) return fail(503, 'Not available.');
+
+    const body = await req.json().catch(() => ({}));
+    const transactionId = cleanString(body?.transactionId, 64);
+    if (!transactionId) return fail(400, 'transactionId is required.');
+
+    const { error } = await db.from('transactions').delete().eq('id', transactionId);
+    if (error) return fail(500, 'Could not delete transaction: ' + error.message);
+
+    await auditServer(req, 'ADMIN_TRANSACTION_DELETED', {
+      userId: admin.id,
+      metadata: { deletedTransactionId: transactionId },
+    });
+
+    return ok({ message: 'Transaction record deleted permanently.' });
+  } catch (err) {
+    return handleRouteError(err);
+  }
+}
+

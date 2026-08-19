@@ -26,7 +26,7 @@ export const AdminReviewDepositModal: React.FC<AdminReviewDepositModalProps> = (
   isOpen,
   onClose,
 }) => {
-  const { approveDeposit, rejectDeposit, paymentSettings, showToast } = useAdmin();
+  const { approveDeposit, rejectDeposit, deleteTransaction, paymentSettings, showToast } = useAdmin();
   const [rejectReason, setRejectReason] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -178,6 +178,19 @@ export const AdminReviewDepositModal: React.FC<AdminReviewDepositModalProps> = (
                   className="px-4 py-2.5 rounded-lg bg-white hover:bg-slate-50 text-rose-600 text-xs font-semibold border border-slate-200 shadow-2xs transition-colors"
                 >
                   Reject
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (confirm(`Are you sure you want to permanently delete this deposit record?`)) {
+                      await deleteTransaction(deposit.id);
+                      onClose();
+                    }
+                  }}
+                  className="px-3 py-2.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold border border-rose-200 transition-colors"
+                  title="Delete Record"
+                >
+                  Delete
                 </button>
               </>
             ) : (

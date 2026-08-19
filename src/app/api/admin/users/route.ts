@@ -162,6 +162,28 @@ export async function POST(req: NextRequest) {
         });
       }
 
+      case 'delete_user': {
+        if (userId === admin.id) return fail(400, 'You cannot delete your own admin account.');
+
+        // Delete all user related data in sequence
+        await db.from('trade_orders').delete().eq('user_id', userId);
+        await db.from('transactions').delete().eq('user_id', userId);
+        await db.from('ledger_entries').delete().eq('user_id', userId);
+        await db.from('kyc_records').delete().eq('user_id', userId);
+        await db.from('sessions').delete().eq('user_id', userId);
+        await db.from('notifications').delete().eq('user_id', userId);
+        const { error } = await db.from('profiles').delete().eq('id', userId);
+
+        if (error) return fail(500, 'Could not delete user account: ' + error.message);
+
+        await auditServer(req, 'ADMIN_USER_DELETED', {
+          userId: admin.id,
+          metadata: { deletedUserId: userId, targetEmail: target.email },
+        });
+
+        return ok({ message: 'User account and all associated records permanently deleted.' });
+      }
+
       default:
         return fail(400, 'Unknown action.');
     }
@@ -169,3 +191,44 @@ export async function POST(req: NextRequest) {
     return handleRouteError(err);
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const admin = await requireAdmin();
+    const db = getServiceClient();
+    if (!db) return fail(503, 'Not available.');
+
+    const body = await req.json().catch(() => ({}));
+    const userId = cleanString(body?.userId, 64);
+    if (!userId) return fail(400, 'userId is required.');
+    if (userId === admin.id) return fail(400, 'You cannot delete your own admin account.');
+
+    const { data: target } = await db
+      .from('profiles')
+      .select('id, email')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (!target) return fail(404, 'No such client.');
+
+    await db.from('trade_orders').delete().eq('user_id', userId);
+    await db.from('transactions').delete().eq('user_id', userId);
+    await db.from('ledger_entries').delete().eq('user_id', userId);
+    await db.from('kyc_records').delete().eq('user_id', userId);
+    await db.from('sessions').delete().eq('user_id', userId);
+    await db.from('notifications').delete().eq('user_id', userId);
+    const { error } = await db.from('profiles').delete().eq('id', userId);
+
+    if (error) return fail(500, 'Could not delete user: ' + error.message);
+
+    await auditServer(req, 'ADMIN_USER_DELETED', {
+      userId: admin.id,
+      metadata: { deletedUserId: userId, targetEmail: target.email },
+    });
+
+    return ok({ message: 'User account and all associated records permanently deleted.' });
+  } catch (err) {
+    return handleRouteError(err);
+  }
+}
+

@@ -31,6 +31,10 @@ interface AdminContextValue {
   setClientPaymentConfig: (config: ClientPaymentConfig) => Promise<ActionResult>;
   getClientPaymentConfig: (userId: string) => ClientPaymentConfig | null;
 
+  // Deletion Operations
+  deleteUser: (userId: string) => Promise<ActionResult>;
+  deleteTransaction: (transactionId: string) => Promise<ActionResult>;
+
   // Client Portfolio & Trade Management
   closeClientTrade: (tradeId: string, userId: string) => Promise<ActionResult>;
   updateClientTrade: (tradeId: string, updates: Partial<TradeOrder>) => Promise<ActionResult>;
@@ -285,6 +289,39 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         success: true,
         message: res.data?.mocked ? 'Email simulated (no provider key configured).' : 'Email sent.',
       };
+    },
+
+    deleteUser: async (userId) => {
+      const res = await post('/api/admin/users', { userId, action: 'delete_user' });
+      if (!res.ok) {
+        showToast({ type: 'error', title: 'Delete Failed', message: res.data?.error || 'Could not delete user.' });
+        return { success: false, error: res.data?.error || 'Could not delete user.' };
+      }
+      await refreshAdminData();
+      showToast({ type: 'success', title: 'User Deleted', message: 'User account and all records permanently deleted.' });
+      return { success: true, message: res.data?.message };
+    },
+
+    deleteTransaction: async (transactionId) => {
+      try {
+        const res = await fetch('/api/admin/transactions', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ transactionId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data?.ok === false) {
+          showToast({ type: 'error', title: 'Delete Failed', message: data?.error || 'Could not delete transaction.' });
+          return { success: false, error: data?.error || 'Could not delete transaction.' };
+        }
+        await refreshAdminData();
+        showToast({ type: 'success', title: 'Transaction Deleted', message: 'Transaction record removed from database.' });
+        return { success: true, message: data?.message };
+      } catch {
+        showToast({ type: 'error', title: 'Network Error', message: 'Check your connection.' });
+        return { success: false, error: 'Network error.' };
+      }
     },
 
     setClientPaymentConfig,

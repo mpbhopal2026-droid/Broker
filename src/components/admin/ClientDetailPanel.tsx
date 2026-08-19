@@ -34,11 +34,12 @@ export const ClientDetailPanel: React.FC<{ client: UserProfile; onClose: () => v
   client,
   onClose,
 }) => {
-  const { adminUpdateUserProfile, setUserActive, setClientPaymentConfig } = useAdmin();
+  const { adminUpdateUserProfile, setUserActive, setClientPaymentConfig, deleteUser } = useAdmin();
   const { showToast, paymentSettings } = useApp();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'banking' | 'routing' | 'security'>('profile');
   const [saving, setSaving] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(false);
   const [showKycModal, setShowKycModal] = useState(false);
   const [togglingStatus, setTogglingStatus] = useState(false);
 
@@ -500,6 +501,32 @@ export const ClientDetailPanel: React.FC<{ client: UserProfile; onClose: () => v
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Open KYC Inspector</span>
+                </button>
+              </div>
+
+              {/* Danger Zone: Permanent Deletion */}
+              <div className="p-5 rounded-2xl bg-rose-50/70 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/60 flex items-center justify-between">
+                <div className="space-y-1">
+                  <h4 className="text-xs font-bold text-rose-700 dark:text-rose-400">Permanent Account Purge</h4>
+                  <p className="text-xs text-rose-600/80 dark:text-rose-300/80">
+                    Permanently delete this user, their wallet balances, trade ledger, and documents.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={deletingUser}
+                  onClick={async () => {
+                    if (confirm(`Are you absolutely sure you want to permanently delete ${client.fullName} (${client.email})? This action cannot be undone.`)) {
+                      setDeletingUser(true);
+                      const res = await deleteUser(client.id);
+                      setDeletingUser(false);
+                      if (res.success) onClose();
+                    }
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-md shadow-rose-500/20 active:scale-95 disabled:opacity-50 shrink-0"
+                >
+                  {deletingUser ? 'Deleting User…' : 'Delete User Permanently'}
                 </button>
               </div>
             </div>

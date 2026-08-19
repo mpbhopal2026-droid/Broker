@@ -32,6 +32,7 @@ export default function AdminUsersPage() {
     tradeOrders,
     ledgerEntries,
     adjustUserBalance,
+    deleteUser,
     paymentSettings
   } = useAdmin();
 
@@ -41,6 +42,8 @@ export default function AdminUsersPage() {
   const [portfolioUser, setPortfolioUser] = useState<UserProfile | null>(null);
   const [paymentConfigUser, setPaymentConfigUser] = useState<UserProfile | null>(null);
   const [verifyKycUser, setVerifyKycUser] = useState<UserProfile | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [adjustAmount, setAdjustAmount] = useState<number>(100);
   const [adjustReason, setAdjustReason] = useState('Manual Ledger Correction');
 
@@ -128,11 +131,11 @@ export default function AdminUsersPage() {
                 </div>
 
                 {/* Quick Action Chips */}
-                <div className="grid grid-cols-4 gap-1.5 pt-1 text-[11px]">
+                <div className="grid grid-cols-5 gap-1 pt-1 text-[11px]">
                   <button
                     type="button"
                     onClick={() => setVerifyKycUser(user)}
-                    className="py-2 px-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 font-bold text-center active:scale-95 transition-all flex items-center justify-center gap-1"
+                    className="py-2 px-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 font-bold text-center active:scale-95 transition-all flex items-center justify-center gap-0.5"
                   >
                     <ShieldCheck className="w-3 h-3" />
                     <span>KYC</span>
@@ -157,6 +160,13 @@ export default function AdminUsersPage() {
                     className="py-2 px-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-center active:scale-95 transition-all"
                   >
                     File
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUserToDelete(user)}
+                    className="py-2 px-1 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 text-rose-600 border border-rose-200 dark:border-rose-800 font-bold text-center active:scale-95 transition-all"
+                  >
+                    Delete
                   </button>
                 </div>
               </div>
@@ -243,6 +253,13 @@ export default function AdminUsersPage() {
                     >
                       File
                     </button>
+                    <button
+                      onClick={() => setUserToDelete(user)}
+                      className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 text-rose-600 border border-rose-200 dark:border-rose-800 text-[11px] font-bold transition-colors"
+                      title="Permanently Delete User"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -262,6 +279,64 @@ export default function AdminUsersPage() {
         isOpen={Boolean(paymentConfigUser)}
         onClose={() => setPaymentConfigUser(null)}
       />
+
+      {/* Delete User Confirmation Modal */}
+      {userToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="p-6 rounded-3xl bg-white dark:bg-[#0d121c] border border-rose-300 dark:border-rose-900/60 max-w-md w-full space-y-4 shadow-2xl animate-scale-in text-xs font-sans">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/80 text-rose-600 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Permanently Delete Client?
+                </h3>
+                <p className="text-xs text-slate-500">
+                  This action is irreversible.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 space-y-1.5 text-rose-900 dark:text-rose-200 text-xs">
+              <p>
+                You are about to completely purge <strong>{userToDelete.fullName}</strong> (<code>{userToDelete.email}</code>).
+              </p>
+              <p className="text-[11px] text-rose-700 dark:text-rose-300">
+                • Wipes wallet balance (${userToDelete.walletBalance.toFixed(2)})<br />
+                • Deletes all trade orders & positions<br />
+                • Deletes all deposit & withdrawal history<br />
+                • Purges uploaded KYC documents & sessions
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setUserToDelete(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={async () => {
+                  setDeleting(true);
+                  await deleteUser(userToDelete.id);
+                  setDeleting(false);
+                  setUserToDelete(null);
+                  if (selectedUser?.id === userToDelete.id) setSelectedUser(null);
+                }}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold transition-all shadow-md shadow-rose-500/20 active:scale-95 disabled:opacity-50"
+              >
+                {deleting ? 'Deleting User…' : 'Yes, Delete User'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Complete User Profile Inspection Drawer / Modal */}
       {selectedUser && (
