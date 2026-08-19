@@ -65,6 +65,7 @@ function LoginFormContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [notRegisteredError, setNotRegisteredError] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
 
   const nextPath = searchParams.get('next');
@@ -92,6 +93,7 @@ function LoginFormContent() {
     e.preventDefault();
     setError('');
     setInfo('');
+    setNotRegisteredError(false);
 
     const targetIdentifier = channel === 'sms' ? phone.trim() : email.trim();
     if (!targetIdentifier) {
@@ -104,20 +106,12 @@ function LoginFormContent() {
     setLoading(false);
 
     if (!result.success) {
-      setError(result.error || 'Could not send verification code.');
-      return;
-    }
-
-    if (result.userExists === false) {
-      setInfo('No account found for this address. Forwarding to quick registration…');
-      const q = new URLSearchParams({
-        ...(email ? { email: email.trim() } : {}),
-        ...(phone ? { phone: phone.trim() } : {}),
-        ...(nextPath ? { next: nextPath } : {}),
-      });
-      setTimeout(() => {
-        router.push(`/register?${q.toString()}`);
-      }, 600);
+      if (result.notRegistered) {
+        setNotRegisteredError(true);
+        setError('');
+      } else {
+        setError(result.error || 'Could not send verification code.');
+      }
       return;
     }
 
@@ -348,6 +342,29 @@ function LoginFormContent() {
                   </div>
 
                   {/* Errors & Notice Alerts */}
+                  {notRegisteredError && (
+                    <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-2.5 text-left">
+                      <div className="flex items-center gap-1.5 font-bold">
+                        <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span>No account found with this {channel === 'sms' ? 'mobile number' : 'email address'}</span>
+                      </div>
+                      <p className="text-amber-800 text-[11px]">
+                        Please create an account to start trading on the institutional desk.
+                      </p>
+                      <Link
+                        href={`/register?${new URLSearchParams({
+                          ...(email ? { email: email.trim() } : {}),
+                          ...(phone ? { phone: phone.trim() } : {}),
+                          ...(nextPath ? { next: nextPath } : {}),
+                        }).toString()}`}
+                        className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-[#00875a] hover:bg-[#00704a] text-white font-bold text-xs transition-all shadow-xs"
+                      >
+                        <span>Create an Account Now</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  )}
+
                   {error && (
                     <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2 text-left">
                       <AlertCircle className="w-4 h-4 shrink-0" />

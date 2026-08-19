@@ -156,7 +156,7 @@ interface AppContextType {
     identifier: string,
     channel?: 'email' | 'sms',
     purpose?: 'login' | 'email_verify'
-  ) => Promise<ActionResult & { userExists?: boolean; alreadyRegistered?: boolean }>;
+  ) => Promise<ActionResult & { userExists?: boolean; alreadyRegistered?: boolean; notRegistered?: boolean }>;
   verifyOtpAndLogin: (
     identifier: string,
     code: string,
@@ -608,7 +608,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       identifier: string,
       channel: 'email' | 'sms' = 'email',
       purpose: 'login' | 'email_verify' = 'login'
-    ): Promise<ActionResult & { userExists?: boolean; alreadyRegistered?: boolean }> => {
+    ): Promise<ActionResult & { userExists?: boolean; alreadyRegistered?: boolean; notRegistered?: boolean }> => {
       const res = await postJson('/api/auth/request-otp', {
         channel,
         ...(channel === 'sms' ? { phone: identifier } : { email: identifier }),
@@ -619,6 +619,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           success: false,
           error: res.data?.error || 'Could not send the code.',
           alreadyRegistered: res.data?.alreadyRegistered === true,
+          notRegistered: res.data?.notRegistered === true,
         };
       }
       return {

@@ -78,16 +78,6 @@ export default function GlobalForexDashboard() {
     method: 'UPI QR / Apps',
   };
 
-  const getAssetBadge = (symbol: string) => {
-    if (symbol.includes('XAU')) return <span className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center font-bold text-[10px] shrink-0">🪙</span>;
-    if (symbol.includes('EUR')) return <span className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center font-bold text-[10px] shrink-0">🇪🇺</span>;
-    if (symbol.includes('GBP')) return <span className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 flex items-center justify-center font-bold text-[10px] shrink-0">🇬🇧</span>;
-    if (symbol.includes('INR')) return <span className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 flex items-center justify-center font-bold text-[10px] shrink-0">🇺🇸</span>;
-    if (symbol.includes('BTC')) return <span className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-500 flex items-center justify-center font-bold text-[11px] shrink-0">₿</span>;
-    if (symbol.includes('WTI') || symbol.includes('OIL')) return <span className="w-6 h-6 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center font-bold text-[10px] shrink-0">🛢️</span>;
-    return <span className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center font-bold text-[10px] shrink-0">⚡</span>;
-  };
-
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto select-none font-sans text-zinc-950 dark:text-white">
       
@@ -150,7 +140,6 @@ export default function GlobalForexDashboard() {
                   >
                     <div className="flex items-center justify-between gap-1 mb-2">
                       <div className="flex items-center gap-2">
-                        {getAssetBadge(asset.symbol)}
                         <span className="font-bold text-xs text-zinc-950 dark:text-white truncate">
                           {asset.symbol}
                         </span>
@@ -266,14 +255,9 @@ export default function GlobalForexDashboard() {
                           </button>
                         </td>
 
-                        {/* Symbol with colored circle badge */}
-                        <td className="py-3 px-3">
-                          <div className="flex items-center gap-2.5">
-                            {getAssetBadge(asset.symbol)}
-                            <strong className="text-zinc-950 dark:text-white font-bold block">
-                              {asset.symbol}
-                            </strong>
-                          </div>
+                        {/* Symbol */}
+                        <td className="py-3 px-3 font-bold text-zinc-950 dark:text-white tracking-wide">
+                          {asset.symbol}
                         </td>
 
                         {/* Description */}

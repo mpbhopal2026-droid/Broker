@@ -58,17 +58,15 @@ export async function POST(req: NextRequest) {
     const secret = process.env.SESSION_SECRET;
     if (!db || !secret) return fail(503, 'Sign-in is unavailable: the server is not fully configured.');
 
-    // Smart Check: For login purpose, verify user exists in profiles
+    // Strict Rule 2: For login purpose, verify user exists in profiles. If not found, reject with 404.
     if (purpose === 'login') {
       const { data: profile } = await (channel === 'sms'
         ? db.from('profiles').select('id, is_active').eq('phone', identifier).maybeSingle()
         : db.from('profiles').select('id, is_active').eq('email', identifier).maybeSingle());
 
       if (!profile) {
-        return ok({
-          channel,
-          userExists: false,
-          message: `No account found for this ${channel === 'sms' ? 'mobile number' : 'email'}. Redirecting to registration...`,
+        return fail(404, `No registered account found with this ${channel === 'sms' ? 'mobile number' : 'email address'}. Please create an account first.`, {
+          notRegistered: true,
         });
       }
 
@@ -77,14 +75,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Smart Check: For registration purpose, verify user does not already exist
+    // Strict Rule 1: For registration purpose, verify user does not already exist. If found, reject with 409.
     if (purpose === 'email_verify') {
       const { data: existingProfile } = await (channel === 'sms'
         ? db.from('profiles').select('id').eq('phone', identifier).maybeSingle()
         : db.from('profiles').select('id').eq('email', identifier).maybeSingle());
 
       if (existingProfile) {
-        return fail(409, `An account is already registered with this ${channel === 'sms' ? 'phone number' : 'email'}. Please sign in.`, {
+        return fail(409, `An account is already registered with this ${channel === 'sms' ? 'mobile number' : 'email address'}. Please sign in instead.`, {
           alreadyRegistered: true,
         });
       }

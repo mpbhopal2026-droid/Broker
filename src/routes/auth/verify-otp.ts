@@ -69,10 +69,9 @@ export async function POST(req: NextRequest) {
 
     const { data: otp } = await db
       .from('auth_otps')
-      .select('id, code_hash, attempts, expires_at')
+      .select('id, code_hash, attempts, expires_at, purpose')
       // Match on identifier, not email — an SMS code has no email to match on.
       .eq('identifier', identifier)
-      .eq('purpose', 'login')
       .is('consumed_at', null)
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
@@ -92,9 +91,18 @@ export async function POST(req: NextRequest) {
       return fail(429, 'Too many incorrect attempts. Request a new code.');
     }
 
-    const candidate = await hmacSign(`${code}:${identifier}:login`, secret);
+    const otpPurpose = otp.purpose || 'login';
+    const candidate = await hmacSign(`${code}:${identifier}:${otpPurpose}`, secret);
 
-    if (!timingSafeEqual(candidate, otp.code_hash)) {
+    let isMatch = timingSafeEqual(candidate, otp.code_hash);
+    if (!isMatch) {
+      // Fallback cross-check against alternate purposes
+      const candLogin = await hmacSign(`${code}:${identifier}:login`, secret);
+      const candVerify = await hmacSign(`${code}:${identifier}:email_verify`, secret);
+      isMatch = timingSafeEqual(candLogin, otp.code_hash) || timingSafeEqual(candVerify, otp.code_hash);
+    }
+
+    if (!isMatch) {
       await db.from('auth_otps').update({ attempts: otp.attempts + 1 }).eq('id', otp.id);
       await auditServer(req, 'AUTH_OTP_VERIFY_FAILED', {
         metadata: { email, attempt: otp.attempts + 1 },
@@ -106,9 +114,7 @@ export async function POST(req: NextRequest) {
     await db.from('auth_otps').update({ consumed_at: new Date().toISOString() }).eq('id', otp.id);
 
     // --- resolve or create the account ---------------------------------------
-    // Look up on whichever identifier was verified. A phone only matches when
-    // it is already verified, so an unverified number cannot take over an
-    // existing account.
+    // Look up on whichever identifier was verified.
     const lookup = db
       .from('profiles')
       .select('id, email, full_name, role, is_active, email_verified');
@@ -117,6 +123,20 @@ export async function POST(req: NextRequest) {
       ? lookup.eq('phone', identifier).eq('phone_verified', true)
       : lookup.eq('email', identifier)
     ).maybeSingle();
+
+    // Rule 1: If user is attempting registration (fullNameInput supplied) but profile already exists:
+    if (fullNameInput && profile) {
+      return fail(409, 'An account is already registered with this email address or mobile number. Please sign in instead.', {
+        alreadyRegistered: true,
+      });
+    }
+
+    // Rule 2: If user is attempting login (no fullNameInput) but profile does NOT exist:
+    if (!fullNameInput && !profile) {
+      return fail(404, 'No account found with this email address or mobile number. Please create an account first.', {
+        notRegistered: true,
+      });
+    }
 
     let isNewAccount = false;
 

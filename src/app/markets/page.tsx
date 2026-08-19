@@ -64,16 +64,6 @@ export default function MarketsDiscoveryPage() {
     });
   }, [marketAssets, selectedCategory, searchQuery]);
 
-  const getAssetBadge = (symbol: string) => {
-    if (symbol.includes('XAU')) return <span className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center font-bold text-[10px] shrink-0">🪙</span>;
-    if (symbol.includes('EUR')) return <span className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center font-bold text-[10px] shrink-0">🇪🇺</span>;
-    if (symbol.includes('GBP')) return <span className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 flex items-center justify-center font-bold text-[10px] shrink-0">🇬🇧</span>;
-    if (symbol.includes('INR')) return <span className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 flex items-center justify-center font-bold text-[10px] shrink-0">🇺🇸</span>;
-    if (symbol.includes('BTC')) return <span className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-500 flex items-center justify-center font-bold text-[11px] shrink-0">₿</span>;
-    if (symbol.includes('WTI') || symbol.includes('OIL')) return <span className="w-6 h-6 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center font-bold text-[10px] shrink-0">🛢️</span>;
-    return <span className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center font-bold text-[10px] shrink-0">⚡</span>;
-  };
-
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto select-none font-sans text-zinc-950 dark:text-white">
       
@@ -131,12 +121,9 @@ export default function MarketsDiscoveryPage() {
                 className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 rounded-xl p-4 transition-all cursor-pointer flex flex-col justify-between shadow-2xs group"
               >
                 <div className="flex items-center justify-between gap-1 mb-2">
-                  <div className="flex items-center gap-2">
-                    {getAssetBadge(asset.symbol)}
-                    <span className="font-bold text-xs text-zinc-950 dark:text-white truncate">
-                      {asset.symbol}
-                    </span>
-                  </div>
+                  <span className="font-bold text-xs text-zinc-950 dark:text-white tracking-wide truncate">
+                    {asset.symbol}
+                  </span>
                   <a
                     href={`/trade?symbol=${encodeURIComponent(asset.symbol)}`}
                     target="_blank"
@@ -265,14 +252,11 @@ export default function MarketsDiscoveryPage() {
                         </button>
                       </td>
 
-                      {/* Instrument Symbol & Icon */}
+                      {/* Instrument Symbol */}
                       <td className="py-3 px-3">
-                        <div className="flex items-center gap-2.5">
-                          {getAssetBadge(asset.symbol)}
-                          <strong className="text-zinc-950 dark:text-white font-bold block text-xs">
-                            {asset.symbol}
-                          </strong>
-                        </div>
+                        <strong className="text-zinc-950 dark:text-white font-bold block text-xs tracking-wide">
+                          {asset.symbol}
+                        </strong>
                       </td>
 
                       {/* Description */}

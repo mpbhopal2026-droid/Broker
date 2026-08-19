@@ -59,6 +59,16 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
       return;
     }
 
+    // Authenticated users on root "/" should immediately go to /dashboard (or /admin for operators)
+    if (isAuthenticated && pathname === '/') {
+      if (isOperator) {
+        router.replace('/admin');
+      } else {
+        router.replace('/dashboard');
+      }
+      return;
+    }
+
     // Role Isolation: Operators only access the Admin & Developer Console
     if (isAuthenticated && isOperator && !pathname.startsWith('/admin') && !pathname.startsWith('/developer') && !isAuthPage) {
       router.replace('/admin');
@@ -66,18 +76,14 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [isLoaded, isAuthenticated, isPublic, isOperator, isAuthPage, pathname, router]);
 
-  // Auth pages are standalone — no chrome around them.
-  if (isAuthPage) {
+  // Auth & Welcome pages for visitors are standalone — zero chrome around them.
+  if (isAuthPage || (pathname === '/' && !isAuthenticated) || (isPublic && !isAuthenticated)) {
     return <main className="min-h-screen w-full">{children}</main>;
   }
 
   // Session still resolving, or we are about to redirect. Show the shape.
   if (!isLoaded || (!isAuthenticated && !isPublic)) {
     return isAuthenticated ? <AppSkeleton /> : <AuthSkeleton />;
-  }
-
-  if (isPublic && !isAuthenticated) {
-    return <main className="min-h-screen w-full">{children}</main>;
   }
 
   // Dedicated Full-Screen OctaFX Trading Terminal — zero chrome overlap

@@ -28,6 +28,7 @@ function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [alreadyRegisteredError, setAlreadyRegisteredError] = useState(false);
 
   const nextPath = searchParams.get('next');
   const paramEmail = searchParams.get('email');
@@ -42,6 +43,8 @@ function RegisterForm() {
   const handleDetails = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setInfo('');
+    setAlreadyRegisteredError(false);
 
     if (!fullName.trim() || !email.trim() || !phone.trim()) {
       setError('Please complete all required fields.');
@@ -69,16 +72,8 @@ function RegisterForm() {
 
     if (!result.success) {
       if (result.alreadyRegistered) {
-        setInfo('An account is already registered with this email. Redirecting to sign in…');
-        const q = new URLSearchParams({
-          email: email.trim(),
-          ...(phone ? { phone: phone.trim() } : {}),
-          ...(nextPath ? { next: nextPath } : {}),
-          notice: 'existing_account',
-        });
-        setTimeout(() => {
-          router.push(`/login?${q.toString()}`);
-        }, 700);
+        setAlreadyRegisteredError(true);
+        setError('');
         return;
       }
 
@@ -142,6 +137,29 @@ function RegisterForm() {
             <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2">
               <Sparkles className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
               <span>We noticed you don&apos;t have an account yet. Complete your profile below to open your account in 30 seconds.</span>
+            </div>
+          )}
+
+          {alreadyRegisteredError && (
+            <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-950 text-xs space-y-2.5 text-left">
+              <div className="flex items-center gap-1.5 font-bold">
+                <AlertTriangle className="w-4 h-4 text-blue-600 shrink-0" />
+                <span>An account is already registered with this email address</span>
+              </div>
+              <p className="text-blue-800 text-[11px]">
+                Please sign in to access your existing trading account and portfolio.
+              </p>
+              <Link
+                href={`/login?${new URLSearchParams({
+                  ...(email ? { email: email.trim() } : {}),
+                  ...(phone ? { phone: phone.trim() } : {}),
+                  ...(nextPath ? { next: nextPath } : {}),
+                }).toString()}`}
+                className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-[#00875a] hover:bg-[#00704a] text-white font-bold text-xs transition-all shadow-xs"
+              >
+                <span>Sign In to Your Account</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
           )}
 
