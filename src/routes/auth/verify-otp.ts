@@ -21,8 +21,16 @@ export const dynamic = 'force-dynamic';
 
 const MAX_ATTEMPTS = 5;
 
+/**
+ * Absolute URL for links sent by email.
+ *
+ * The request origin is a poor fallback here: a request that arrived at the
+ * stale vercel.app host would email the recipient a link back to that host, and
+ * they would land on an old build. Emails outlive the request that produced
+ * them, so they get the canonical domain regardless of how the caller arrived.
+ */
 function appUrl(req: NextRequest, path: string): string {
-  const origin = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
+  const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://www.globalforex.online';
   return `${origin.replace(/\/$/, '')}${path}`;
 }
 

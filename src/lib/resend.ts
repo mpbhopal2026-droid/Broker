@@ -37,7 +37,17 @@ const HAIRLINE = '#e2e8f0';
  * also why this is a hosted URL rather than an inline data URI — Gmail refuses
  * to render data-URI images in HTML mail.
  */
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://globalforex.vercel.app';
+/**
+ * Base URL for anything linked from an email.
+ *
+ * The fallback used to be the vercel.app host, which is the stale preview
+ * deployment — so whenever NEXT_PUBLIC_APP_URL was unset, every sign-up link
+ * and logo in outgoing mail pointed at an old build rather than the live site.
+ *
+ * www is canonical: the apex 308-redirects to it, so linking straight to www
+ * saves recipients a redirect and keeps the cookie domain consistent.
+ */
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.globalforex.online').replace(/\/$/, '');
 const LOGO_URL = `${APP_URL}/icons/logo-email.png`;
 
 // ---------------------------------------------------------------------------
