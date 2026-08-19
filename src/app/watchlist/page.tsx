@@ -2,12 +2,14 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Star, ChevronRight, Plus, ExternalLink } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { MarketAsset } from '@/lib/types';
 import { InstrumentDetailModal } from '@/components/trading/InstrumentDetailModal';
 
 export default function MonochromeWatchlistPage() {
+  const router = useRouter();
   const { marketAssets, watchlist, toggleWatchlist } = useApp();
   const [selectedAsset, setSelectedAsset] = useState<MarketAsset | null>(null);
 
@@ -60,7 +62,7 @@ export default function MonochromeWatchlistPage() {
                 return (
                   <div
                     key={asset.symbol}
-                    onClick={() => setSelectedAsset(asset)}
+                    onClick={() => router.push(`/market?symbol=${encodeURIComponent(asset.symbol)}`)}
                     className="p-3 flex items-center justify-between cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
                   >
                     <div className="flex items-center gap-2">
@@ -126,7 +128,7 @@ export default function MonochromeWatchlistPage() {
                     return (
                       <tr
                         key={asset.symbol}
-                        onClick={() => setSelectedAsset(asset)}
+                        onClick={() => router.push(`/market?symbol=${encodeURIComponent(asset.symbol)}`)}
                         className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer group"
                       >
                         <td className="py-2.5 px-3" onClick={(e) => e.stopPropagation()}>
@@ -161,12 +163,12 @@ export default function MonochromeWatchlistPage() {
 
                         <td className="py-2.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="inline-flex items-center gap-1.5">
-                            <button
-                              onClick={() => setSelectedAsset(asset)}
+                            <Link
+                              href={`/market?symbol=${encodeURIComponent(asset.symbol)}`}
                               className="px-2 py-1 rounded bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-[11px] font-bold transition-colors"
                             >
-                              Quote & Order
-                            </button>
+                              Details & Trade
+                            </Link>
 
                             <a
                               href={`/trade?symbol=${encodeURIComponent(asset.symbol)}`}

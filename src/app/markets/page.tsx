@@ -76,7 +76,7 @@ export default function MonochromeMarketsPage() {
             return (
               <div
                 key={asset.symbol}
-                onClick={() => setSelectedAsset(asset)}
+                onClick={() => router.push(`/market?symbol=${encodeURIComponent(asset.symbol)}`)}
                 className="p-3 rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors cursor-pointer flex flex-col justify-between"
               >
                 <div className="flex items-center justify-between">
@@ -89,7 +89,7 @@ export default function MonochromeMarketsPage() {
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
                     className="p-1 rounded text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors"
-                    title="Open Chart in New Tab"
+                    title="Open Full Chart in New Tab"
                   >
                     <ExternalLink className="w-3 h-3" />
                   </a>
@@ -248,7 +248,7 @@ export default function MonochromeMarketsPage() {
                   return (
                     <tr
                       key={asset.symbol}
-                      onClick={() => setSelectedAsset(asset)}
+                      onClick={() => router.push(`/market?symbol=${encodeURIComponent(asset.symbol)}`)}
                       className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer group"
                     >
                       {/* Watchlist Toggle */}
@@ -291,19 +291,19 @@ export default function MonochromeMarketsPage() {
                       {/* Actions: Trade Modal / Dedicated Chart in New Tab */}
                       <td className="py-2.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="inline-flex items-center gap-1.5">
-                          <button
-                            onClick={() => setSelectedAsset(asset)}
+                          <Link
+                            href={`/market?symbol=${encodeURIComponent(asset.symbol)}`}
                             className="px-2 py-1 rounded bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-[11px] font-bold transition-colors"
                           >
-                            Quote & Order
-                          </button>
+                            Details & Trade
+                          </Link>
 
                           <a
                             href={`/trade?symbol=${encodeURIComponent(asset.symbol)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="px-2 py-1 rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-[11px] font-bold inline-flex items-center gap-1 transition-colors"
-                            title="Open Real-Time Candlestick Chart in New Tab"
+                            title="Open Real-Time Chart in New Tab"
                           >
                             <span>Chart</span>
                             <ExternalLink className="w-3 h-3 text-zinc-400" />

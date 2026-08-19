@@ -121,7 +121,7 @@ export default function MonochromeInstitutionalDashboard() {
               {marketOverviewCards.map((card) => (
                 <div
                   key={card.symbol}
-                  onClick={() => setSelectedAsset(card.rawAsset)}
+                  onClick={() => router.push(`/market?symbol=${encodeURIComponent(card.symbol)}`)}
                   className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 rounded-md p-3 transition-colors cursor-pointer flex flex-col justify-between"
                 >
                   <div className="flex items-center justify-between gap-1 mb-1.5">
@@ -134,7 +134,7 @@ export default function MonochromeInstitutionalDashboard() {
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
                       className="p-1 rounded text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors"
-                      title="Open Chart in New Tab"
+                      title="Open Full Chart in New Tab"
                     >
                       <ExternalLink className="w-3 h-3" />
                     </a>
@@ -200,7 +200,7 @@ export default function MonochromeInstitutionalDashboard() {
                     return (
                       <tr
                         key={asset.symbol}
-                        onClick={() => setSelectedAsset(asset)}
+                        onClick={() => router.push(`/market?symbol=${encodeURIComponent(asset.symbol)}`)}
                         className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer"
                       >
                         <td className="py-2 px-2.5">
@@ -220,12 +220,12 @@ export default function MonochromeInstitutionalDashboard() {
                         </td>
                         <td className="py-2 px-2.5 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="inline-flex items-center gap-1.5">
-                            <button
-                              onClick={() => setSelectedAsset(asset)}
+                            <Link
+                              href={`/market?symbol=${encodeURIComponent(asset.symbol)}`}
                               className="px-2 py-1 rounded bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-[10px] font-bold transition-colors"
                             >
-                              Order
-                            </button>
+                              Trade & Details
+                            </Link>
 
                             <a
                               href={`/trade?symbol=${encodeURIComponent(asset.symbol)}`}

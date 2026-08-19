@@ -86,7 +86,7 @@ export const AppHeader: React.FC = () => {
                       onClick={() => {
                         setIsSearchOpen(false);
                         setSearchQuery('');
-                        router.push(`/trade?symbol=${encodeURIComponent(item.symbol)}`);
+                        router.push(`/market?symbol=${encodeURIComponent(item.symbol)}`);
                       }}
                       className="w-full px-3 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-900 flex items-center justify-between text-xs transition-colors"
                     >
