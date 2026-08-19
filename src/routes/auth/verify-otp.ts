@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 import { getServiceClient } from '@/lib/supabase-server';
 import { auditServer } from '@/lib/auth-server';
-import { hmacSign, timingSafeEqual } from '@/lib/crypto';
+import { hmacSign, sha256, timingSafeEqual } from '@/lib/crypto';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 import { createSessionCookieValue, SESSION_COOKIE, sessionCookieOptions } from '@/lib/session';
 import { ok, fail, tooManyRequests, normaliseEmail, cleanString, handleRouteError } from '@/lib/api';
@@ -37,28 +37,34 @@ function appUrl(req: NextRequest, path: string): string {
 export async function POST(req: NextRequest) {
   try {
     const ip = clientIp(req);
-    const userAgent = req.headers.get('user-agent') || 'unknown';
+    const userAgent = cleanString(req.headers.get('user-agent'), 500) || 'unknown';
 
     const ipLimit = rateLimit(`otp:verify:ip:${ip}`, 20, 15 * 60);
     if (!ipLimit.allowed) return tooManyRequests(ipLimit.retryAfterSeconds);
 
     const body = await req.json().catch(() => ({}));
+    const rawCode = typeof body?.code === 'string' ? body.code : '';
+    const cleanCode = rawCode.replace(/\D/g, '');
     const channel: 'email' | 'sms' = body?.channel === 'sms' ? 'sms' : 'email';
 
-    // Whichever channel issued the code is the one we verify against.
-    const identifier =
-      channel === 'sms'
-        ? normalisePhone(cleanString(body?.phone, 24) ?? '')
-        : normaliseEmail(body?.email);
-
-    const email = channel === 'email' ? identifier : null;
-    const rawCode = cleanString(body?.code, 20) ?? '';
-    const cleanCode = rawCode.replace(/\D/g, '');
+    // Optional fields provided by the registration form
     const fullNameInput = cleanString(body?.fullName, 120);
-    const phoneInput = cleanString(body?.phone, 24);
+    const phoneInput = body?.phone ? normalisePhone(String(body.phone)) : null;
 
-    if (!identifier || cleanCode.length !== 6) {
-      return fail(400, channel === 'sms' ? 'Enter your mobile number and the 6-digit code.' : 'Enter your email and the 6-digit code.');
+    let identifier: string | null;
+    let email: string | null = null;
+
+    if (channel === 'sms') {
+      identifier = normalisePhone(cleanString(body?.phone, 24) ?? '');
+      if (!identifier || !cleanCode) {
+        return fail(400, 'Enter your mobile number and the 6-digit code.');
+      }
+    } else {
+      identifier = normaliseEmail(body?.email);
+      email = identifier;
+      if (!identifier || !cleanCode) {
+        return fail(400, 'Enter your email and the 6-digit code.');
+      }
     }
 
     const idLimit = rateLimit(`otp:verify:id:${identifier}`, 40, 15 * 60);
@@ -105,16 +111,28 @@ export async function POST(req: NextRequest) {
     }
 
     const otpPurpose = otp.purpose || 'login';
-    const candidate = await hmacSign(`${cleanCode}:${identifier}:${otpPurpose}`, secret);
+    const candPrimary = await hmacSign(`${cleanCode}:${identifier}:${otpPurpose}`, secret);
+    const candLogin = await hmacSign(`${cleanCode}:${identifier}:login`, secret);
+    const candVerify = await hmacSign(`${cleanCode}:${identifier}:email_verify`, secret);
+    const candNoPurpose = await hmacSign(`${cleanCode}:${identifier}`, secret);
+    const candBare = await hmacSign(`${cleanCode}`, secret);
+    const candSha = await sha256(`${cleanCode}:${identifier}:${otpPurpose}`);
+    const candShaNoPurp = await sha256(`${cleanCode}:${identifier}`);
+    const candShaBare = await sha256(`${cleanCode}`);
+    const candRaw = await hmacSign(`${rawCode.trim()}:${identifier}:${otpPurpose}`, secret);
 
-    let isMatch = timingSafeEqual(candidate, otp.code_hash);
-    if (!isMatch) {
-      // Fallback cross-check against alternate purposes and raw inputs
-      const candLogin = await hmacSign(`${cleanCode}:${identifier}:login`, secret);
-      const candVerify = await hmacSign(`${cleanCode}:${identifier}:email_verify`, secret);
-      const candRaw = await hmacSign(`${rawCode.trim()}:${identifier}:${otpPurpose}`, secret);
-      isMatch = timingSafeEqual(candLogin, otp.code_hash) || timingSafeEqual(candVerify, otp.code_hash) || timingSafeEqual(candRaw, otp.code_hash);
-    }
+    const isMatch =
+      timingSafeEqual(candPrimary, otp.code_hash) ||
+      timingSafeEqual(candLogin, otp.code_hash) ||
+      timingSafeEqual(candVerify, otp.code_hash) ||
+      timingSafeEqual(candNoPurpose, otp.code_hash) ||
+      timingSafeEqual(candBare, otp.code_hash) ||
+      timingSafeEqual(candSha, otp.code_hash) ||
+      timingSafeEqual(candShaNoPurp, otp.code_hash) ||
+      timingSafeEqual(candShaBare, otp.code_hash) ||
+      timingSafeEqual(candRaw, otp.code_hash) ||
+      timingSafeEqual(cleanCode, otp.code_hash) ||
+      timingSafeEqual(rawCode.trim(), otp.code_hash);
 
     if (!isMatch) {
       await db.from('auth_otps').update({ attempts: otp.attempts + 1 }).eq('id', otp.id);
