@@ -204,12 +204,12 @@ export default function MonochromeFundsPage() {
         </div>
 
         {/* Top Tab Switcher */}
-        <div className="grid grid-cols-3 sm:flex items-center gap-1 p-1 rounded-md bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+        <div className="grid grid-cols-3 sm:flex items-center gap-1 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`px-3 py-1 rounded text-xs font-bold transition-colors ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               activeTab === 'overview'
-                ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950'
+                ? 'bg-[#00875a] text-white shadow-xs'
                 : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white'
             }`}
           >
@@ -217,9 +217,9 @@ export default function MonochromeFundsPage() {
           </button>
           <button
             onClick={() => setActiveTab('deposit')}
-            className={`px-3 py-1 rounded text-xs font-bold transition-colors ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               activeTab === 'deposit'
-                ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950'
+                ? 'bg-[#00875a] text-white shadow-xs'
                 : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white'
             }`}
           >
@@ -227,9 +227,9 @@ export default function MonochromeFundsPage() {
           </button>
           <button
             onClick={() => setActiveTab('withdraw')}
-            className={`px-3 py-1 rounded text-xs font-bold transition-colors ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               activeTab === 'withdraw'
-                ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950'
+                ? 'bg-[#00875a] text-white shadow-xs'
                 : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white'
             }`}
           >
@@ -242,28 +242,29 @@ export default function MonochromeFundsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         
         {/* Available Balance Card */}
-        <div className="p-4 rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-2">
+        <div className="p-5 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-2 shadow-2xs">
           <span className="text-[10px] font-bold uppercase text-zinc-400 block">Available Capital</span>
-          <div className="text-2xl font-bold tabular-nums text-zinc-950 dark:text-white tracking-tight">
+          <div className="text-2xl font-black tabular-nums text-zinc-950 dark:text-white tracking-tight">
             {formatUSD(currentUser?.walletBalance)}
           </div>
           <span className="text-[11px] text-zinc-500 block tabular-nums">
             ≈ {formatINR((currentUser?.walletBalance || 0) * exchangeRate)}
           </span>
 
-          <div className="flex items-center gap-2 pt-1">
+          <div className="flex items-center gap-2 pt-2">
             <button
               onClick={() => setActiveTab('deposit')}
-              className="px-3 py-1.5 rounded-md bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-xs font-bold flex items-center gap-1 transition-colors"
+              className="px-4 py-2 rounded-lg bg-[#00875a] hover:bg-[#00704a] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs"
             >
-              <Plus className="w-3 h-3" />
+              <Plus className="w-3.5 h-3.5" />
               <span>Deposit</span>
             </button>
             <button
               onClick={() => setActiveTab('withdraw')}
-              className="px-3 py-1.5 rounded-md bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 text-xs font-semibold transition-colors"
+              className="px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-[#e6f4ea] hover:text-[#00875a] text-zinc-700 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-all"
             >
-              Withdraw
+              <ArrowUpRight className="w-3.5 h-3.5" />
+              <span>Withdraw</span>
             </button>
           </div>
         </div>

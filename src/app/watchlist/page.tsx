@@ -161,11 +161,11 @@ export default function MonochromeWatchlistPage() {
                           </span>
                         </td>
 
-                        <td className="py-2.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
+                        <td className="py-3 px-3 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="inline-flex items-center gap-1.5">
                             <Link
                               href={`/market?symbol=${encodeURIComponent(asset.symbol)}`}
-                              className="px-2 py-1 rounded bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-[11px] font-bold transition-colors"
+                              className="px-3 py-1 rounded-md bg-[#e6f4ea] dark:bg-emerald-950/60 text-[#00875a] dark:text-emerald-400 hover:bg-[#d4edd9] dark:hover:bg-emerald-900/80 border border-[#b7e4c7] dark:border-emerald-800 text-xs font-bold transition-colors"
                             >
                               Details & Trade
                             </Link>
@@ -174,7 +174,7 @@ export default function MonochromeWatchlistPage() {
                               href={`/trade?symbol=${encodeURIComponent(asset.symbol)}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-2 py-1 rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-[11px] font-bold inline-flex items-center gap-1 transition-colors"
+                              className="px-2.5 py-1 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-950 dark:hover:text-white text-xs font-semibold inline-flex items-center gap-1 transition-colors"
                               title="Open Real-Time Candlestick Chart in New Tab"
                             >
                               <span>Chart</span>
