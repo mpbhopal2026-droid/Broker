@@ -72,9 +72,6 @@ export default function MonochromeMarketsPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
           {popularAssets.map((asset) => {
             const isUp = asset.changePercent >= 0;
-            const mockSparkline = isUp
-              ? [asset.price * 0.98, asset.price * 0.985, asset.price * 0.99, asset.price * 0.995, asset.price]
-              : [asset.price * 1.02, asset.price * 1.015, asset.price * 1.01, asset.price * 1.005, asset.price];
 
             return (
               <div
@@ -107,8 +104,15 @@ export default function MonochromeMarketsPage() {
                   </span>
                 </div>
 
-                <div className="w-full h-5 flex items-end opacity-60">
-                  <MiniSparkline data={mockSparkline} isPositive={isUp} width={90} height={20} />
+                <div className="w-full h-8 pt-1">
+                  <MiniSparkline
+                    symbol={asset.symbol}
+                    price={asset.price}
+                    changePercent={asset.changePercent}
+                    isPositive={isUp}
+                    width={120}
+                    height={32}
+                  />
                 </div>
               </div>
             );

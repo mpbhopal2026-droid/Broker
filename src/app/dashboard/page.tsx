@@ -52,10 +52,11 @@ export default function MonochromeInstitutionalDashboard() {
       marketAssets.slice(0, 4).map((a) => ({
         rawAsset: a,
         symbol: a.symbol,
-        price: a.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 5 }),
+        numericPrice: a.price,
+        changePercent: a.changePercent,
+        price: a.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: a.price > 100 ? 2 : 4 }),
         change: `${a.change >= 0 ? '▲ +' : '▼ -'}${Math.abs(a.changePercent).toFixed(2)}%`,
         isPositive: a.changePercent >= 0,
-        sparkline: [a.low24h ?? a.price, a.price, a.high24h ?? a.price],
       })),
     [marketAssets],
   );
@@ -153,12 +154,14 @@ export default function MonochromeInstitutionalDashboard() {
                       </span>
                     </div>
 
-                    <div className="h-4 w-full opacity-60 flex items-center justify-center">
+                    <div className="h-8 w-full pt-1">
                       <MiniSparkline
-                        data={card.sparkline}
+                        symbol={card.symbol}
+                        price={card.numericPrice}
+                        changePercent={card.changePercent}
                         isPositive={card.isPositive}
-                        width={100}
-                        height={16}
+                        width={120}
+                        height={32}
                       />
                     </div>
                   </div>
