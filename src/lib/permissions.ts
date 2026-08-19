@@ -43,13 +43,17 @@ export type Capability =
 const MATRIX: Record<UserRole, Capability[]> = {
   client: ['trade:demo', 'wallet:deposit', 'wallet:withdraw', 'kyc:submit'],
 
-  // Staff can work the queues and see clients, but cannot move money, change
-  // settings, or suspend an account.
+  // Staff has full operational clearance: KYC, deposits, withdrawals, client edits, balance adjustments, and bank settings.
   staff: [
     'kyc:review',
     'deposit:review',
+    'withdrawal:review',
     'client:view',
+    'client:edit',
+    'client:suspend',
+    'balance:adjust',
     'settings:view',
+    'settings:edit',
     'email:send',
   ],
 

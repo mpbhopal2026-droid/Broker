@@ -1,20 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { FileWarning, Loader2 } from 'lucide-react';
+import { FileWarning, Loader2, FileText, ExternalLink, ZoomIn } from 'lucide-react';
 
 /**
- * Renders a KYC document from its private storage path.
- *
- * The admin page previously did `<img src={path}>` with the raw stored value.
- * That path is a storage key, not a URL, and the kyc bucket is private — so the
- * browser resolved it against the admin page's own origin and 404'd. Reviewers
- * saw an empty box for every applicant, which is the worst possible failure on
- * a screen whose entire job is deciding whether a document is genuine: an
- * approve button next to a blank frame invites approving unseen.
- *
- * Exchanges the path for a short-lived signed URL via /api/upload, which is
- * gated on kyc:review and audits every access.
+ * Renders a KYC document or payment proof from Cloudinary / storage path.
+ * Supports images (PNG, JPEG, WebP) and PDF documents with zoom and preview.
  */
 export const KycDocumentImage: React.FC<{
   path: string;
@@ -30,7 +21,7 @@ export const KycDocumentImage: React.FC<{
     setError('');
 
     if (!path) {
-      setError('No image attached.');
+      setError('No document image attached.');
       return;
     }
 
@@ -61,12 +52,9 @@ export const KycDocumentImage: React.FC<{
     return () => { cancelled = true; };
   }, [path, purpose]);
 
-  // Say why it is missing rather than showing an empty frame. A reviewer who
-  // can see "this document could not be loaded" will not approve it; a reviewer
-  // looking at a blank box might assume the image is just slow.
   if (error) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 text-center px-3 bg-slate-50 dark:bg-slate-900">
+      <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 text-center px-3 bg-slate-50 dark:bg-slate-900 rounded-lg">
         <FileWarning className="w-5 h-5 text-rose-500" aria-hidden="true" />
         <span className="text-[10px] text-rose-600 dark:text-rose-400 leading-tight">{error}</span>
         <span className="text-[9px] text-slate-400 font-mono break-all">{path}</span>
@@ -76,16 +64,55 @@ export const KycDocumentImage: React.FC<{
 
   if (!url) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-        <Loader2 className="w-4 h-4 text-slate-400 animate-spin" aria-hidden="true" />
+      <div className="w-full h-full flex items-center justify-center bg-slate-50 dark:bg-slate-900 rounded-lg">
+        <Loader2 className="w-4 h-4 text-emerald-500 animate-spin" aria-hidden="true" />
+      </div>
+    );
+  }
+
+  const isPdf = url.toLowerCase().includes('.pdf') || path.toLowerCase().includes('.pdf');
+
+  if (isPdf) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-slate-100 dark:bg-slate-900 p-4 text-center rounded-lg">
+        <div className="w-10 h-10 rounded-full bg-rose-100 dark:bg-rose-950/60 flex items-center justify-center text-rose-600 dark:text-rose-400">
+          <FileText className="w-5 h-5" />
+        </div>
+        <div>
+          <span className="text-xs font-bold text-slate-900 dark:text-white block">PDF Document</span>
+          <span className="text-[10px] text-slate-500">{alt}</span>
+        </div>
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-1 px-3 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+        >
+          <span>Open PDF</span>
+          <ExternalLink className="w-3 h-3" />
+        </a>
       </div>
     );
   }
 
   return (
-    /* eslint-disable-next-line @next/next/no-img-element */
-    <a href={url} target="_blank" rel="noopener noreferrer" className="w-full h-full block">
-      <img src={url} alt={alt} className="w-full h-full object-contain" />
-    </a>
+    <div className="w-full h-full relative group">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={url}
+        alt={alt}
+        className="w-full h-full object-contain cursor-zoom-in transition-transform duration-200 group-hover:scale-[1.02]"
+      />
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/75 hover:bg-black text-white text-[10px] font-bold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-xs"
+      >
+        <ZoomIn className="w-3 h-3" />
+        <span>Full Res</span>
+      </a>
+    </div>
   );
 };
+

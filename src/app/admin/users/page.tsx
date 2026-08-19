@@ -23,8 +23,10 @@ import { ClientDetailPanel } from '@/components/admin/ClientDetailPanel';
 import { AdminClientPortfolioModal } from '@/components/admin/modals/AdminClientPortfolioModal';
 import { AdminClientPaymentConfigModal } from '@/components/admin/modals/AdminClientPaymentConfigModal';
 import { AdminManualKycModal } from '@/components/admin/modals/AdminManualKycModal';
+import { useApp } from '@/lib/store';
 
 export default function AdminUsersPage() {
+  const { currentUser } = useApp();
   const {
     users,
     kycRecords,
@@ -35,6 +37,9 @@ export default function AdminUsersPage() {
     deleteUser,
     paymentSettings
   } = useAdmin();
+
+  const isStaff = currentUser?.role === 'staff';
+  const isDeveloper = currentUser?.role === 'developer';
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -159,15 +164,17 @@ export default function AdminUsersPage() {
                     onClick={() => setSelectedUser(user)}
                     className="py-2 px-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-center active:scale-95 transition-all"
                   >
-                    File
+                    Profile
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setUserToDelete(user)}
-                    className="py-2 px-1 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 text-rose-600 border border-rose-200 dark:border-rose-800 font-bold text-center active:scale-95 transition-all"
-                  >
-                    Delete
-                  </button>
+                  {isDeveloper && (
+                    <button
+                      type="button"
+                      onClick={() => setUserToDelete(user)}
+                      className="py-2 px-1 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 text-rose-600 border border-rose-200 dark:border-rose-800 font-bold text-center active:scale-95 transition-all"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               </div>
             ))
@@ -243,7 +250,7 @@ export default function AdminUsersPage() {
                     </button>
                     <button
                       onClick={() => setManageUser(user)}
-                      className="px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[11px] font-bold"
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[11px] font-bold hover:opacity-90 transition-opacity"
                     >
                       Manage
                     </button>
@@ -251,15 +258,17 @@ export default function AdminUsersPage() {
                       onClick={() => setSelectedUser(user)}
                       className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-[11px] font-semibold"
                     >
-                      File
+                      Profile
                     </button>
-                    <button
-                      onClick={() => setUserToDelete(user)}
-                      className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 text-rose-600 border border-rose-200 dark:border-rose-800 text-[11px] font-bold transition-colors"
-                      title="Permanently Delete User"
-                    >
-                      Delete
-                    </button>
+                    {isDeveloper && (
+                      <button
+                        onClick={() => setUserToDelete(user)}
+                        className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 text-rose-600 border border-rose-200 dark:border-rose-800 text-[11px] font-bold transition-colors"
+                        title="Permanently Delete User (Developer Only)"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

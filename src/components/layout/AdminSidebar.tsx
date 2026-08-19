@@ -22,16 +22,20 @@ import {
   ChevronLeft
 } from 'lucide-react';
 import { useAdmin } from '@/lib/admin-store';
+import { useApp } from '@/lib/store';
 import { AdminWalletWithdrawModal } from '@/components/admin/modals/AdminWalletWithdrawModal';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 
 export const AdminSidebar: React.FC = () => {
   const pathname = usePathname();
   const router = useRouter();
+  const { currentUser } = useApp();
   const { logout, kycRecords, transactions } = useAdmin();
   const [hideWalletBalance, setHideWalletBalance] = useState(false);
   const [isWalletWithdrawOpen, setIsWalletWithdrawOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const isStaff = currentUser?.role === 'staff';
 
   const countPending = (type: 'deposit' | 'withdrawal') =>
     (transactions ?? []).filter((t) => t.type === type && t.status === 'pending').length || undefined;
@@ -52,6 +56,20 @@ export const AdminSidebar: React.FC = () => {
     { href: '/admin/audit-logs', label: 'Audit Trail', icon: Lock },
     { href: '/admin/settings', label: 'Bank & UPI Routing', icon: Settings },
   ];
+
+  const staffNav = [
+    { href: '/admin', label: 'Operations Desk', icon: LayoutGrid },
+    { href: '/admin/users', label: 'Users & Portfolios', icon: Users },
+    { href: '/admin/kyc', label: 'KYC Queue', icon: ShieldCheck, badge: pendingKyc },
+    { href: '/admin/deposits', label: 'Deposit Clearing', icon: CreditCard, badge: pendingDeposits },
+    { href: '/admin/withdrawals', label: 'Payout Queue', icon: Clock, badge: pendingWithdrawals },
+    { href: '/admin/trades', label: 'Trade Ledger', icon: Layers },
+    { href: '/admin/ledger', label: 'Double-Entry Ledger', icon: FileText },
+    { href: '/market', label: 'Market Feeds', icon: BarChart2 },
+    { href: '/admin/settings', label: 'Bank & UPI Routing', icon: Settings },
+  ];
+
+  const currentNav = isStaff ? staffNav : adminNav;
 
   return (
     <>
@@ -82,11 +100,16 @@ export const AdminSidebar: React.FC = () => {
           {/* Navigation Links */}
           <div className="space-y-0.5">
             {!isCollapsed && (
-              <div className="px-2 pb-1 text-[10px] uppercase font-bold text-zinc-400">
-                Operator Desk
+              <div className="px-2 pb-1 text-[10px] uppercase font-bold text-zinc-400 flex items-center justify-between">
+                <span>{isStaff ? 'Staff Operator Desk' : 'Administrator Desk'}</span>
+                {isStaff && (
+                  <span className="px-1.5 py-0.2 rounded text-[8px] font-bold uppercase bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300">
+                    Staff
+                  </span>
+                )}
               </div>
             )}
-            {adminNav.map((item) => {
+            {currentNav.map((item) => {
               const Icon = item.icon;
               const isActive =
                 item.href === '/admin'
@@ -153,8 +176,8 @@ export const AdminSidebar: React.FC = () => {
             {!isCollapsed && <span className="whitespace-nowrap">Sign Out</span>}
           </button>
 
-          {/* Admin Wallet Card */}
-          {!isCollapsed && (
+          {/* Admin Wallet Card (Only for Admins/Developers, not Staff) */}
+          {!isCollapsed && !isStaff && (
             <div className="p-2.5 rounded-md bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase text-zinc-400">Desk Ledger</span>

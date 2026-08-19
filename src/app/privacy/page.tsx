@@ -71,37 +71,26 @@ export default function PublicPrivacyPolicyPage() {
             <p>We only collect information strictly required to deliver secure trading services:</p>
             <ul className="list-disc pl-5 space-y-1.5 text-slate-700 dark:text-zinc-300">
               <li><strong>Account Credentials:</strong> Email address, mobile telephone number, full legal name.</li>
-              <li><strong>Authentication Data:</strong> OAuth identity tokens when you choose to sign in via Google Authentication or one-time verification passwords (OTP).</li>
+              <li><strong>Authentication Data:</strong> Cryptographically secure one-time verification passwords (OTP) transmitted via SMS and email.</li>
               <li><strong>Identity Verification (KYC):</strong> Government identity numbers and verification documentation required under statutory financial regulations.</li>
               <li><strong>Trading & Ledger Records:</strong> Order executions, deposit transactions, withdrawal logs, and open market positions.</li>
             </ul>
           </section>
 
-          {/* Section 3: Google User Data Disclosure */}
-          <section className="space-y-2.5 p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-[#b7e4c7] dark:border-emerald-800/80">
-            <h2 className="text-base font-bold text-[#00875a] dark:text-emerald-400 flex items-center gap-2">
-              <Lock className="w-4 h-4" />
-              <span>3. Google API Services User Data Policy</span>
-            </h2>
-            <p className="text-slate-700 dark:text-zinc-300">
-              When you use <strong>Google Sign-In</strong> to access Global Forex, we access only your primary Google account email address and basic profile name for authentication purposes. We do not access, store, or share your Google Drive, contacts, private browsing data, or any other Google service data. Your information is never transferred, monetized, or sold to third-party advertising networks.
-            </p>
-          </section>
-
-          {/* Section 4: Security & Encryption */}
+          {/* Section 3: Security & Encryption */}
           <section className="space-y-2.5">
             <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
-              4. Data Security & Storage Standard
+              3. Data Security & Storage Standard
             </h2>
             <p>
               All data transmissions are encrypted using Transport Layer Security (TLS 1.3). Sensitive identity and KYC fields are encrypted at rest using industry-standard <strong>AES-256 encryption</strong>. Access to production databases is strictly restricted through multi-factor authenticated role-based access controls.
             </p>
           </section>
 
-          {/* Section 5: Your Rights */}
+          {/* Section 4: Your Rights */}
           <section className="space-y-2.5">
             <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
-              5. Your Rights & Data Portability
+              4. Your Rights & Data Portability
             </h2>
             <p>
               Under applicable data protection laws, you retain the full right to:
@@ -113,10 +102,10 @@ export default function PublicPrivacyPolicyPage() {
             </ul>
           </section>
 
-          {/* Section 6: Contact & Grievance */}
+          {/* Section 5: Contact & Grievance */}
           <section className="space-y-2.5 pt-4 border-t border-slate-100 dark:border-zinc-900">
             <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
-              6. Contact & Grievance Redressal
+              5. Contact & Grievance Redressal
             </h2>
             <p>
               For any questions regarding this Privacy Policy or your personal data, contact our dedicated compliance desk:

@@ -48,7 +48,7 @@ export interface UserProfile {
   // Firebase & Push Notification integrations
   firebaseUid?: string;
   fcmToken?: string;
-  authProvider?: 'firebase' | 'local' | 'google';
+  authProvider?: 'firebase' | 'local';
 
   createdAt: string;
   updatedAt: string;

@@ -73,7 +73,7 @@ export default function PublicTermsOfServicePage() {
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-slate-700 dark:text-zinc-300">
               <li>You must be at least 18 years of age and legally competent to enter into binding financial agreements.</li>
-              <li>You are responsible for maintaining the confidentiality of your authentication credentials (including your email access, Google OAuth session, and OTP codes).</li>
+              <li>You are responsible for maintaining the confidentiality of your authentication credentials (including your email access, phone SMS credentials, and OTP verification codes).</li>
               <li>You agree to provide true, accurate, and complete information during registration and identity verification (KYC).</li>
             </ul>
           </section>
