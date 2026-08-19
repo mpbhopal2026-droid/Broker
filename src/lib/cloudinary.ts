@@ -2,11 +2,28 @@ import 'server-only';
 import crypto from 'crypto';
 import { log } from './logger';
 
+/**
+ * Credentials come from the environment ONLY.
+ *
+ * These were hardcoded as fallbacks, and the file is committed to a public
+ * repository — so the API secret was published. Anyone holding it can upload
+ * to, transform, or delete anything in the account. A fallback that leaks a
+ * live secret is worse than no fallback: it turns a missing-config error into
+ * a silent compromise.
+ *
+ * Missing config now fails closed. An upload that cannot happen is a bug the
+ * client reports in a minute; an upload to an account strangers control is one
+ * nobody notices.
+ */
 export const CLOUDINARY_CONFIG = {
-  cloudName: process.env.CLOUDINARY_CLOUD_NAME || 'hoy61f72',
-  apiKey: process.env.CLOUDINARY_API_KEY || '292762116366424',
-  apiSecret: process.env.CLOUDINARY_API_SECRET || 'xlCJeVwcYlAqZ0_3rL2v4HpOkBI',
+  cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
+  apiKey: process.env.CLOUDINARY_API_KEY || '',
+  apiSecret: process.env.CLOUDINARY_API_SECRET || '',
 };
+
+export const isCloudinaryConfigured = Boolean(
+  CLOUDINARY_CONFIG.cloudName && CLOUDINARY_CONFIG.apiKey && CLOUDINARY_CONFIG.apiSecret,
+);
 
 export const CLOUDINARY_FOLDERS = {
   kyc: 'kyc-documents',
@@ -42,9 +59,19 @@ export async function uploadToCloudinary(params: {
     const targetFolder = `${params.folder}/${params.userId}`;
 
     // Prepare parameters for signature
+    // 'authenticated' means Cloudinary will not serve this asset from a plain
+    // URL — delivery requires a signature. Without it every upload is public
+    // forever: a PAN card and an Aadhaar sitting at a permanent, unauthenticated
+    // URL. Under the DPDP Act that is close to the worst place an identity
+    // document can be, and it cannot be undone once the URL has been shared.
+    //
+    // public-assets stays public deliberately — that folder holds logos.
+    const isPrivate = params.isPrivate !== false && params.folder !== 'public-assets';
+
     const signParams: Record<string, string | number> = {
       folder: targetFolder,
       timestamp,
+      ...(isPrivate ? { type: 'authenticated' } : {}),
     };
 
     const signature = generateCloudinarySignature(signParams);
@@ -63,6 +90,7 @@ export async function uploadToCloudinary(params: {
     formData.append('api_key', CLOUDINARY_CONFIG.apiKey);
     formData.append('timestamp', String(timestamp));
     formData.append('folder', targetFolder);
+    if (isPrivate) formData.append('type', 'authenticated');
     formData.append('signature', signature);
 
     const uploadEndpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/auto/upload`;
@@ -98,8 +126,31 @@ export async function uploadToCloudinary(params: {
  * Generate a signed delivery URL for private documents.
  */
 export function generateSignedDeliveryUrl(publicId: string): string {
+  // Already a full URL — a legacy public upload from before assets were made
+  // authenticated. Returned as-is so old records still render, but see the
+  // migration note in supabase/ROTATE-CLOUDINARY.txt: these remain public and
+  // should be re-uploaded.
   if (publicId.startsWith('http://') || publicId.startsWith('https://')) {
     return publicId;
   }
-  return `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/image/upload/${publicId}`;
+
+  if (!isCloudinaryConfigured) return '';
+
+  // This function did not sign anything. It built a plain /image/upload/ URL,
+  // which for an authenticated asset returns 401 and for a public one hands the
+  // document to anyone with the link. Both are wrong, and the name said
+  // otherwise — which is how it survived review.
+  //
+  // Cloudinary signed delivery: sha1(public_id + api_secret), base64url, first
+  // 8 characters, inserted as s--SIG--.
+  const toSign = `${publicId}${CLOUDINARY_CONFIG.apiSecret}`;
+  const signature = crypto
+    .createHash('sha1')
+    .update(toSign)
+    .digest('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .slice(0, 8);
+
+  return `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/image/authenticated/s--${signature}--/${publicId}`;
 }

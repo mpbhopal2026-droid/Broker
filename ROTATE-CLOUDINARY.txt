@@ -1,0 +1,71 @@
+URGENT — ROTATE THE CLOUDINARY CREDENTIALS
+==========================================
+
+WHAT HAPPENED
+-------------
+src/lib/cloudinary.ts contained hardcoded fallback credentials:
+
+    apiKey:    292762116366424
+    apiSecret: xlCJeVwcYlAqZ0_3rL2v4HpOkBI
+
+That file is committed to https://github.com/mpbhopal2026-droid/Broker,
+which is PUBLIC. Verified: the secret is readable from raw.githubusercontent
+.com right now. It is also in this repository's git history.
+
+Anyone holding that secret can upload to, transform, overwrite or delete
+anything in the Cloudinary account — including replacing a client's KYC
+document with something else.
+
+This is almost certainly what triggered the GitHub Push Protection block
+mentioned earlier.
+
+
+DO THIS NOW, IN ORDER
+---------------------
+1. Cloudinary Console -> Settings -> Access Keys
+   Generate a new API key/secret pair. Disable the old one.
+
+2. Put the NEW values in Vercel (and .env.local) as:
+       CLOUDINARY_CLOUD_NAME
+       CLOUDINARY_API_KEY
+       CLOUDINARY_API_SECRET
+   The code no longer has fallbacks. Missing config now fails closed, which
+   is deliberate — an upload that cannot happen is a bug someone reports in a
+   minute; an upload into an account strangers control is one nobody notices.
+
+3. Redeploy.
+
+4. Cloudinary Console -> Media Library -> check for anything you did not
+   upload, and review the account's usage/activity for the exposure window.
+
+
+SECOND PROBLEM: DOCUMENTS WERE PUBLIC
+-------------------------------------
+Uploads were made with Cloudinary's default delivery type, which is PUBLIC.
+Every KYC document uploaded so far - PAN cards, Aadhaar cards - sits at a
+permanent, unauthenticated URL. Anyone with the link has it forever, and no
+amount of later configuration takes that back.
+
+Uploads are now created with type=authenticated, and delivery goes through a
+signed URL. New documents are protected.
+
+EXISTING DOCUMENTS ARE NOT. To close it:
+
+  Option A (cleanest): ask affected clients to re-upload, then delete the old
+  public assets from the Media Library.
+
+  Option B: in the Cloudinary Console, move the existing kyc-documents and
+  payment-proofs assets to authenticated delivery, then re-run KYC review to
+  confirm the admin viewer still resolves them.
+
+Do not skip this because the URLs look unguessable. They are permanent, they
+appear in server logs and browser history, and identity documents at open URLs
+is exactly the kind of finding that turns a DPDP complaint into a penalty.
+
+
+WHY THE FALLBACKS WERE THE REAL BUG
+-----------------------------------
+A default that keeps the app working when configuration is missing is normally
+good practice. A default that is a LIVE CREDENTIAL is the opposite: it removes
+the error that would have told you the configuration was missing, and puts the
+secret somewhere it will eventually be published. Fail closed instead.
