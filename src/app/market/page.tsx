@@ -32,6 +32,7 @@ import { TradingViewWidget } from '@/components/trading/TradingViewWidget';
 import { InsufficientFundsModal } from '@/components/trading/InsufficientFundsModal';
 import { TradeOrder } from '@/lib/types';
 import { MiniSparkline } from '@/components/charts/MiniSparkline';
+import { InteractiveMarketChart, ChartDataPoint } from '@/components/charts/InteractiveMarketChart';
 
 // Detailed Market Assets Catalog
 const INSTRUMENTS_DATABASE = [
@@ -231,6 +232,7 @@ function InstrumentDetailPageContent() {
   // Chart view mode: 'interactive' (lightweight native area/spline) or 'candlestick' (TradingView embedded)
   const [chartMode, setChartMode] = useState<'area' | 'candlestick'>('area');
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>('1D');
+  const [hoveredPoint, setHoveredPoint] = useState<ChartDataPoint | null>(null);
 
   // Order Ticket State
   const [orderSide, setOrderSide] = useState<'BUY' | 'SELL'>('BUY');
@@ -248,6 +250,22 @@ function InstrumentDetailPageContent() {
   const livePrice = instrument.defaultPrice;
   const spread = instrument.spread;
   const isUp = instrument.change24h.startsWith('+');
+
+  // Dynamic Hover Scrubber Display Values
+  const displayPrice = hoveredPoint ? hoveredPoint.price : livePrice;
+  const isHovering = hoveredPoint !== null;
+  const referencePrice = instrument.openPrice || livePrice;
+  const displayDelta = isHovering ? displayPrice - referencePrice : instrument.changeValue;
+  const displayDeltaPercent = isHovering
+    ? referencePrice > 0
+      ? (displayDelta / referencePrice) * 100
+      : 0
+    : parseFloat(instrument.change24h);
+  const isDisplayUp = isHovering ? displayDelta >= 0 : isUp;
+  const displayDeltaStr = isHovering
+    ? `${displayDeltaPercent >= 0 ? '+' : ''}${displayDeltaPercent.toFixed(2)}%`
+    : instrument.change24h;
+
   const bidPrice = (livePrice - spread / 2).toFixed(instrument.symbol.includes('JPY') ? 2 : instrument.symbol.includes('EUR') || instrument.symbol.includes('GBP') ? 5 : 2);
   const askPrice = (livePrice + spread / 2).toFixed(instrument.symbol.includes('JPY') ? 2 : instrument.symbol.includes('EUR') || instrument.symbol.includes('GBP') ? 5 : 2);
 
@@ -418,14 +436,16 @@ function InstrumentDetailPageContent() {
             </div>
 
             <div className="text-left sm:text-right">
-              <div className="text-2xl sm:text-3xl font-bold tabular-nums text-zinc-950 dark:text-white">
-                ${instrument.defaultPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 5 })}
+              <div className="text-2xl sm:text-3xl font-bold tabular-nums text-zinc-950 dark:text-white transition-all">
+                ${displayPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 5 })}
               </div>
               <div className="flex items-center sm:justify-end gap-1.5 text-xs font-semibold tabular-nums">
-                <span className={isUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
-                  {isUp ? '▲ +' : '▼ -'}${Math.abs(instrument.changeValue).toFixed(2)} ({instrument.change24h})
+                <span className={isDisplayUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
+                  {isDisplayUp ? '▲ +' : '▼ -'}${Math.abs(displayDelta).toFixed(2)} ({displayDeltaStr})
                 </span>
-                <span className="text-zinc-400 text-[10px] font-normal">Today</span>
+                <span className="text-zinc-400 text-[10px] font-normal">
+                  {hoveredPoint ? hoveredPoint.time : selectedTimeframe === '1D' ? 'Today' : selectedTimeframe}
+                </span>
               </div>
             </div>
           </div>
@@ -442,7 +462,10 @@ function InstrumentDetailPageContent() {
                   <button
                     key={tf}
                     type="button"
-                    onClick={() => setSelectedTimeframe(tf)}
+                    onClick={() => {
+                      setSelectedTimeframe(tf);
+                      setHoveredPoint(null);
+                    }}
                     className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${
                       selectedTimeframe === tf
                         ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950'
@@ -465,7 +488,7 @@ function InstrumentDetailPageContent() {
                       : 'text-zinc-500 hover:text-zinc-950 dark:hover:text-white'
                   }`}
                 >
-                  Line / Area
+                  Interactive Line
                 </button>
                 <button
                   type="button"
@@ -485,15 +508,14 @@ function InstrumentDetailPageContent() {
             {/* Chart Canvas Area */}
             <div className="w-full h-72 sm:h-80 relative flex items-center justify-center">
               {chartMode === 'area' ? (
-                <div className="w-full h-full p-2">
-                  <MiniSparkline
+                <div className="w-full h-full">
+                  <InteractiveMarketChart
                     symbol={instrument.symbol}
-                    price={instrument.defaultPrice}
-                    changePercent={parseFloat(instrument.change24h)}
+                    currentPrice={instrument.defaultPrice}
+                    timeframe={selectedTimeframe}
                     isPositive={isUp}
-                    width={700}
-                    height={280}
-                    className="h-full"
+                    onHoverPoint={setHoveredPoint}
+                    height={300}
                   />
                 </div>
               ) : (
