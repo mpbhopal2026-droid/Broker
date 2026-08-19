@@ -79,7 +79,7 @@ export const AppSidebar: React.FC = () => {
         {/* Brand Header */}
         <div className="px-1 flex items-center justify-between">
           <Link href={isAdmin ? '/admin' : '/dashboard'} className="overflow-hidden">
-            <BrandLogo isCollapsed={isCollapsed} size="sm" isAdmin={isAdmin} />
+            <BrandLogo isCollapsed={isCollapsed} size="md" isAdmin={isAdmin} />
           </Link>
 
           <button

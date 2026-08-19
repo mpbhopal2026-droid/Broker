@@ -14,6 +14,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   className = '',
   isCollapsed = false,
   size = 'md',
+  showTagline = true,
   isAdmin = false,
 }) => {
   const iconSizes = {
@@ -22,50 +23,80 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
     lg: 'w-9 h-9',
   };
 
-  const textSizes = {
-    sm: 'text-sm',
-    md: 'text-base',
-    lg: 'text-lg',
+  const titleSizes = {
+    sm: 'text-base font-black',
+    md: 'text-lg font-black',
+    lg: 'text-xl font-black',
+  };
+
+  const taglineSizes = {
+    sm: 'text-[8.5px]',
+    md: 'text-[9.5px]',
+    lg: 'text-[11px]',
   };
 
   return (
     <div className={`flex items-center gap-2.5 select-none ${className}`}>
-      {/* Precision Stylized G Emblem */}
+      {/* Precision Globe with Upward Green Growth Bars & Trend Arrow */}
       <div className={`relative ${iconSizes[size]} shrink-0 flex items-center justify-center`}>
         <svg
-          viewBox="0 0 40 40"
+          viewBox="0 0 44 44"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="w-full h-full"
+          className="w-full h-full drop-shadow-xs"
         >
-          {/* Green G Ring */}
+          {/* Blue Globe Circle Background & Grid */}
+          <circle cx="22" cy="22" r="18" stroke="#1d4ed8" strokeWidth="2.2" fill="#eff6ff" className="dark:fill-blue-950/40 dark:stroke-blue-500" />
+          <ellipse cx="22" cy="22" rx="9" ry="18" stroke="#3b82f6" strokeWidth="1.5" className="dark:stroke-blue-400" />
+          <line x1="4" y1="22" x2="40" y2="22" stroke="#3b82f6" strokeWidth="1.5" className="dark:stroke-blue-400" />
+          <line x1="7" y1="13" x2="37" y2="13" stroke="#93c5fd" strokeWidth="1.1" className="dark:stroke-blue-700" />
+          <line x1="7" y1="31" x2="37" y2="31" stroke="#93c5fd" strokeWidth="1.1" className="dark:stroke-blue-700" />
+
+          {/* Ascending Green Growth Candlesticks & Arrow */}
+          <rect x="11" y="27" width="2.4" height="6" rx="0.5" fill="#00875a" />
+          <rect x="17" y="21" width="2.4" height="12" rx="0.5" fill="#00875a" />
+          <rect x="23" y="24" width="2.4" height="9" rx="0.5" fill="#00875a" />
+          <rect x="29" y="15" width="2.4" height="18" rx="0.5" fill="#00875a" />
           <path
-            d="M20 5C11.7157 5 5 11.7157 5 20C5 28.2843 11.7157 35 20 35C27.5 35 33.7 29.5 34.8 22.5H20V17.5H39.8C39.9 18.3 40 19.1 40 20C40 31.0457 31.0457 40 20 40C8.9543 40 0 31.0457 0 20C0 8.9543 8.9543 0 20 0C26.5 0 32.2 3.1 35.8 7.9L31.8 11.9C29.1 8.2 24.8 5 20 5Z"
-            fill="url(#gf-gradient)"
+            d="M12 28L18 22L24 25L34 13"
+            stroke="#00875a"
+            strokeWidth="2.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
-          {/* Inner Mint Accent Dot / Tick */}
-          <rect x="22" y="17.5" width="13" height="5" rx="1" fill="#00d674" />
-          <defs>
-            <linearGradient id="gf-gradient" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#00875a" />
-              <stop offset="1" stopColor="#064e3b" />
-            </linearGradient>
-          </defs>
+          <path
+            d="M28 13H34V19"
+            stroke="#00875a"
+            strokeWidth="2.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </div>
 
-      {/* Brand Text */}
+      {/* Brand Text Typography */}
       {!isCollapsed && (
-        <div className="flex items-center gap-1.5 leading-none">
-          <span
-            className={`font-extrabold tracking-tight text-zinc-950 dark:text-white uppercase font-sans ${textSizes[size]}`}
-          >
-            GLOBAL FOREX
-          </span>
-          {isAdmin && (
-            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-sans uppercase bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800">
-              Admin
+        <div className="flex flex-col leading-none text-left">
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`tracking-tight text-[#0f2942] dark:text-white font-sans ${titleSizes[size]}`}
+            >
+              GLOBAL
             </span>
+            {isAdmin && (
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-sans uppercase bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800">
+                Admin
+              </span>
+            )}
+          </div>
+          {showTagline && (
+            <div
+              className={`flex items-center justify-between font-black tracking-[0.28em] text-[#00875a] font-sans mt-0.5 ${taglineSizes[size]}`}
+            >
+              <span>—</span>
+              <span>FOREX</span>
+              <span>—</span>
+            </div>
           )}
         </div>
       )}
