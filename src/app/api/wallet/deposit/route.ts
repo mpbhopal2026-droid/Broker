@@ -33,15 +33,16 @@ export async function POST(req: NextRequest) {
     if (!Number.isFinite(amountINR) || amountINR < MIN_INR || amountINR > MAX_INR) {
       return fail(400, `Enter an amount between ₹${MIN_INR.toLocaleString('en-IN')} and ₹${MAX_INR.toLocaleString('en-IN')}.`);
     }
-    if (!paymentMode) return fail(400, 'Select a payment mode.');
     if (!utrNumber || !/^[A-Za-z0-9]{6,40}$/.test(utrNumber)) {
       return fail(400, 'Enter the UTR / reference number from your payment.');
     }
 
-    if (proofImagePath) {
-      const verdict = await verifyUploadedFile(BUCKETS.proof, proofImagePath, user.id);
-      if (!verdict.ok) return fail(400, verdict.error);
+    if (!proofImagePath) {
+      return fail(400, 'Payment proof screenshot is mandatory to verify and credit your deposit.');
     }
+
+    const verdict = await verifyUploadedFile(BUCKETS.proof, proofImagePath, user.id);
+    if (!verdict.ok) return fail(400, verdict.error);
 
     const db = getServiceClient();
     if (!db) return fail(503, 'Deposits are not available right now.');

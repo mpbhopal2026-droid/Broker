@@ -31,27 +31,39 @@ export const AdminReviewDepositModal: React.FC<AdminReviewDepositModalProps> = (
   const [isRejecting, setIsRejecting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  if (!isOpen || !deposit) return null;
-
-  const inrAmount = deposit.amountINR || deposit.amount * paymentSettings.usdToInrRate;
+  const inrAmount = deposit?.amountINR || (deposit ? deposit.amount * paymentSettings.usdToInrRate : 0);
   const rate = paymentSettings.usdToInrRate || 84.5;
   const commPercent = (paymentSettings.commissionPercent ?? 0) || 2.0;
   const grossUSD = inrAmount / rate;
   const commissionUSD = grossUSD * (commPercent / 100);
   const netUSD = grossUSD - commissionUSD;
 
+  const [customCreditUSD, setCustomCreditUSD] = useState<string>(String(netUSD.toFixed(2)));
+
+  // Sync state when deposit changes
+  React.useEffect(() => {
+    if (deposit) {
+      const calcGross = (deposit.amountINR || deposit.amount * rate) / rate;
+      const calcComm = calcGross * (commPercent / 100);
+      setCustomCreditUSD(String((calcGross - calcComm).toFixed(2)));
+    }
+  }, [deposit, rate, commPercent]);
+
+  if (!isOpen || !deposit) return null;
+
   const handleApprove = () => {
     setIsLoading(true);
+    const finalCredit = Number(customCreditUSD) || netUSD;
     setTimeout(() => {
-      approveDeposit(deposit.id);
+      approveDeposit(deposit.id, finalCredit);
       setIsLoading(false);
       onClose();
       showToast({
         type: 'success',
         title: 'Deposit Approved',
-        message: `Credited ${formatUSD(netUSD)} to client ledger.`,
+        message: `Credited ${formatUSD(finalCredit)} to client ledger.`,
       });
-    }, 800);
+    }, 500);
   };
 
   const handleReject = () => {

@@ -4,6 +4,7 @@ import { getServiceClient } from './supabase-server';
 import { randomUUID } from './crypto';
 import { log } from './logger';
 import { validateFileBytes } from './file-validation';
+import { uploadToCloudinary } from './cloudinary';
 
 /**
  * Private file storage for KYC documents and payment proofs.
@@ -85,6 +86,23 @@ export async function uploadBufferToStorage(params: {
   buffer: Uint8Array | Buffer;
   mimeType: string;
 }): Promise<{ ok: true; path: string } | { ok: false; error: string }> {
+  // 1. Primary: Cloudinary Storage
+  try {
+    const cloudinaryRes = await uploadToCloudinary({
+      folder: params.bucket as any,
+      userId: params.userId,
+      fileData: Buffer.from(params.buffer),
+      mimeType: params.mimeType,
+    });
+
+    if (cloudinaryRes.ok) {
+      return { ok: true, path: cloudinaryRes.secureUrl };
+    }
+  } catch (cErr) {
+    log.warn('storage', 'Cloudinary upload attempt failed, falling back to Supabase', { error: String(cErr) });
+  }
+
+  // 2. Secondary Fallback: Supabase Storage
   await ensureBucketExists(params.bucket);
   const db = getServiceClient();
   if (!db) return { ok: false, error: 'File storage is not configured.' };

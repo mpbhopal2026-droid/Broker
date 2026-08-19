@@ -16,6 +16,8 @@ import {
 import { useApp } from '@/lib/store';
 import { formatUSD, formatINR } from '@/lib/utils';
 
+import { uploadFile } from '@/lib/client-upload';
+
 interface DepositModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -28,6 +30,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
   const [utrNumber, setUtrNumber] = useState('');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [receiptFile, setReceiptFile] = useState<string | null>(null);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -47,10 +50,33 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
     setTimeout(() => setCopiedField(null), 2000);
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingReceipt(true);
+      const res = await uploadFile(file, 'proof');
+      setUploadingReceipt(false);
+      if (res.ok && res.path) {
+        setReceiptFile(res.path);
+        showToast({ type: 'success', title: 'Receipt Uploaded', message: 'Payment proof saved to Cloudinary.' });
+      } else {
+        showToast({ type: 'error', title: 'Upload Failed', message: res.error || 'Could not upload screenshot.' });
+      }
+    } catch {
+      setUploadingReceipt(false);
+      showToast({ type: 'error', title: 'Upload Failed', message: 'Check your file and try again.' });
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!utrNumber || utrNumber.length < 6) {
       showToast({ type: 'error', title: 'Invalid UTR', message: 'Please enter a valid 12-digit UTR number.' });
+      return;
+    }
+    if (!receiptFile) {
+      showToast({ type: 'error', title: 'Screenshot Required', message: 'Payment screenshot is mandatory to verify your deposit.' });
       return;
     }
     if (numInr < 1000) {
@@ -63,12 +89,12 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
       submitDeposit(
         numInr,
         utrNumber,
-        receiptFile || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400'
+        receiptFile
       );
       setIsLoading(false);
       setIsSubmitted(true);
       showToast({ type: 'success', title: 'Deposit Submitted', message: 'Verification pending by admin.' });
-    }, 1200);
+    }, 800);
   };
 
   const handleResetAndClose = () => {
@@ -219,16 +245,32 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                 />
               </div>
 
-              {/* Screenshot Upload Simulator */}
+              {/* Real Cloudinary Screenshot Upload */}
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Payment Screenshot (Optional)
-                </label>
-                <div className="border border-dashed border-slate-300 rounded-lg p-3 text-center bg-slate-50/50 hover:bg-slate-50 cursor-pointer">
-                  <Upload className="w-4 h-4 text-slate-400 mx-auto mb-1" />
-                  <span className="text-[11px] text-slate-600 block">Click to upload transfer receipt</span>
-                  <span className="text-[9px] text-slate-400 font-mono">PNG, JPG, PDF up to 5MB</span>
+                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700 mb-1">
+                  <span>Payment Screenshot *</span>
+                  <span className={receiptFile ? 'text-emerald-600 font-bold' : 'text-rose-500 font-medium'}>
+                    {receiptFile ? '✓ Attached' : 'Mandatory'}
+                  </span>
                 </div>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  required
+                  onChange={handleFileUpload}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-600 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-[#00875a] file:text-white"
+                />
+                {!receiptFile && (
+                  <p className="text-[10px] text-amber-600 mt-1">
+                    Upload your payment transfer screenshot to verify your deposit.
+                  </p>
+                )}
+                {uploadingReceipt && (
+                  <div className="flex items-center gap-1.5 text-[11px] text-[#00875a] mt-1 font-semibold">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span>Uploading proof to Cloudinary…</span>
+                  </div>
+                )}
               </div>
 
               {/* Conversion Calculator Box */}
@@ -255,8 +297,8 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isLoading}
-              className="w-full py-2.5 rounded-lg bg-slate-950 text-white text-xs font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+              disabled={isLoading || !utrNumber || !receiptFile || uploadingReceipt}
+              className="w-full py-2.5 rounded-xl bg-[#00875a] hover:bg-[#00704a] text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-xs disabled:opacity-40 cursor-pointer"
             >
               {isLoading ? (
                 <>

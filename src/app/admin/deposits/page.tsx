@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CreditCard,
   CheckCircle2,
@@ -19,18 +19,25 @@ import { Transaction } from '@/lib/types';
 export default function AdminDepositsPage() {
   const { transactions, approveDeposit, rejectDeposit, deleteTransaction, paymentSettings } = useAdmin();
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+  const [customCreditUSD, setCustomCreditUSD] = useState<string>('');
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
 
   const deposits = transactions.filter((t) => t.type === 'deposit');
 
+  useEffect(() => {
+    if (selectedTx) {
+      const grossUSD = Number(((selectedTx.amountINR || 0) / paymentSettings.usdToInrRate).toFixed(2));
+      const commissionUSD = Number(((grossUSD * (paymentSettings.commissionPercent ?? 0)) / 100).toFixed(2));
+      const netUSD = Number((grossUSD - commissionUSD).toFixed(2));
+      setCustomCreditUSD(String(netUSD || selectedTx.amount || 0));
+    }
+  }, [selectedTx, paymentSettings]);
+
   const handleApprove = () => {
     if (!selectedTx) return;
-    const grossUSD = Number(((selectedTx.amountINR || 0) / paymentSettings.usdToInrRate).toFixed(2));
-    const commissionUSD = Number(((grossUSD * (paymentSettings.commissionPercent ?? 0)) / 100).toFixed(2));
-    const netUSD = Number((grossUSD - commissionUSD).toFixed(2));
-
-    void approveDeposit(selectedTx.id, netUSD);
+    const finalUSD = Number(customCreditUSD) || Number(((selectedTx.amountINR || 0) / paymentSettings.usdToInrRate).toFixed(2));
+    void approveDeposit(selectedTx.id, finalUSD);
     setSelectedTx(null);
   };
 
@@ -273,9 +280,61 @@ export default function AdminDepositsPage() {
                 </span>
               </div>
               <div className="flex justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <span className="text-slate-500 font-sans">Paid Destination (UPI/Bank):</span>
+                <span className="font-bold text-slate-900 dark:text-white font-mono">{selectedTx.paymentMode || 'Desk Primary UPI'}</span>
+              </div>
+              <div className="flex justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
                 <span className="text-slate-500 font-sans">Submitted On:</span>
                 <span className="text-slate-700 dark:text-slate-300 font-sans">{formatDate(selectedTx.createdAt)}</span>
               </div>
+
+              {/* Editable USD Amount to Credit */}
+              {selectedTx.status === 'pending' && (
+                <div className="p-3.5 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 space-y-2 font-sans">
+                  <div className="flex items-center justify-between text-xs">
+                    <label className="font-bold text-slate-900 dark:text-white">
+                      USD Amount to Credit Client Ledger:
+                    </label>
+                    <span className="text-[10px] text-slate-500 font-mono">
+                      Rate: ₹{paymentSettings.usdToInrRate} / USD
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-500 font-mono">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={customCreditUSD}
+                      onChange={(e) => setCustomCreditUSD(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-700 rounded-lg pl-7 pr-3 py-2 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const grossUSD = Number(((selectedTx.amountINR || 0) / paymentSettings.usdToInrRate).toFixed(2));
+                        const commUSD = Number(((grossUSD * (paymentSettings.commissionPercent ?? 0)) / 100).toFixed(2));
+                        setCustomCreditUSD(String((grossUSD - commUSD).toFixed(2)));
+                      }}
+                      className="px-2 py-0.5 rounded bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-300"
+                    >
+                      With Fee (${((selectedTx.amountINR || 0) / paymentSettings.usdToInrRate * (1 - (paymentSettings.commissionPercent ?? 0) / 100)).toFixed(2)})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const grossUSD = Number(((selectedTx.amountINR || 0) / paymentSettings.usdToInrRate).toFixed(2));
+                        setCustomCreditUSD(String(grossUSD.toFixed(2)));
+                      }}
+                      className="px-2 py-0.5 rounded bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-300"
+                    >
+                      Zero Fee (${((selectedTx.amountINR || 0) / paymentSettings.usdToInrRate).toFixed(2)})
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Live Payment Screenshot */}
               <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 font-sans">

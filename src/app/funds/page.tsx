@@ -157,6 +157,14 @@ export default function MonochromeFundsPage() {
       showToast({ type: 'error', title: 'Invalid UTR', message: 'Please enter a valid 12-digit UTR.' });
       return;
     }
+    if (!proofImage) {
+      showToast({
+        type: 'error',
+        title: 'Payment Screenshot Required',
+        message: 'Payment screenshot is mandatory to verify your UTR and credit your deposit.',
+      });
+      return;
+    }
 
     setDepositLoading(true);
     await submitDeposit(depositINR, depositMethod === 'upi' ? 'UPI QR / Apps' : 'IMPS Bank Transfer', utrNumber, proofImage);
@@ -455,21 +463,32 @@ export default function MonochromeFundsPage() {
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase text-zinc-400 block">Payment Receipt Screenshot (Optional)</label>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[10px] font-bold uppercase">
+                <span className="text-zinc-400">Payment Receipt Screenshot *</span>
+                <span className={proofImage ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}>
+                  {proofImage ? '✓ Screenshot Attached' : 'Mandatory Requirement'}
+                </span>
+              </div>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,application/pdf"
+                required
                 onChange={handleFileUpload}
-                className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs text-zinc-600 dark:text-zinc-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-bold file:bg-zinc-950 file:text-white dark:file:bg-white dark:file:text-zinc-950"
+                className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs text-zinc-600 dark:text-zinc-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-bold file:bg-[#00875a] file:text-white"
               />
+              {!proofImage && (
+                <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                  Please attach a clear payment screenshot or UPI receipt to verify your deposit.
+                </p>
+              )}
             </div>
           </div>
 
           <button
             type="submit"
-            disabled={depositLoading || !utrNumber}
-            className="w-full py-2.5 px-3 rounded-md bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-40 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            disabled={depositLoading || !utrNumber || !proofImage}
+            className="w-full py-2.5 px-3 rounded-xl bg-[#00875a] text-white hover:bg-[#00704a] disabled:opacity-40 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
           >
             {depositLoading ? 'Dispatching to Clearing Desk…' : 'Submit Deposit for Clearance'}
           </button>
