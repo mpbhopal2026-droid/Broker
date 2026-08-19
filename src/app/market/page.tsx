@@ -405,7 +405,7 @@ function InstrumentDetailPageContent() {
             href={`/trade?symbol=${encodeURIComponent(instrument.symbol)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3 py-2 rounded-md bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-xs font-bold transition-colors flex items-center gap-1.5"
+            className="px-4 py-2 rounded-lg bg-[#0a382c] hover:bg-[#064e3b] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
           >
             <span>Full Terminal</span>
             <ExternalLink className="w-3.5 h-3.5" />
@@ -440,7 +440,7 @@ function InstrumentDetailPageContent() {
                 ${displayPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 5 })}
               </div>
               <div className="flex items-center sm:justify-end gap-1.5 text-xs font-semibold tabular-nums">
-                <span className={isDisplayUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
+                <span className={isDisplayUp ? 'text-[#00875a]' : 'text-rose-600'}>
                   {isDisplayUp ? '▲ +' : '▼ -'}${Math.abs(displayDelta).toFixed(2)} ({displayDeltaStr})
                 </span>
                 <span className="text-zinc-400 text-[10px] font-normal">
@@ -451,7 +451,7 @@ function InstrumentDetailPageContent() {
           </div>
 
           {/* 2. Interactive Chart Container */}
-          <div className="rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-4 space-y-4">
+          <div className="rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-4 space-y-4 shadow-2xs">
             
             {/* Chart Mode & Timeframe Selector Bar */}
             <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-zinc-100 dark:border-zinc-900">
@@ -466,10 +466,10 @@ function InstrumentDetailPageContent() {
                       setSelectedTimeframe(tf);
                       setHoveredPoint(null);
                     }}
-                    className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                       selectedTimeframe === tf
-                        ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950'
-                        : 'text-zinc-500 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900'
+                        ? 'bg-[#00875a] text-white shadow-xs'
+                        : 'text-zinc-500 hover:text-[#00875a] hover:bg-[#e6f4ea] dark:hover:bg-emerald-950/40'
                     }`}
                   >
                     {tf}
@@ -478,13 +478,13 @@ function InstrumentDetailPageContent() {
               </div>
 
               {/* Area vs TradingView Candlestick Toggle */}
-              <div className="flex items-center gap-1 p-0.5 rounded-md bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs">
+              <div className="flex items-center gap-1 p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs">
                 <button
                   type="button"
                   onClick={() => setChartMode('area')}
-                  className={`px-2.5 py-1 rounded font-bold transition-colors ${
+                  className={`px-3 py-1 rounded-md font-bold transition-all ${
                     chartMode === 'area'
-                      ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-2xs'
+                      ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-xs'
                       : 'text-zinc-500 hover:text-zinc-950 dark:hover:text-white'
                   }`}
                 >
@@ -493,9 +493,9 @@ function InstrumentDetailPageContent() {
                 <button
                   type="button"
                   onClick={() => setChartMode('candlestick')}
-                  className={`px-2.5 py-1 rounded font-bold transition-colors ${
+                  className={`px-3 py-1 rounded-md font-bold transition-all ${
                     chartMode === 'candlestick'
-                      ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-2xs'
+                      ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-xs'
                       : 'text-zinc-500 hover:text-zinc-950 dark:hover:text-white'
                   }`}
                 >
