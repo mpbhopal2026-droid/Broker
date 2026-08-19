@@ -188,6 +188,24 @@ export const InteractiveMarketChart: React.FC<InteractiveMarketChartProps> = ({
     [data, onHoverPoint]
   );
 
+  // Touch Move / Drag Handler for Mobile & Tablets
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
+      if (!containerRef.current || e.touches.length === 0) return;
+      const touch = e.touches[0];
+      const rect = containerRef.current.getBoundingClientRect();
+      const clientX = touch.clientX - rect.left;
+      const relativeX = Math.max(0, Math.min(1, clientX / rect.width));
+      const closestIndex = Math.round(relativeX * (data.length - 1));
+
+      setHoverIndex(closestIndex);
+      if (onHoverPoint && data[closestIndex]) {
+        onHoverPoint(data[closestIndex]);
+      }
+    },
+    [data, onHoverPoint]
+  );
+
   const handleMouseLeave = useCallback(() => {
     setHoverIndex(null);
     if (onHoverPoint) {
@@ -200,7 +218,11 @@ export const InteractiveMarketChart: React.FC<InteractiveMarketChartProps> = ({
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="w-full relative select-none cursor-crosshair group"
+      onTouchStart={handleTouchMove}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleMouseLeave}
+      onTouchCancel={handleMouseLeave}
+      className="w-full relative select-none cursor-crosshair group touch-none"
       style={{ height: `${height}px` }}
     >
       {/* Background horizontal guide gridlines */}

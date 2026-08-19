@@ -364,7 +364,7 @@ function InstrumentDetailPageContent() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-6 text-zinc-950 dark:text-white select-none">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-32 lg:pb-8 space-y-6 text-zinc-950 dark:text-white select-none">
       
       {/* Top Navigation & Breadcrumb */}
       <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-800">
@@ -621,7 +621,7 @@ function InstrumentDetailPageContent() {
         {/* ═══════════════════════════════════════════════════════════════
             RIGHT COLUMN (5 COLS): STICKY ORDER EXECUTION DESK (GROWW STYLE)
            ═══════════════════════════════════════════════════════════════ */}
-        <div className="lg:col-span-5 xl:col-span-4 sticky top-6 space-y-4">
+        <div id="order-panel" className="lg:col-span-5 xl:col-span-4 sticky top-6 space-y-4">
           
           {/* Order Ticket Card */}
           <div className="rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-4 sm:p-5 space-y-4 shadow-sm">
@@ -882,6 +882,38 @@ function InstrumentDetailPageContent() {
 
         </div>
 
+      </div>
+
+      {/* Mobile Sticky Quick Order Dock (Visible on Mobile/Tablet) */}
+      <div className="lg:hidden fixed bottom-12 inset-x-0 z-30 bg-white/95 dark:bg-black/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 p-2.5 px-4 shadow-xl flex items-center justify-between gap-3">
+        <div className="flex flex-col text-left leading-tight">
+          <span className="text-[10px] text-zinc-400 font-sans uppercase font-bold">{instrument.symbol}</span>
+          <span className="text-xs font-bold tabular-nums text-zinc-950 dark:text-white">
+            ${livePrice.toFixed(instrument.symbol.includes('JPY') ? 2 : 4)}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 flex-1 max-w-xs justify-end">
+          <button
+            type="button"
+            onClick={() => {
+              setOrderSide('SELL');
+              document.getElementById('order-panel')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="flex-1 py-2 px-3 rounded-md bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-wider text-center shadow-xs"
+          >
+            Sell @ {bidPrice}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setOrderSide('BUY');
+              document.getElementById('order-panel')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="flex-1 py-2 px-3 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider text-center shadow-xs"
+          >
+            Buy @ {askPrice}
+          </button>
+        </div>
       </div>
 
       {/* Gatekeeper deposit modal if live zero balance */}
