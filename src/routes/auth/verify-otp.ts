@@ -10,6 +10,7 @@ import { sendMailBestEffort } from '@/lib/mailer';
 import { buildLoginAlertEmailHtml, buildWelcomeEmailHtml } from '@/lib/resend';
 import { UserRole } from '@/lib/permissions';
 import { normalisePhone, maskPhone } from '@/lib/sms';
+import { geoFromHeaders } from '@/lib/geo';
 
 const KNOWN_ROLES: UserRole[] = ['client', 'staff', 'admin', 'developer'];
 function normaliseRole(value: unknown): UserRole {
@@ -295,11 +296,18 @@ export async function POST(req: NextRequest) {
     const role = normaliseRole(profile.role);
     const { cookieValue, sidHash, expiresAt } = await createSessionCookieValue(profile.id, role);
 
+    // Approximate location from edge headers — no IP-geolocation service is
+    // called, so nothing about where an operator signs in leaves our infra.
+    const geo = geoFromHeaders(req.headers);
+
     const { error: sessionError } = await db.from('sessions').insert({
       user_id: profile.id,
       sid_hash: sidHash,
       ip_address: ip,
       user_agent: userAgent,
+      geo_country: geo.country,
+      geo_region: geo.region,
+      geo_city: geo.city,
       expires_at: expiresAt.toISOString(),
     });
 

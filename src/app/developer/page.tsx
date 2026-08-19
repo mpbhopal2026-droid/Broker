@@ -10,6 +10,7 @@ import {
 import { formatDate, formatUSD, formatINR } from '@/lib/utils';
 import { UserRole, ROLE_LABELS } from '@/lib/permissions';
 import { AdminRolePromoteModal } from '@/components/admin/modals/AdminRolePromoteModal';
+import { OperatorAccessLog } from '@/components/developer/OperatorAccessLog';
 
 interface FeatureFlag {
   key: string;
@@ -31,7 +32,7 @@ interface Health {
   ledgerDrift: Array<{ user_id: string; email: string; drift: number }>;
 }
 
-type Tab = 'users' | 'notifications_lab' | 'emails' | 'logins' | 'actions' | 'flags' | 'diagnostics';
+type Tab = 'users' | 'sessions' | 'notifications_lab' | 'emails' | 'logins' | 'actions' | 'flags' | 'diagnostics';
 type RoleFilter = 'all' | 'client' | 'staff' | 'admin' | 'developer';
 
 export default function DeveloperPage() {
@@ -464,6 +465,18 @@ export default function DeveloperPage() {
         >
           <Lock className="w-4 h-4 text-emerald-500" />
           <span>Auth & Sessions</span>
+        </button>
+
+        <button
+          onClick={() => setTab('sessions')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+            tab === 'sessions'
+              ? 'bg-white dark:bg-[#0f172a] text-slate-900 dark:text-white shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Radio className="w-4 h-4 text-amber-500" />
+          <span>Operator Access</span>
         </button>
 
         <button
@@ -1087,6 +1100,8 @@ export default function DeveloperPage() {
       {/* ========================================================================= */}
       {/* TAB 4: AUTH & LOGIN LOGS */}
       {/* ========================================================================= */}
+      {tab === 'sessions' && <OperatorAccessLog />}
+
       {tab === 'logins' && (
         <div className="rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
           {/* Mobile Card List */}

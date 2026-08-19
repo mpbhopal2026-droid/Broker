@@ -81,6 +81,27 @@ export async function GET(req: NextRequest) {
       return ok({ emails: data ?? [], deliveryHealth: health ?? [] });
     }
 
+    // Operator access history: who signed in, from where, on what, and whether
+    // that session is still live.
+    //
+    // The view itself filters to admin/staff/developer. Client sessions are in
+    // the same table but are never surfaced — logging where your own staff
+    // access an administrative system is ordinary security practice; building a
+    // picture of where your customers are is a different thing entirely, and
+    // the column existing is not a reason to read it.
+    if (view === 'sessions') {
+      const { data, error } = await db
+        .from('operator_session_log')
+        .select('*')
+        .limit(limit);
+
+      if (error) {
+        // The view may not exist until supabase/session-location.sql has run.
+        return ok({ sessions: [], note: 'Run supabase/session-location.sql to enable session tracking.' });
+      }
+      return ok({ sessions: data ?? [] });
+    }
+
     if (view === 'logins') {
       const { data } = await db
         .from('audit_logs')
