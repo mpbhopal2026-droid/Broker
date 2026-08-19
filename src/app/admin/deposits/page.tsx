@@ -13,16 +13,19 @@ import {
 } from 'lucide-react';
 import { KycDocumentImage } from '@/components/admin/KycDocumentImage';
 import { useAdmin } from '@/lib/admin-store';
+import { useApp } from '@/lib/store';
 import { formatUSD, formatINR, formatDate } from '@/lib/utils';
 import { Transaction } from '@/lib/types';
 
 export default function AdminDepositsPage() {
+  const { currentUser } = useApp();
   const { transactions, approveDeposit, rejectDeposit, deleteTransaction, paymentSettings, getClientPaymentConfig } = useAdmin();
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [customCreditUSD, setCustomCreditUSD] = useState<string>('');
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
 
+  const isDeveloper = currentUser?.role === 'developer';
   const deposits = transactions.filter((t) => t.type === 'deposit');
 
   const getRoutingInfo = (tx: Transaction) => {
@@ -267,19 +270,21 @@ export default function AdminDepositsPage() {
                               </button>
                             )}
 
-                            {/* Delete Transaction Button */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (confirm(`Are you sure you want to permanently delete deposit record UTR ${tx.utrNumber || tx.id}?`)) {
-                                  void deleteTransaction(tx.id);
-                                }
-                              }}
-                              className="p-1.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/60 text-slate-400 hover:text-rose-600 transition-colors"
-                              title="Delete Deposit Record"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
+                            {/* Delete Transaction Button (Developer Only) */}
+                            {isDeveloper && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm(`Are you sure you want to permanently delete deposit record UTR ${tx.utrNumber || tx.id}? (Developer action)`)) {
+                                    void deleteTransaction(tx.id);
+                                  }
+                                }}
+                                className="p-1.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/60 text-slate-400 hover:text-rose-600 transition-colors"
+                                title="Delete Deposit Record (Developer Only)"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -449,36 +454,40 @@ export default function AdminDepositsPage() {
                     Approve & Credit Balance
                   </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (confirm(`Are you sure you want to permanently delete this deposit record?`)) {
-                      void deleteTransaction(selectedTx.id);
-                      setSelectedTx(null);
-                    }
-                  }}
-                  className="w-full py-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-semibold transition-colors"
-                >
-                  Delete Deposit Record
-                </button>
+                {isDeveloper && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm(`Are you sure you want to permanently delete this deposit record? (Developer action)`)) {
+                        void deleteTransaction(selectedTx.id);
+                        setSelectedTx(null);
+                      }
+                    }}
+                    className="w-full py-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-semibold transition-colors"
+                  >
+                    Delete Deposit Record (Developer Only)
+                  </button>
+                )}
               </div>
             ) : (
               <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between font-sans text-xs">
                 <span className="text-slate-400">
                   Status: <strong className="uppercase text-slate-700 dark:text-slate-300">{selectedTx.status}</strong>
                 </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (confirm(`Are you sure you want to permanently delete this deposit record?`)) {
-                      void deleteTransaction(selectedTx.id);
-                      setSelectedTx(null);
-                    }
-                  }}
-                  className="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold transition-colors"
-                >
-                  Delete Record
-                </button>
+                {isDeveloper && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm(`Are you sure you want to permanently delete this deposit record? (Developer action)`)) {
+                        void deleteTransaction(selectedTx.id);
+                        setSelectedTx(null);
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold transition-colors"
+                  >
+                    Delete Record
+                  </button>
+                )}
               </div>
             )}
           </div>

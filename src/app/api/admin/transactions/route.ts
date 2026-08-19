@@ -260,6 +260,9 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const admin = await requireAdmin();
+    if (admin.role !== 'developer') {
+      return fail(403, 'Permission denied. Only Developer accounts can permanently delete transaction records.');
+    }
     const db = getServiceClient();
     if (!db) return fail(503, 'Not available.');
 

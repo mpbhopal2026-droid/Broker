@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { KycDocumentImage } from '@/components/admin/KycDocumentImage';
 import { useAdmin } from '@/lib/admin-store';
+import { useApp } from '@/lib/store';
 import { formatUSD, formatINR } from '@/lib/utils';
 import { Transaction } from '@/lib/types';
 
@@ -27,10 +28,13 @@ export const AdminReviewDepositModal: React.FC<AdminReviewDepositModalProps> = (
   isOpen,
   onClose,
 }) => {
+  const { currentUser } = useApp();
   const { approveDeposit, rejectDeposit, deleteTransaction, paymentSettings, getClientPaymentConfig, showToast } = useAdmin();
   const [rejectReason, setRejectReason] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const isDeveloper = currentUser?.role === 'developer';
 
   const inrAmount = deposit?.amountINR || (deposit ? deposit.amount * paymentSettings.usdToInrRate : 0);
   const rate = paymentSettings.usdToInrRate || 84.5;
@@ -237,19 +241,21 @@ export const AdminReviewDepositModal: React.FC<AdminReviewDepositModalProps> = (
                 >
                   Reject
                 </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (confirm(`Are you sure you want to permanently delete this deposit record?`)) {
-                      await deleteTransaction(deposit.id);
-                      onClose();
-                    }
-                  }}
-                  className="px-3 py-2.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold border border-rose-200 transition-colors"
-                  title="Delete Record"
-                >
-                  Delete
-                </button>
+                {isDeveloper && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (confirm(`Are you sure you want to permanently delete this deposit record? (Developer action)`)) {
+                        await deleteTransaction(deposit.id);
+                        onClose();
+                      }
+                    }}
+                    className="px-3 py-2.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold border border-rose-200 transition-colors"
+                    title="Delete Record (Developer Only)"
+                  >
+                    Delete
+                  </button>
+                )}
               </>
             ) : (
               <>
