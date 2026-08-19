@@ -37,10 +37,10 @@ export const AccountModeSwitch: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-2">
       {/* Sleek Minimalist Toggle */}
       <div
-        className="flex items-center p-0.5 rounded-md bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
+        className="flex items-center p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs"
         role="group"
         aria-label="Account mode"
       >
@@ -49,15 +49,15 @@ export const AccountModeSwitch: React.FC = () => {
           onClick={handleSwitchToDemo}
           aria-pressed={isDemo}
           title={!canUseDemo ? 'Demo mode is disabled by developer policy' : 'Practice with virtual demo balance'}
-          className={`px-2.5 py-1 rounded text-xs transition-colors flex items-center gap-1.5 ${
+          className={`px-3 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 ${
             isDemo
-              ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-bold'
+              ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-xs font-bold'
               : !canUseDemo
               ? 'opacity-40 cursor-not-allowed text-zinc-400'
               : 'text-zinc-500 hover:text-zinc-950 dark:hover:text-white'
           }`}
         >
-          <FlaskConical className="w-3.5 h-3.5" aria-hidden="true" />
+          <span className="text-[10px]">👤</span>
           <span>Demo</span>
         </button>
 
@@ -65,19 +65,19 @@ export const AccountModeSwitch: React.FC = () => {
           type="button"
           onClick={handleSwitchToLive}
           aria-pressed={!isDemo}
-          className={`px-2.5 py-1 rounded text-xs transition-colors flex items-center gap-1.5 ${
+          className={`px-3 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 ${
             !isDemo
-              ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-bold'
+              ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-xs font-bold'
               : 'text-zinc-500 hover:text-zinc-950 dark:hover:text-white'
           }`}
         >
-          <Wallet className="w-3.5 h-3.5" aria-hidden="true" />
+          <span className="w-2 h-2 rounded-full bg-[#00875a] shrink-0" />
           <span>Live</span>
         </button>
       </div>
 
       {/* Money Showcase Window */}
-      <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs font-bold text-zinc-950 dark:text-white tabular-nums">
+      <div className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-bold text-zinc-950 dark:text-white">
         <span>{formatUSD(balance)}</span>
       </div>
     </div>

@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 
 interface BrandLogoProps {
   className?: string;
@@ -15,104 +14,58 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   className = '',
   isCollapsed = false,
   size = 'md',
-  showTagline = true,
   isAdmin = false,
 }) => {
   const iconSizes = {
     sm: 'w-7 h-7',
     md: 'w-8 h-8',
-    lg: 'w-10 h-10',
+    lg: 'w-9 h-9',
   };
 
-  const titleSizes = {
+  const textSizes = {
     sm: 'text-sm',
     md: 'text-base',
-    lg: 'text-xl',
+    lg: 'text-lg',
   };
 
   return (
     <div className={`flex items-center gap-2.5 select-none ${className}`}>
-      {/* Precision Brand Emblem */}
+      {/* Precision Stylized G Emblem */}
       <div className={`relative ${iconSizes[size]} shrink-0 flex items-center justify-center`}>
         <svg
-          viewBox="0 0 44 44"
+          viewBox="0 0 40 40"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="w-full h-full drop-shadow-xs"
+          className="w-full h-full"
         >
-          {/* Outer Ring & Globe Latitudes */}
-          <circle
-            cx="22"
-            cy="22"
-            r="19"
-            stroke="currentColor"
-            className="text-zinc-900 dark:text-zinc-100"
-            strokeWidth="2.2"
-            fill="currentColor"
-            fillOpacity="0.04"
-          />
-          <ellipse
-            cx="22"
-            cy="22"
-            rx="9"
-            ry="19"
-            stroke="currentColor"
-            className="text-zinc-400 dark:text-zinc-600"
-            strokeWidth="1.4"
-          />
-          <line
-            x1="3"
-            y1="22"
-            x2="41"
-            y2="22"
-            stroke="currentColor"
-            className="text-zinc-400 dark:text-zinc-600"
-            strokeWidth="1.4"
-          />
-          
-          {/* Institutional Emerald Bullish Candlesticks & Trend Trajectory */}
-          <rect x="11" y="26" width="2.4" height="7" rx="0.6" fill="#00875a" />
-          <rect x="17" y="20" width="2.4" height="13" rx="0.6" fill="#00875a" />
-          <rect x="23" y="23" width="2.4" height="10" rx="0.6" fill="#00875a" />
-          <rect x="29" y="14" width="2.4" height="19" rx="0.6" fill="#00875a" />
+          {/* Green G Ring */}
           <path
-            d="M12 27L18 21L24 24L34 12"
-            stroke="#00875a"
-            strokeWidth="2.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            d="M20 5C11.7157 5 5 11.7157 5 20C5 28.2843 11.7157 35 20 35C27.5 35 33.7 29.5 34.8 22.5H20V17.5H39.8C39.9 18.3 40 19.1 40 20C40 31.0457 31.0457 40 20 40C8.9543 40 0 31.0457 0 20C0 8.9543 8.9543 0 20 0C26.5 0 32.2 3.1 35.8 7.9L31.8 11.9C29.1 8.2 24.8 5 20 5Z"
+            fill="url(#gf-gradient)"
           />
-          <path
-            d="M28 12H34V18"
-            stroke="#00875a"
-            strokeWidth="2.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          {/* Inner Mint Accent Dot / Tick */}
+          <rect x="22" y="17.5" width="13" height="5" rx="1" fill="#00d674" />
+          <defs>
+            <linearGradient id="gf-gradient" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#00875a" />
+              <stop offset="1" stopColor="#064e3b" />
+            </linearGradient>
+          </defs>
         </svg>
       </div>
 
-      {/* Brand Text Typography */}
+      {/* Brand Text */}
       {!isCollapsed && (
-        <div className="flex flex-col leading-none text-left">
-          <div className="flex items-center gap-1.5">
-            <span
-              className={`font-black tracking-tight text-zinc-950 dark:text-white font-sans uppercase ${titleSizes[size]}`}
-            >
-              GLOBAL
+        <div className="flex items-center gap-1.5 leading-none">
+          <span
+            className={`font-extrabold tracking-tight text-zinc-950 dark:text-white uppercase font-sans ${textSizes[size]}`}
+          >
+            GLOBAL FOREX
+          </span>
+          {isAdmin && (
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-sans uppercase bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800">
+              Admin
             </span>
-            {isAdmin && (
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-sans uppercase bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700">
-                Admin
-              </span>
-            )}
-          </div>
-          {showTagline && (
-            <div className="flex items-center justify-between text-[9px] font-extrabold tracking-[0.26em] text-[#00875a] font-sans mt-0.5">
-              <span>—</span>
-              <span>FOREX</span>
-              <span>—</span>
-            </div>
           )}
         </div>
       )}

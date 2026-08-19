@@ -94,7 +94,7 @@ export const AppSidebar: React.FC = () => {
         {/* Primary Navigation */}
         <div className="space-y-1">
           {!isCollapsed && (
-            <div className="px-2.5 pb-1 text-[10px] font-mono uppercase font-bold text-zinc-400">
+            <div className="px-2.5 pb-1 text-[10px] font-sans uppercase font-bold tracking-wider text-zinc-400">
               {isAdmin ? 'Administration' : 'Trading Desk'}
             </div>
           )}
@@ -106,14 +106,14 @@ export const AppSidebar: React.FC = () => {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-medium transition-colors ${
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-colors font-sans ${
                   isActive
-                    ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-semibold'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-white'
+                    ? 'bg-[#e6f4ea] dark:bg-emerald-950/50 text-[#00875a] dark:text-emerald-400 font-bold'
+                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-white font-medium'
                 }`}
                 title={isCollapsed ? item.label : undefined}
               >
-                <Icon className="w-4 h-4 shrink-0" />
+                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#00875a] dark:text-emerald-400' : ''}`} />
                 {!isCollapsed && <span>{item.label}</span>}
               </Link>
             );
@@ -124,7 +124,7 @@ export const AppSidebar: React.FC = () => {
         {!isAdmin && (
           <div className="space-y-1 pt-3 border-t border-zinc-100 dark:border-zinc-900">
             {!isCollapsed && (
-              <div className="px-2.5 pb-1 text-[10px] font-mono uppercase font-bold text-zinc-400">
+              <div className="px-2.5 pb-1 text-[10px] font-sans uppercase font-bold tracking-wider text-zinc-400">
                 Account & Security
               </div>
             )}
@@ -136,14 +136,14 @@ export const AppSidebar: React.FC = () => {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-medium transition-colors ${
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-colors font-sans ${
                     isActive
-                      ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-semibold'
-                      : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-white'
+                      ? 'bg-[#e6f4ea] dark:bg-emerald-950/50 text-[#00875a] dark:text-emerald-400 font-bold'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-white font-medium'
                   }`}
                   title={isCollapsed ? item.label : undefined}
                 >
-                  <Icon className="w-4 h-4 shrink-0" />
+                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#00875a] dark:text-emerald-400' : ''}`} />
                   {!isCollapsed && <span>{item.label}</span>}
                 </Link>
               );
@@ -153,16 +153,14 @@ export const AppSidebar: React.FC = () => {
 
       </div>
 
-      {/* Bottom User Bar */}
-      <div className="p-3 border-t border-zinc-200 dark:border-zinc-800">
+      {/* Bottom Sign Out */}
+      <div className="p-3 border-t border-zinc-100 dark:border-zinc-900">
         <button
           onClick={() => logout()}
-          className={`w-full flex items-center gap-2 px-2 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-white rounded-md transition-colors ${
-            isCollapsed ? 'justify-center' : 'justify-start'
-          }`}
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-sans font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-white transition-colors"
           title="Sign Out"
         >
-          <LogOut className="w-4 h-4 shrink-0" />
+          <LogOut className="w-4 h-4 shrink-0 text-zinc-500" />
           {!isCollapsed && <span>Sign Out</span>}
         </button>
       </div>
