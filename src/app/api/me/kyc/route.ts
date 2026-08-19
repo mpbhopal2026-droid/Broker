@@ -118,6 +118,23 @@ export async function POST(req: NextRequest) {
     if (body.bankAccountNumber) profileUpdates.bank_account_number = cleanString(body.bankAccountNumber, 50);
     if (body.bankIfsc) profileUpdates.bank_ifsc = cleanString(body.bankIfsc, 20)?.toUpperCase();
     if (body.upiId) profileUpdates.user_upi_id = cleanString(body.upiId, 100);
+    // PAN was collected by the form, validated, sent here — and then dropped,
+    // because nothing read the field and no column existed. The client believed
+    // their tax identifier was on record when it was not, and the reviewer had
+    // nothing to check the uploaded card against.
+    //
+    // Encrypted at rest like the KYC document number, with a masked copy so an
+    // operator can eyeball a match without the plaintext reaching the browser.
+    const panNumber = cleanString(body.panNumber, 10)?.toUpperCase();
+    if (panNumber) {
+      if (!DOC_PATTERNS.pan.test(panNumber)) {
+        return fail(400, 'That does not look like a valid PAN number.');
+      }
+      profileUpdates.pan_number_masked = maskIdentifier(panNumber);
+      const panEncrypted = await encryptField(panNumber);
+      if (panEncrypted) profileUpdates.pan_number_encrypted = panEncrypted;
+    }
+
     if (body.streetAddress) profileUpdates.address = cleanString(body.streetAddress, 255);
     if (body.city) profileUpdates.city = cleanString(body.city, 100);
     if (body.state) profileUpdates.state = cleanString(body.state, 100);
