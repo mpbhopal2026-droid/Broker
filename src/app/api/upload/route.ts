@@ -3,6 +3,7 @@ import { requireUser, requireCapability, auditServer } from '@/lib/auth-server';
 import { rateLimit } from '@/lib/rate-limit';
 import { ok, fail, tooManyRequests, cleanString, handleRouteError } from '@/lib/api';
 import { BUCKETS, createUploadTarget, createSignedReadUrl, uploadBufferToStorage } from '@/lib/storage';
+import { extractAadhaar, extractPan } from '@/lib/document-ocr';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -40,24 +41,55 @@ export async function POST(req: NextRequest) {
         return fail(400, 'purpose must be "kyc", "proof" or "support".');
       }
 
+      // Only KYC images are OCR'd, and only when the caller asks. The add-on is
+      // billed per call, so a payment screenshot should not trigger one.
+      const wantsOcr = purpose === 'kyc' && formData.get('ocr') === 'true';
+
       const buffer = Buffer.from(await file.arrayBuffer());
       const result = await uploadBufferToStorage({
         bucket: PURPOSE_TO_BUCKET[purpose],
         userId: user.id,
         buffer,
         mimeType: file.type || 'image/jpeg',
+        ocr: wantsOcr,
       });
 
       if (!result.ok) {
         return fail(500, result.error);
       }
 
+      // Read the number off the card, server-side.
+      //
+      // Only a candidate that passes the same validation a typed number would
+      // is returned — Verhoeff for Aadhaar, the format check for PAN. OCR
+      // confuses 5 with 6 and 0 with O routinely, and a wrong number sitting in
+      // a field the client assumes was verified is worse than an empty one.
+      // Nothing here is stored; it lands in an editable input for them to
+      // confirm.
+      const docType = String(formData.get('documentType') || '');
+      let detectedNumber: string | null = null;
+      let detectionReason: string | undefined;
+
+      if (result.ocrText) {
+        const extracted =
+          docType === 'pan' ? extractPan(result.ocrText) : extractAadhaar(result.ocrText);
+        detectedNumber = extracted.value;
+        detectionReason = extracted.reason;
+      }
+
       await auditServer(req, 'FILE_UPLOADED_DIRECT', {
         userId: user.id,
-        metadata: { purpose, path: result.path, sizeBytes: file.size },
+        // The extracted number is deliberately not audited — it is an identity
+        // document number, and the audit trail is not where it belongs.
+        metadata: { purpose, path: result.path, sizeBytes: file.size, ocrAttempted: wantsOcr },
       });
 
-      return ok({ path: result.path, ok: true });
+      return ok({
+        path: result.path,
+        ok: true,
+        detectedNumber,
+        detectionReason,
+      });
     }
 
     // JSON upload target or direct base64 data URL
@@ -129,7 +161,11 @@ export async function GET(req: NextRequest) {
     if (!purpose || !(purpose in PURPOSE_TO_BUCKET)) return fail(400, 'Invalid purpose.');
     if (!path || path.includes('..') || path.includes('//')) return fail(400, 'Invalid path.');
 
-    const isOwner = path.startsWith(`${user.id}/`);
+    // Supabase paths are "<userId>/file"; Cloudinary public ids are
+    // "kyc-documents/<userId>/file". Checking only the first form meant a client
+    // could not view the document they had just uploaded — the request fell
+    // through to the reviewer branch and 403'd on their own file.
+    const isOwner = path.startsWith(`${user.id}/`) || path.includes(`/${user.id}/`);
 
     if (!isOwner) {
       // Not your file — you need review rights. requireCapability throws 403.

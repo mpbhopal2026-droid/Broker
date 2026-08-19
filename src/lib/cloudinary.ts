@@ -53,7 +53,9 @@ export async function uploadToCloudinary(params: {
   fileData: string | Buffer; // base64 data URL, remote URL, or Buffer
   mimeType?: string;
   isPrivate?: boolean;
-}): Promise<{ ok: true; url: string; publicId: string; secureUrl: string } | { ok: false; error: string }> {
+  /** Ask Cloudinary to OCR the image and return the text it found. */
+  ocr?: boolean;
+}): Promise<{ ok: true; url: string; publicId: string; secureUrl: string; ocrText?: string } | { ok: false; error: string }> {
   try {
     const timestamp = Math.floor(Date.now() / 1000);
     const targetFolder = `${params.folder}/${params.userId}`;
@@ -91,6 +93,10 @@ export async function uploadToCloudinary(params: {
     formData.append('timestamp', String(timestamp));
     formData.append('folder', targetFolder);
     if (isPrivate) formData.append('type', 'authenticated');
+    // adv_ocr is a paid Cloudinary add-on. Requested unsigned so that an
+    // account without it still uploads successfully — the document is what
+    // matters; reading the number off it is a convenience.
+    if (params.ocr) formData.append('ocr', 'adv_ocr');
     formData.append('signature', signature);
 
     const uploadEndpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/auto/upload`;
@@ -115,6 +121,9 @@ export async function uploadToCloudinary(params: {
       url: data.url,
       secureUrl: data.secure_url,
       publicId: data.public_id,
+      // Present only when the adv_ocr add-on is enabled on the account. Absent
+      // is normal and not an error — the document uploaded either way.
+      ocrText: data?.info?.ocr?.adv_ocr?.data?.[0]?.textAnnotations?.[0]?.description,
     };
   } catch (err: any) {
     log.error('cloudinary', 'upload exception', { error: String(err) });

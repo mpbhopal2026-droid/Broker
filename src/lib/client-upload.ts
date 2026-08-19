@@ -14,11 +14,21 @@ export interface UploadResult {
   ok: boolean;
   path?: string;
   error?: string;
+  /** Number read off the card, returned only when it passed validation. */
+  detectedNumber?: string | null;
+  /** Why nothing was returned, so the UI can explain rather than stay silent. */
+  detectionReason?: string;
 }
 
 export async function uploadFile(
   file: File,
-  purpose: 'kyc' | 'proof' | 'support'
+  purpose: 'kyc' | 'proof' | 'support',
+  /**
+   * Read the document number off the image. Each call bills a paid OCR add-on,
+   * so it is passed only for the identity cards that actually need it — never
+   * for a payment screenshot.
+   */
+  ocr?: { documentType: 'aadhaar' | 'pan' }
 ): Promise<UploadResult> {
   try {
     // 0. Inspect the actual bytes before uploading anything.
@@ -35,6 +45,10 @@ export async function uploadFile(
       const formData = new FormData();
       formData.append('file', file);
       formData.append('purpose', purpose);
+      if (ocr) {
+        formData.append('ocr', 'true');
+        formData.append('documentType', ocr.documentType);
+      }
 
       const res = await fetch('/api/upload', {
         method: 'POST',

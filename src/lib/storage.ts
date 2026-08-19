@@ -90,7 +90,9 @@ export async function uploadBufferToStorage(params: {
   userId: string;
   buffer: Uint8Array | Buffer;
   mimeType: string;
-}): Promise<{ ok: true; path: string } | { ok: false; error: string }> {
+  /** Read the document number off the image. KYC uploads only. */
+  ocr?: boolean;
+}): Promise<{ ok: true; path: string; ocrText?: string } | { ok: false; error: string }> {
   // 1. Primary: Cloudinary Storage
   try {
     const cloudinaryRes = await uploadToCloudinary({
@@ -98,6 +100,7 @@ export async function uploadBufferToStorage(params: {
       userId: params.userId,
       fileData: Buffer.from(params.buffer),
       mimeType: params.mimeType,
+      ocr: params.ocr,
     });
 
     if (cloudinaryRes.ok) {
@@ -107,7 +110,7 @@ export async function uploadBufferToStorage(params: {
       // verifyUploadedFile checks ownership against — and lets delivery be
       // signed fresh on each view rather than baking in a link that never
       // expires.
-      return { ok: true, path: cloudinaryRes.publicId };
+      return { ok: true, path: cloudinaryRes.publicId, ocrText: cloudinaryRes.ocrText };
     }
   } catch (cErr) {
     log.warn('storage', 'Cloudinary upload attempt failed, falling back to Supabase', { error: String(cErr) });

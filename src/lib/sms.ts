@@ -50,6 +50,11 @@ export function normalisePhone(raw: string): string | null {
   // Already has 91 but no plus
   if (/^91[6-9]\d{9}$/.test(trimmed)) return `+${trimmed}`;
 
+  // "91+9979388603" — the plus typed after the country code rather than before.
+  // Real numbers arrived in this shape, and rejecting them meant the account
+  // was created with an unusable number that phone sign-in could never match.
+  if (/^91\+[6-9]\d{9}$/.test(trimmed)) return `+${trimmed.replace('+', '')}`;
+
   return null;
 }
 

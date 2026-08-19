@@ -53,6 +53,10 @@ export default function ClientKycRealityPage() {
   // Form State: 1. Identity & Documents
   const [fullName, setFullName] = useState(currentUser?.fullName ?? '');
   const [aadhaarNumber, setAadhaarNumber] = useState('');
+  // Whether the number below was read off the card rather than typed. Shown to
+  // the client so they know to check it — an auto-filled field that looks typed
+  // invites being skipped over.
+  const [aadhaarAutoFilled, setAadhaarAutoFilled] = useState(false);
   const [panNumber, setPanNumber] = useState('');
   const [aadhaarFront, setAadhaarFront] = useState<string>('');
   const [aadhaarBack, setAadhaarBack] = useState<string>('');
@@ -106,11 +110,34 @@ export default function ClientKycRealityPage() {
     else setUploadingBack(true);
 
     try {
-      const res = await uploadFile(file, 'kyc');
+      // Only the front carries the number, so only the front is OCR'd — the
+      // back would bill a second call and read nothing useful.
+      const res = await uploadFile(file, 'kyc', type === 'front' ? { documentType: 'aadhaar' } : undefined);
       if (res.ok && res.path) {
         if (type === 'front') {
           setAadhaarFront(res.path);
-          showToast({ type: 'success', title: 'Front Uploaded', message: 'Aadhaar front photo securely stored.' });
+
+          // Fill the field, never the record. The number lands in an editable
+          // input and the client confirms it — a read that passed the Verhoeff
+          // checksum is still a read, and OCR confuses 5 with 6 routinely.
+          if (res.detectedNumber) {
+            setAadhaarNumber(res.detectedNumber);
+            setAadhaarAutoFilled(true);
+            showToast({
+              type: 'success',
+              title: 'Aadhaar number read from your card',
+              message: 'Check it matches your card, and correct it if not.',
+            });
+          } else {
+            setAadhaarAutoFilled(false);
+            showToast({
+              type: 'success',
+              title: 'Front Uploaded',
+              message: res.detectionReason === 'failed-checksum'
+                ? 'We could not read the number clearly — please type it below.'
+                : 'Aadhaar front photo securely stored.',
+            });
+          }
         } else {
           setAadhaarBack(res.path);
           showToast({ type: 'success', title: 'Back Uploaded', message: 'Aadhaar back photo securely stored.' });
@@ -494,7 +521,11 @@ export default function ClientKycRealityPage() {
                   required
                   maxLength={12}
                   value={aadhaarNumber}
-                  onChange={(e) => setAadhaarNumber(e.target.value.replace(/\D/g, '').slice(0, 12))}
+                  onChange={(e) => {
+                    setAadhaarNumber(e.target.value.replace(/\D/g, '').slice(0, 12));
+                    // Once they edit it, it is theirs, not ours.
+                    setAadhaarAutoFilled(false);
+                  }}
                   placeholder="Enter 12-digit number"
                   className={`w-full bg-zinc-50 focus:bg-white dark:bg-zinc-900 border rounded-md px-3 py-2 text-xs text-zinc-950 dark:text-white tracking-widest placeholder-zinc-400 focus:outline-none transition-colors ${
                     aadhaarNumber.length === 12
@@ -504,6 +535,16 @@ export default function ClientKycRealityPage() {
                       : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-950 dark:focus:border-zinc-100'
                   }`}
                 />
+
+                {/* Say plainly that this was read off the image. An auto-filled
+                    field that looks typed is one people scroll past without
+                    checking, and OCR is a convenience, never a verification. */}
+                {aadhaarAutoFilled && (
+                  <p className="text-[10px] text-emerald-700 dark:text-emerald-400 flex items-start gap-1 pt-0.5">
+                    <Check className="w-3 h-3 shrink-0 mt-px" aria-hidden="true" />
+                    <span>Read from your card. Please check it matches, and correct it if not.</span>
+                  </p>
+                )}
               </div>
 
               {/* PAN Card Number */}
