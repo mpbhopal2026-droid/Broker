@@ -5,6 +5,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { ok, fail, tooManyRequests, cleanString, handleRouteError } from '@/lib/api';
 import { deriveFxRates } from '@/lib/pricing';
 import { verifyUploadedFile, BUCKETS } from '@/lib/storage';
+import { operatorAlerts } from '@/lib/notify';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -99,6 +100,11 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       metadata: { transactionId: tx.id, amountINR, estimatedUSD, utrNumber, rate, midRate: fx.mid },
     });
+
+    // Tell the desk. Without this the claim sat in the queue unannounced: the
+    // client believes someone is looking at their money, while the operator
+    // finds out whenever they next happen to open /admin.
+    operatorAlerts.depositSubmitted(user.fullName || user.email, amountINR, utrNumber);
 
     return ok({
       transactionId: tx.id,

@@ -3,6 +3,7 @@ import { getServiceClient } from '@/lib/supabase-server';
 import { requireUser, auditServer } from '@/lib/auth-server';
 import { rateLimit } from '@/lib/rate-limit';
 import { ok, fail, tooManyRequests, cleanString, handleRouteError } from '@/lib/api';
+import { operatorAlerts } from '@/lib/notify';
 import { encryptField, maskIdentifier } from '@/lib/field-crypto';
 import { verifyUploadedFile, BUCKETS } from '@/lib/storage';
 
@@ -126,6 +127,11 @@ export async function POST(req: NextRequest) {
       // Never log the document number itself, encrypted or not.
       metadata: { recordId: record?.id, documentType, encryptedAtRest: Boolean(encrypted) },
     });
+
+    // The applicant is now blocked from everything until someone reviews this,
+    // so the queue arriving silently is what turns a two-minute check into a
+    // three-day wait.
+    operatorAlerts.kycSubmitted(user.fullName || user.email, documentType);
 
     return ok({
       recordId: record?.id,
