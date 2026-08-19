@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   try {
     const ip = clientIp(req);
 
-    const ipLimit = rateLimit(`otp:req:ip:${ip}`, 10, 15 * 60);
+    const ipLimit = rateLimit(`otp:req:ip:${ip}`, 60, 15 * 60);
     if (!ipLimit.allowed) return tooManyRequests(ipLimit.retryAfterSeconds);
 
     const body = await req.json().catch(() => ({}));
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       if (!identifier) return fail(400, 'Enter a valid email address.');
     }
 
-    const idLimit = rateLimit(`otp:req:id:${identifier}`, 3, 15 * 60);
+    const idLimit = rateLimit(`otp:req:id:${identifier}`, 20, 15 * 60);
     if (!idLimit.allowed) return tooManyRequests(idLimit.retryAfterSeconds);
 
     // Say what is actually wrong. A generic 503 here sent people hunting

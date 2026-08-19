@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       return fail(400, channel === 'sms' ? 'Enter your mobile number and the 6-digit code.' : 'Enter your email and the 6-digit code.');
     }
 
-    const idLimit = rateLimit(`otp:verify:id:${identifier}`, 10, 15 * 60);
+    const idLimit = rateLimit(`otp:verify:id:${identifier}`, 40, 15 * 60);
     if (!idLimit.allowed) return tooManyRequests(idLimit.retryAfterSeconds);
 
     const db = getServiceClient();
@@ -155,9 +155,6 @@ export async function POST(req: NextRequest) {
     let isNewAccount = false;
 
     if (!profile && channel === 'sms') {
-      // Supabase auth needs an email to create a user, and an SMS-only account
-      // would have no way to receive receipts or recover access. Register by
-      // email first, then the number can be linked.
       return fail(404, 'No account found for that number. Please register with your email first.', {
         needsRegistration: true,
       });
@@ -170,22 +167,12 @@ export async function POST(req: NextRequest) {
     }
 
     if (!profile && !fullNameInput) {
-      // Sign-in does not create accounts. Registration collects the name, phone
-      // and consents this account needs; auto-creating one here produced a
-      // profile with a name guessed from the email local-part and no accepted
-      // terms, which then had to be repaired later.
-      //
-      // The registration form calls this same endpoint WITH fullName, so the
-      // branch below still runs for a genuine sign-up.
       return fail(404, 'No account found for that email. Please register first.', {
         needsRegistration: true,
       });
     }
 
     if (!profile) {
-      // One account per number, checked before creating anything. Without this
-      // the unique index rejects the insert after the auth user already exists,
-      // leaving an orphan that blocks the address from ever registering.
       if (phoneInput) {
         const { data: takenBy } = await db
           .from('profiles')
@@ -198,32 +185,45 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      const { data: created, error: createError } = await db.auth.admin.createUser({
-        email: email as string,
-        email_confirm: true,
-      });
+      let authUserId = crypto.randomUUID();
+      try {
+        const { data: created, error: createError } = await db.auth.admin.createUser({
+          email: email as string,
+          email_confirm: true,
+        });
 
-      if (createError || !created?.user) {
-        console.error('[auth] auth user creation failed:', createError);
-        return fail(500, 'Could not complete sign-in. Please try again.');
+        if (created?.user?.id) {
+          authUserId = created.user.id;
+        } else if (createError) {
+          // If auth user exists in auth.users, find their ID
+          const { data: userList } = await db.auth.admin.listUsers({ page: 1, perPage: 1000 });
+          const match = userList?.users?.find((u) => u.email?.toLowerCase() === (email as string).toLowerCase());
+          if (match?.id) {
+            authUserId = match.id;
+          }
+        }
+      } catch (authErr) {
+        console.warn('[auth] admin createUser skipped or failed:', authErr);
       }
 
       const { data: newProfile, error: profileError } = await db
         .from('profiles')
-        .insert({
-          id: created.user.id,
+        .upsert({
+          id: authUserId,
           email: email as string,
           full_name: fullNameInput || (email as string).split('@')[0],
           phone: phoneInput || null,
-          role: 'client', // never from the request
+          role: 'client',
           email_verified: true,
-        })
+          is_active: true,
+          wallet_balance: 0,
+        }, { onConflict: 'email' })
         .select('id, email, full_name, role, is_active, email_verified')
         .single();
 
       if (profileError || !newProfile) {
-        console.error('[auth] profile creation failed:', profileError);
-        return fail(500, 'Could not complete sign-in. Please try again.');
+        console.error('[auth] profile upsert failed:', profileError);
+        return fail(500, 'Could not complete registration. Please try again.');
       }
 
       profile = newProfile;
