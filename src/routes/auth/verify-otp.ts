@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 import { getServiceClient } from '@/lib/supabase-server';
 import { auditServer } from '@/lib/auth-server';
-import { hmacSign, sha256, timingSafeEqual } from '@/lib/crypto';
+import { hmacSign, timingSafeEqual } from '@/lib/crypto';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 import { createSessionCookieValue, SESSION_COOKIE, sessionCookieOptions } from '@/lib/session';
 import { ok, fail, tooManyRequests, normaliseEmail, cleanString, handleRouteError } from '@/lib/api';
@@ -97,29 +97,32 @@ export async function POST(req: NextRequest) {
       for (const otp of activeOtps) {
         if ((otp.attempts || 0) >= MAX_ATTEMPTS) continue;
 
+        // The row carries its own purpose, so signing with it matches whatever
+        // request-otp used. That alone fixes the registration 401: registration
+        // issues purpose 'email_verify' while sign-in issues 'login', and the
+        // verifier used to assume 'login'.
         const otpPurpose = otp.purpose || 'login';
         const candPrimary = await hmacSign(`${cleanCode}:${identifier}:${otpPurpose}`, secret);
+
+        // Transitional only: codes issued by the previous build were signed
+        // with the wrong purpose. Harmless because both are still bound to the
+        // identifier and the secret. Remove once no pre-fix code can still be
+        // inside its 10 minute window.
         const candLogin = await hmacSign(`${cleanCode}:${identifier}:login`, secret);
         const candVerify = await hmacSign(`${cleanCode}:${identifier}:email_verify`, secret);
-        const candNoPurpose = await hmacSign(`${cleanCode}:${identifier}`, secret);
-        const candBare = await hmacSign(`${cleanCode}`, secret);
-        const candSha = await sha256(`${cleanCode}:${identifier}:${otpPurpose}`);
-        const candShaNoPurp = await sha256(`${cleanCode}:${identifier}`);
-        const candShaBare = await sha256(`${cleanCode}`);
-        const candRaw = await hmacSign(`${rawCode.trim()}:${identifier}:${otpPurpose}`, secret);
 
+        // Deliberately NOT tested any more, and they must not come back:
+        //   hmac(code) and sha256(code) — not bound to the identifier at all.
+        //   sha256(code:identifier) — unsalted. A 6 digit code is a million
+        //     possibilities, so a leaked dump becomes a lookup table. The HMAC
+        //     exists precisely so a dump gives up nothing.
+        //   comparing the plaintext code against code_hash — that treats the
+        //     hash column as if it might hold a plaintext code, which is the
+        //     one thing hashing is for.
         const isMatch =
           timingSafeEqual(candPrimary, otp.code_hash) ||
           timingSafeEqual(candLogin, otp.code_hash) ||
-          timingSafeEqual(candVerify, otp.code_hash) ||
-          timingSafeEqual(candNoPurpose, otp.code_hash) ||
-          timingSafeEqual(candBare, otp.code_hash) ||
-          timingSafeEqual(candSha, otp.code_hash) ||
-          timingSafeEqual(candShaNoPurp, otp.code_hash) ||
-          timingSafeEqual(candShaBare, otp.code_hash) ||
-          timingSafeEqual(candRaw, otp.code_hash) ||
-          timingSafeEqual(cleanCode, otp.code_hash) ||
-          timingSafeEqual(rawCode.trim(), otp.code_hash);
+          timingSafeEqual(candVerify, otp.code_hash);
 
         if (isMatch) {
           matchedOtp = otp;
@@ -130,7 +133,16 @@ export async function POST(req: NextRequest) {
 
     if (!matchedOtp) {
       if (activeOtps && activeOtps.length > 0) {
-        await db.from('auth_otps').update({ attempts: (activeOtps[0].attempts || 0) + 1 }).eq('id', activeOtps[0].id);
+        // Charge the attempt against EVERY active code, not just the newest.
+        // A wrong guess is tested against all of them, so counting it once let
+        // a caller with two live codes take ten guesses instead of five —
+        // and the lock is the only thing standing between an attacker and a
+        // six digit space they can otherwise walk in about a million tries.
+        await Promise.all(
+          activeOtps.map((o) =>
+            db.from('auth_otps').update({ attempts: (o.attempts || 0) + 1 }).eq('id', o.id),
+          ),
+        );
       } else {
         // Check past consumed/expired
         const { data: pastOtp } = await (channel === 'email'
