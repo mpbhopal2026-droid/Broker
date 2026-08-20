@@ -129,6 +129,25 @@ export default function ClientKycRealityPage() {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
   const [isResubmitting, setIsResubmitting] = useState<boolean>(false);
+  const [checkingStatus, setCheckingStatus] = useState<boolean>(false);
+
+  // Auto-refresh status if in pending review every 15 seconds
+  useEffect(() => {
+    if (currentUser?.kycStatus !== 'pending') return;
+    const interval = setInterval(() => {
+      void refreshSession();
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [currentUser?.kycStatus, refreshSession]);
+
+  const handleManualRefresh = async () => {
+    setCheckingStatus(true);
+    await refreshSession();
+    setTimeout(() => {
+      setCheckingStatus(false);
+      showToast({ type: 'info', title: 'Status Checked', message: 'Your compliance status is up to date.' });
+    }, 600);
+  };
 
   // Form State: 1. Identity & Documents
   const [fullName, setFullName] = useState(currentUser?.fullName ?? '');
@@ -335,122 +354,129 @@ export default function ClientKycRealityPage() {
             </p>
           </div>
 
-          {/* Stepper Tabs */}
-          <div className="max-w-xl mx-auto flex items-center justify-center gap-3 sm:gap-4">
-            {/* Step 1 Tab */}
-            <div
-              className={`flex-1 rounded-2xl px-4 py-3 flex items-center justify-between gap-3 border transition-all ${
-                currentStep === 1
-                  ? 'border-2 border-emerald-600 bg-white shadow-sm'
-                  : currentStep > 1
-                  ? 'border-emerald-500 bg-emerald-50/50'
-                  : 'border-slate-200 bg-white'
-              }`}
-            >
-              <div className="flex items-center gap-3">
+          {/* Stepper Tabs - only shown during active document submission */}
+          {(kycStatus === 'not_submitted' || isResubmitting) && (
+            <>
+              <div className="max-w-xl mx-auto flex items-center justify-center gap-3 sm:gap-4">
+                {/* Step 1 Tab */}
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                  className={`flex-1 rounded-2xl px-4 py-3 flex items-center justify-between gap-3 border transition-all ${
                     currentStep === 1
-                      ? 'bg-[#05603a] text-white'
+                      ? 'border-2 border-emerald-600 bg-white shadow-sm'
                       : currentStep > 1
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-100 text-slate-500'
+                      ? 'border-emerald-500 bg-emerald-50/50'
+                      : 'border-slate-200 bg-white'
                   }`}
                 >
-                  {currentStep > 1 ? '✓' : '1'}
-                </div>
-                <div className="text-left">
-                  <div className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">
-                    Aadhaar & PAN
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                        currentStep === 1
+                          ? 'bg-[#05603a] text-white'
+                          : currentStep > 1
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-slate-100 text-slate-500'
+                      }`}
+                    >
+                      {currentStep > 1 ? '✓' : '1'}
+                    </div>
+                    <div className="text-left">
+                      <div className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">
+                        Aadhaar & PAN
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        {currentStep > 1 ? 'Verified' : 'Identity Proofs'}
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-[11px] text-slate-500">
-                    {currentStep > 1 ? 'Verified' : 'Identity Proofs'}
-                  </div>
+                  <CreditCard className={`w-5 h-5 shrink-0 ${currentStep === 1 ? 'text-emerald-600' : 'text-slate-400'}`} />
                 </div>
-              </div>
-              <CreditCard className={`w-5 h-5 shrink-0 ${currentStep === 1 ? 'text-emerald-600' : 'text-slate-400'}`} />
-            </div>
 
-            {/* Step Connector Line */}
-            <div className={`w-6 sm:w-10 h-[2px] shrink-0 ${currentStep === 2 ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+                {/* Step Connector Line */}
+                <div className={`w-6 sm:w-10 h-[2px] shrink-0 ${currentStep === 2 ? 'bg-emerald-500' : 'bg-slate-200'}`} />
 
-            {/* Step 2 Tab */}
-            <div
-              className={`flex-1 rounded-2xl px-4 py-3 flex items-center justify-between gap-3 border transition-all ${
-                currentStep === 2
-                  ? 'border-2 border-emerald-600 bg-white shadow-sm'
-                  : 'border-slate-200 bg-white'
-              }`}
-            >
-              <div className="flex items-center gap-3">
+                {/* Step 2 Tab */}
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                  className={`flex-1 rounded-2xl px-4 py-3 flex items-center justify-between gap-3 border transition-all ${
                     currentStep === 2
-                      ? 'bg-[#05603a] text-white'
-                      : 'bg-slate-100 text-slate-500'
+                      ? 'border-2 border-emerald-600 bg-white shadow-sm'
+                      : 'border-slate-200 bg-white'
                   }`}
                 >
-                  2
-                </div>
-                <div className="text-left">
-                  <div className="text-xs sm:text-sm font-bold text-slate-800 leading-tight">
-                    Payout Bank
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                        currentStep === 2
+                          ? 'bg-[#05603a] text-white'
+                          : 'bg-slate-100 text-slate-500'
+                      }`}
+                    >
+                      2
+                    </div>
+                    <div className="text-left">
+                      <div className="text-xs sm:text-sm font-bold text-slate-800 leading-tight">
+                        Payout Bank
+                      </div>
+                      <div className="text-[11px] text-slate-400">
+                        Double-Verified
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-[11px] text-slate-400">
-                    Double-Verified
-                  </div>
+                  <Building2 className={`w-5 h-5 shrink-0 ${currentStep === 2 ? 'text-emerald-600' : 'text-slate-400'}`} />
                 </div>
               </div>
-              <Building2 className={`w-5 h-5 shrink-0 ${currentStep === 2 ? 'text-emerald-600' : 'text-slate-400'}`} />
-            </div>
-          </div>
 
-          {/* Security Banner */}
-          <div className="rounded-2xl bg-[#f0fdf4] border border-emerald-200/80 p-4 sm:p-4.5 flex items-center justify-between gap-4">
-            <div className="flex items-start sm:items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-emerald-100/90 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-xs sm:text-sm font-bold text-slate-900">
-                  Your information is secure and encrypted.
-                </h4>
-                <p className="text-[11px] sm:text-xs text-slate-600">
-                  Please enter your details exactly as shown on your Government ID documents.
-                </p>
-              </div>
-            </div>
+              {/* Security Banner */}
+              <div className="rounded-2xl bg-[#f0fdf4] border border-emerald-200/80 p-4 sm:p-4.5 flex items-center justify-between gap-4">
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100/90 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-900">
+                      Your information is secure and encrypted.
+                    </h4>
+                    <p className="text-[11px] sm:text-xs text-slate-600">
+                      Please enter your details exactly as shown on your Government ID documents.
+                    </p>
+                  </div>
+                </div>
 
-            <div className="hidden sm:flex w-10 h-10 rounded-2xl bg-white/80 border border-emerald-200/90 items-center justify-center text-emerald-600 shadow-sm shrink-0">
-              <Check className="w-5 h-5 stroke-[2.5]" />
-            </div>
-          </div>
+                <div className="hidden sm:flex w-10 h-10 rounded-2xl bg-white/80 border border-emerald-200/90 items-center justify-center text-emerald-600 shadow-sm shrink-0">
+                  <Check className="w-5 h-5 stroke-[2.5]" />
+                </div>
+              </div>
+            </>
+          )}
 
           {/* ========================================================================= */}
           {/* REALITY CASE 1: APPROVED STATE */}
           {/* ========================================================================= */}
           {kycStatus === 'approved' && !isResubmitting && (
-            <div className="p-8 rounded-3xl bg-emerald-50/50 border border-emerald-200 space-y-6 text-center">
-              <div className="w-16 h-16 mx-auto rounded-full bg-emerald-100 border-2 border-emerald-300 flex items-center justify-center">
-                <CheckCircle2 className="w-9 h-9 text-emerald-600" />
+            <div className="p-6 sm:p-10 rounded-3xl bg-gradient-to-b from-emerald-50/70 via-white to-slate-50 border border-emerald-200 space-y-7 text-center shadow-xl shadow-emerald-950/5 relative overflow-hidden">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-emerald-600 to-[#044e2f] border-2 border-white shadow-xl shadow-emerald-900/20 flex items-center justify-center text-white">
+                <CheckCircle2 className="w-9 h-9 stroke-[2.3]" />
               </div>
 
-              <div className="space-y-1.5">
-                <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 border border-emerald-200 inline-block">
-                  ✔ KYC Approved & Verified
+              <div className="space-y-2 max-w-md mx-auto">
+                <span className="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300/80 inline-block shadow-sm">
+                  ✔ Tier-1 Clearance Active
                 </span>
-                <h3 className="text-lg sm:text-xl font-bold text-slate-900">
-                  Institutional KYC Clearance Active
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+                  Institutional KYC Clearance Approved
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                   Your government identity and domestic settlement bank account are fully verified. All live deposit, trading, and payout gateways are active.
                 </p>
               </div>
 
-              <div className="p-5 rounded-2xl bg-white border border-slate-200 max-w-md mx-auto text-left space-y-3 text-xs shadow-sm">
+              <div className="p-5 rounded-2xl bg-white border border-slate-200/90 max-w-md mx-auto text-left space-y-3 text-xs shadow-sm">
                 <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
                   <span className="text-[10px] font-bold uppercase text-slate-400">Verified Profile</span>
-                  <span className="text-[10px] font-bold text-emerald-600">Tier-1 Institutional</span>
+                  <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    Tier-1 Institutional
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-xs">
@@ -471,7 +497,7 @@ export default function ClientKycRealityPage() {
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 block">IFSC Code</span>
-                    <span className="font-bold text-slate-900">{currentUser?.bankIfsc || '••••••••'}</span>
+                    <span className="font-bold text-slate-900 font-mono">{currentUser?.bankIfsc || '••••••••'}</span>
                   </div>
                 </div>
               </div>
@@ -479,7 +505,7 @@ export default function ClientKycRealityPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md mx-auto pt-2">
                 <Link
                   href="/deposit"
-                  className="py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-98"
+                  className="py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md active:scale-98"
                 >
                   <Wallet className="w-4 h-4" />
                   <span>Deposit Capital</span>
@@ -487,18 +513,18 @@ export default function ClientKycRealityPage() {
 
                 <Link
                   href="/dashboard"
-                  className="py-3 px-4 rounded-xl bg-[#05603a] hover:bg-[#044e2f] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-98"
+                  className="py-3.5 px-4 rounded-xl bg-[#05603a] hover:bg-[#044e2f] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-950/20 active:scale-98"
                 >
-                  <TrendingUp className="w-4 h-4" />
-                  <span>Enter Dashboard →</span>
+                  <span>Enter Terminal</span>
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-1">
                 <button
                   type="button"
                   onClick={() => setIsResubmitting(true)}
-                  className="text-xs text-slate-500 hover:text-slate-900 transition-colors underline"
+                  className="text-xs text-slate-500 hover:text-slate-900 transition-colors underline cursor-pointer"
                 >
                   Update or Change Payout Bank Details
                 </button>
@@ -510,45 +536,170 @@ export default function ClientKycRealityPage() {
           {/* REALITY CASE 2: PENDING QUEUE */}
           {/* ========================================================================= */}
           {kycStatus === 'pending' && !isResubmitting && (
-            <div className="p-8 rounded-3xl bg-amber-50/50 border border-amber-200 space-y-6 text-center">
-              <div className="w-16 h-16 mx-auto rounded-full bg-amber-100 border-2 border-amber-300 flex items-center justify-center">
-                <Clock className="w-9 h-9 text-amber-600 animate-pulse" />
-              </div>
+            <div className="p-6 sm:p-10 rounded-3xl bg-gradient-to-b from-[#f0fdf4]/80 via-white to-slate-50 border border-emerald-200/90 space-y-8 text-center shadow-xl shadow-emerald-950/5 relative overflow-hidden">
+              
+              {/* Decorative background glow */}
+              <div className="absolute top-0 right-1/4 w-72 h-72 bg-emerald-300/15 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-teal-300/10 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="space-y-1.5">
-                <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200 inline-block">
-                  Compliance Queue Active
-                </span>
-                <h3 className="text-lg sm:text-xl font-bold text-slate-900">
-                  Verification in Progress (~30 Mins)
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto leading-relaxed">
-                  Your identity documents and domestic settlement bank details have been dispatched to our compliance desk for verification.
-                </p>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white border border-amber-200 max-w-sm mx-auto space-y-2.5 shadow-sm text-left">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                  <span>Estimated Review Time</span>
-                  <span className="text-amber-700">~30 Minutes</span>
+              {/* Top Status Badge & Glowing Radar Icon */}
+              <div className="space-y-4 relative z-10">
+                <div className="relative inline-flex items-center justify-center">
+                  {/* Pulsing outer aura rings */}
+                  <div className="absolute w-24 h-24 rounded-full bg-emerald-400/20 animate-ping opacity-60 pointer-events-none" />
+                  <div className="absolute w-20 h-20 rounded-full bg-emerald-500/25 animate-pulse pointer-events-none" />
+                  
+                  {/* Core Icon Box */}
+                  <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-600 to-[#044e2f] border-2 border-white shadow-xl shadow-emerald-900/30 flex items-center justify-center text-white">
+                    <ShieldCheck className="w-8 h-8 stroke-[2.2]" />
+                  </div>
                 </div>
-                <div className="h-2 rounded-full bg-amber-100 overflow-hidden">
-                  <div className="h-full bg-amber-500 w-3/4 rounded-full animate-pulse" />
+
+                <div className="space-y-2 max-w-lg mx-auto">
+                  <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase bg-emerald-100/90 text-emerald-800 border border-emerald-300/80 shadow-sm">
+                    <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+                    <span>Compliance Audit In Progress</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                    Verification In Progress (~15 - 30 Mins)
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    Your identity proofs and domestic settlement bank details have been safely recorded. Our compliance officers are performing final verification.
+                  </p>
                 </div>
-                <p className="text-[10px] text-slate-500 font-sans">
-                  You can explore your dashboard and place demo trades while verification is completed.
-                </p>
               </div>
 
-              <div className="pt-2 max-w-sm mx-auto">
+              {/* Real-time Verification Progress Timeline */}
+              <div className="max-w-xl mx-auto rounded-2xl bg-white border border-slate-200/90 p-5 sm:p-6 shadow-sm space-y-4 text-left relative z-10">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-emerald-600" />
+                    Verification Pipeline
+                  </span>
+                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                    Estimated: ~15 - 30 Mins
+                  </span>
+                </div>
+
+                <div className="space-y-3.5 pt-1">
+                  {/* Step 1 */}
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">
+                        ✓
+                      </div>
+                      <span className="font-semibold text-slate-800">Aadhaar & PAN Uploaded</span>
+                    </div>
+                    <span className="text-[11px] text-emerald-600 font-medium">Verhoeff Validated</span>
+                  </div>
+
+                  {/* Step 2 */}
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">
+                        ✓
+                      </div>
+                      <span className="font-semibold text-slate-800">Payout Bank Details Registered</span>
+                    </div>
+                    <span className="text-[11px] text-emerald-600 font-medium">Double-Verified</span>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-5 h-5 rounded-full bg-emerald-100 border border-emerald-500 text-emerald-700 flex items-center justify-center text-[10px] font-bold">
+                        <span className="w-2 h-2 rounded-full bg-emerald-600 animate-ping" />
+                      </div>
+                      <span className="font-bold text-slate-900">Desk Audit & Security Clearance</span>
+                    </div>
+                    <span className="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 animate-pulse">
+                      Active Review
+                    </span>
+                  </div>
+
+                  {/* Step 4 */}
+                  <div className="flex items-center justify-between text-xs opacity-50">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-5 h-5 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-[10px] font-bold">
+                        4
+                      </div>
+                      <span className="font-medium text-slate-600">Full Live Trading & Instant Payout Gateways</span>
+                    </div>
+                    <span className="text-[11px] text-slate-400">Upcoming</span>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="pt-2">
+                  <div className="h-2 rounded-full bg-emerald-100 overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-emerald-500 to-[#05603a] w-3/4 rounded-full animate-pulse" />
+                  </div>
+                  <p className="text-[10px] text-slate-400 pt-1.5 text-center">
+                    You can explore the terminal and place demo trades while verification is completed.
+                  </p>
+                </div>
+              </div>
+
+              {/* Registered Details Preview */}
+              <div className="max-w-xl mx-auto rounded-2xl bg-white/90 border border-emerald-100 p-4 text-xs text-left grid grid-cols-2 sm:grid-cols-4 gap-3 shadow-sm relative z-10">
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-medium">Account Name</span>
+                  <span className="font-bold text-slate-800 truncate block">{currentUser?.fullName || 'Client'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-medium">Settlement Bank</span>
+                  <span className="font-bold text-slate-800 truncate block">{currentUser?.bankName || 'Domestic Bank'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-medium">Bank Account</span>
+                  <span className="font-bold text-slate-800 truncate block font-mono">
+                    •••• {currentUser?.bankAccountNumber ? currentUser.bankAccountNumber.slice(-4) : '••••'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-medium">IFSC Code</span>
+                  <span className="font-bold text-slate-800 truncate block font-mono">
+                    {currentUser?.bankIfsc || '••••••••'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="max-w-md mx-auto space-y-3 relative z-10 pt-1">
                 <Link
                   href="/dashboard"
-                  className="w-full py-3.5 px-4 rounded-xl bg-[#05603a] hover:bg-[#044e2f] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-950/20 active:scale-98"
+                  className="w-full py-3.5 px-6 rounded-xl bg-[#05603a] hover:bg-[#044e2f] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-950/20 active:scale-98 cursor-pointer"
                 >
                   <span>Proceed to Dashboard</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
+
+                <div className="flex items-center justify-center gap-4 text-xs pt-1">
+                  <button
+                    type="button"
+                    onClick={handleManualRefresh}
+                    disabled={checkingStatus}
+                    className="text-emerald-700 hover:text-emerald-900 font-bold flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${checkingStatus ? 'animate-spin' : ''}`} />
+                    <span>{checkingStatus ? 'Checking...' : 'Refresh Status'}</span>
+                  </button>
+
+                  <span className="text-slate-300">•</span>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsResubmitting(true);
+                      setCurrentStep(2);
+                    }}
+                    className="text-slate-500 hover:text-slate-800 font-medium transition-colors underline cursor-pointer"
+                  >
+                    Update Bank Details
+                  </button>
+                </div>
               </div>
+
             </div>
           )}
 
@@ -556,19 +707,19 @@ export default function ClientKycRealityPage() {
           {/* REALITY CASE 3: REJECTED STATE */}
           {/* ========================================================================= */}
           {kycStatus === 'rejected' && !isResubmitting && (
-            <div className="p-8 rounded-3xl bg-rose-50/60 border border-rose-200 space-y-6 text-center">
-              <div className="w-16 h-16 mx-auto rounded-full bg-rose-100 border-2 border-rose-300 flex items-center justify-center">
-                <AlertCircle className="w-9 h-9 text-rose-600" />
+            <div className="p-6 sm:p-10 rounded-3xl bg-gradient-to-b from-rose-50/80 via-white to-slate-50 border border-rose-200 space-y-7 text-center shadow-xl shadow-rose-950/5 relative overflow-hidden">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-rose-600 to-rose-800 border-2 border-white shadow-xl shadow-rose-900/20 flex items-center justify-center text-white">
+                <AlertCircle className="w-9 h-9 stroke-[2.3]" />
               </div>
 
-              <div className="space-y-1.5">
-                <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-100 text-rose-700 border border-rose-200 inline-block">
-                  Verification Requires Resubmission
+              <div className="space-y-2 max-w-md mx-auto">
+                <span className="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-300/80 inline-block shadow-sm">
+                  ✕ Action Needed on KYC Documents
                 </span>
-                <h3 className="text-lg sm:text-xl font-bold text-slate-900">
-                  Action Needed on KYC Documents
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+                  Verification Requires Resubmission
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto leading-relaxed">
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                   The compliance desk was unable to verify your previous submission. Please ensure photos are clear and bank details match your legal name.
                 </p>
               </div>
@@ -580,7 +731,7 @@ export default function ClientKycRealityPage() {
                     setIsResubmitting(true);
                     setCurrentStep(1);
                   }}
-                  className="w-full py-3.5 px-4 rounded-xl bg-[#05603a] hover:bg-[#044e2f] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-950/20 active:scale-98 cursor-pointer"
+                  className="w-full py-3.5 px-6 rounded-xl bg-[#05603a] hover:bg-[#044e2f] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-950/20 active:scale-98 cursor-pointer"
                 >
                   <RotateCcw className="w-4 h-4" />
                   <span>Resubmit Verification Documents</span>
