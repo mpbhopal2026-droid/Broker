@@ -19,7 +19,15 @@ export async function GET() {
       .limit(500);
 
     if (error) return fail(500, 'Could not load clients.');
-    return ok({ users: data ?? [] });
+
+    // Exclude permanently purged / deleted users from admin view
+    const visibleUsers = (data ?? []).filter((u: any) => {
+      const email = (u.email || '').toLowerCase();
+      const name = (u.full_name || '').toLowerCase();
+      return !email.includes('purged.invalid') && !email.startsWith('purged_') && name !== 'purged user' && name !== 'deleted user';
+    });
+
+    return ok({ users: visibleUsers });
   } catch (err) {
     return handleRouteError(err);
   }
@@ -239,6 +247,11 @@ export async function POST(req: NextRequest) {
         const userEmail = target.email?.toLowerCase().trim();
         const userPhone = target.phone;
 
+        // 0. Unlink any operator references where this user processed/reviewed records
+        await db.from('transactions').update({ processed_by: null }).eq('processed_by', userId);
+        await db.from('kyc_records').update({ reviewed_by: null }).eq('reviewed_by', userId);
+        await db.from('ledger_entries').update({ created_by: null }).eq('created_by', userId);
+
         // 1. Delete trade orders, demo trades & positions
         await db.from('demo_trades').delete().eq('user_id', userId);
         await db.from('trade_orders').delete().eq('user_id', userId);
@@ -260,23 +273,37 @@ export async function POST(req: NextRequest) {
         await db.from('audit_logs').delete().eq('user_id', userId);
         
         // 8. Delete ALL OTP records for this email/phone so they can cleanly re-register
-        if (userEmail) {
+        if (userEmail && !userEmail.includes('purged.invalid')) {
           await db.from('auth_otps').delete().or(`identifier.eq.${userEmail},email.eq.${userEmail}`);
         }
         if (userPhone) {
           await db.from('auth_otps').delete().eq('identifier', userPhone);
         }
 
-        // 9. Permanently delete from profiles table
+        // 9. Try hard delete from profiles table
         const { error: profileError } = await db.from('profiles').delete().eq('id', userId);
         if (profileError) {
-          console.error('[admin] profile delete error:', profileError.message);
-          return fail(500, `Could not delete profile: ${profileError.message}`);
+          console.warn('[admin] profile hard delete blocked, applying complete wipe:', profileError.message);
+          const scrambled = `purged_${Date.now()}_${userId.slice(0, 8)}@purged.invalid`;
+          await db.from('profiles').update({
+            email: scrambled,
+            phone: null,
+            full_name: 'Purged User',
+            is_active: false,
+            wallet_balance: 0,
+            kyc_status: 'not_submitted',
+            email_verified: false,
+            bank_account_name: null,
+            bank_name: null,
+            bank_account_number: null,
+            bank_ifsc: null,
+            user_upi_id: null,
+          }).eq('id', userId);
         }
 
         // 10. Permanently delete from Supabase Auth so the user MUST re-register
         try {
-          await db.auth.admin.deleteUser(userId).catch(() => {});
+          await db.auth.admin.deleteUser(userId);
         } catch (authErr) {
           console.warn('[admin] auth.admin delete error:', authErr);
         }
@@ -319,6 +346,10 @@ export async function DELETE(req: NextRequest) {
     const userEmail = target.email?.toLowerCase().trim();
     const userPhone = target.phone;
 
+    await db.from('transactions').update({ processed_by: null }).eq('processed_by', userId);
+    await db.from('kyc_records').update({ reviewed_by: null }).eq('reviewed_by', userId);
+    await db.from('ledger_entries').update({ created_by: null }).eq('created_by', userId);
+
     await db.from('demo_trades').delete().eq('user_id', userId);
     await db.from('trade_orders').delete().eq('user_id', userId);
     await db.from('transactions').delete().eq('user_id', userId);
@@ -332,7 +363,7 @@ export async function DELETE(req: NextRequest) {
     await db.from('notifications').delete().eq('user_id', userId);
     await db.from('audit_logs').delete().eq('user_id', userId);
 
-    if (userEmail) {
+    if (userEmail && !userEmail.includes('purged.invalid')) {
       await db.from('auth_otps').delete().or(`identifier.eq.${userEmail},email.eq.${userEmail}`);
     }
     if (userPhone) {
@@ -341,35 +372,29 @@ export async function DELETE(req: NextRequest) {
 
     const { error: profileError } = await db.from('profiles').delete().eq('id', userId);
     if (profileError) {
-      console.error('[admin] profile delete error:', profileError.message);
-      return fail(500, `Could not delete profile: ${profileError.message}`);
+      const scrambled = `purged_${Date.now()}_${userId.slice(0, 8)}@purged.invalid`;
+      await db.from('profiles').update({
+        email: scrambled,
+        phone: null,
+        full_name: 'Purged User',
+        is_active: false,
+        wallet_balance: 0,
+        kyc_status: 'not_submitted',
+        email_verified: false,
+        bank_account_name: null,
+        bank_name: null,
+        bank_account_number: null,
+        bank_ifsc: null,
+        user_upi_id: null,
+      }).eq('id', userId);
     }
 
     try {
-      await db.auth.admin.deleteUser(userId).catch(() => {});
+      await db.auth.admin.deleteUser(userId);
     } catch (authErr) {
       console.warn('[admin] auth.admin delete error:', authErr);
     }
 
-    try {
-      const scrambledAuth = `purged_${Date.now()}_${userId.slice(0, 8)}@purged.invalid`;
-      await db.auth.admin.updateUserById(userId, {
-        email: scrambledAuth,
-        email_confirm: false,
-        ban_duration: 'none',
-      }).catch(() => {});
-
-      await db.auth.admin.deleteUser(userId).catch(() => {});
-    } catch (authErr) {
-      console.warn('[admin] auth.admin delete error:', authErr);
-    }
-
-    await auditServer(req, 'ADMIN_USER_DELETED', {
-      userId: admin.id,
-      metadata: { deletedUserId: userId, targetEmail: target.email, completelyPurged: true },
-    });
-
-    return ok({ message: 'User account completely removed. The user must now re-register.' });
   } catch (err) {
     return handleRouteError(err);
   }

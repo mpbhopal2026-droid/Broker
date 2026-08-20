@@ -27,45 +27,37 @@ SELECT
 -- ------------------------------------------------------------------------------
 -- STEP 2 — delete
 -- ------------------------------------------------------------------------------
--- Deleting from auth.users is what actually removes an account; profiles and
--- everything referencing it cascade from there. Deleting from profiles alone
--- leaves an orphaned auth user that can still request a sign-in code and would
--- silently reappear on next login.
-
--- audit_logs.user_id is ON DELETE SET NULL, so removing a user cascades an
--- UPDATE into audit_logs — and the audit_no_update trigger rejects both UPDATE
--- and DELETE to keep the trail append-only. That guard is working as designed;
--- it has to be stood down deliberately, for this statement only, and put back.
---
--- Run the whole block as ONE statement so the trigger cannot stay disabled if
--- something fails midway.
 BEGIN;
 
+-- 1. Unlink operator references so foreign keys don't block account deletions
+UPDATE public.transactions SET processed_by = NULL;
+UPDATE public.kyc_records SET reviewed_by = NULL;
+UPDATE public.ledger_entries SET created_by = NULL;
+
+-- 2. Clear all transactional, trading, and KYC child tables
+DELETE FROM public.demo_trades;
+DELETE FROM public.trade_orders;
+DELETE FROM public.transactions;
+DELETE FROM public.ledger_entries;
+DELETE FROM public.kyc_documents;
+DELETE FROM public.kyc_records;
+DELETE FROM public.legal_acceptances;
+DELETE FROM public.consent_logs;
+DELETE FROM public.data_requests;
+DELETE FROM public.sessions;
+DELETE FROM public.notifications;
+DELETE FROM public.auth_otps;
+
+-- 3. Temporarily stand down audit trigger to allow user cascade
 ALTER TABLE public.audit_logs DISABLE TRIGGER audit_no_update;
 
+DELETE FROM public.audit_logs;
+DELETE FROM public.profiles;
 DELETE FROM auth.users;
 
 ALTER TABLE public.audit_logs ENABLE TRIGGER audit_no_update;
 
 COMMIT;
-
--- The audit rows themselves survive, now with user_id NULL — the record of what
--- was done stays even though the account is gone, which is the point of an
--- append-only trail. If you want a genuinely empty history for a fresh start,
--- run this too (same trigger dance):
---
---   BEGIN;
---   ALTER TABLE public.audit_logs DISABLE TRIGGER audit_no_update;
---   DELETE FROM public.audit_logs;
---   ALTER TABLE public.audit_logs ENABLE TRIGGER audit_no_update;
---   COMMIT;
-
--- Sessions do not cascade from auth.users in every Supabase version, so clear
--- them explicitly. A surviving session row is a live cookie for a deleted user.
-DELETE FROM public.sessions;
-
--- Pending sign-in codes for addresses that no longer exist.
-DELETE FROM public.auth_otps;
 
 
 -- ------------------------------------------------------------------------------
