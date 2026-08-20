@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- FIX FOREIGN KEYS & PERMANENTLY PURGE ALL ORPHANED / PURGED ACCOUNTS
 -- ==============================================================================
--- Run this in Supabase SQL Editor to resolve any foreign key constraint violations
+-- Run this in Supabase SQL Editor to resolve foreign key constraint violations
 -- (e.g. transactions_processed_by_fkey) and cleanly purge phantom accounts.
 -- ==============================================================================
 
@@ -35,10 +35,8 @@ ALTER TABLE public.ledger_entries
 
 -- 3. Delete any orphaned records associated with purged.invalid accounts
 DELETE FROM public.demo_trades WHERE user_id IN (SELECT id FROM public.profiles WHERE email LIKE '%purged.invalid' OR full_name = 'Purged User');
-DELETE FROM public.trade_orders WHERE user_id IN (SELECT id FROM public.profiles WHERE email LIKE '%purged.invalid' OR full_name = 'Purged User');
 DELETE FROM public.transactions WHERE user_id IN (SELECT id FROM public.profiles WHERE email LIKE '%purged.invalid' OR full_name = 'Purged User');
 DELETE FROM public.ledger_entries WHERE user_id IN (SELECT id FROM public.profiles WHERE email LIKE '%purged.invalid' OR full_name = 'Purged User');
-DELETE FROM public.kyc_documents WHERE user_id IN (SELECT id FROM public.profiles WHERE email LIKE '%purged.invalid' OR full_name = 'Purged User');
 DELETE FROM public.kyc_records WHERE user_id IN (SELECT id FROM public.profiles WHERE email LIKE '%purged.invalid' OR full_name = 'Purged User');
 DELETE FROM public.legal_acceptances WHERE user_id IN (SELECT id FROM public.profiles WHERE email LIKE '%purged.invalid' OR full_name = 'Purged User');
 DELETE FROM public.consent_logs WHERE user_id IN (SELECT id FROM public.profiles WHERE email LIKE '%purged.invalid' OR full_name = 'Purged User');

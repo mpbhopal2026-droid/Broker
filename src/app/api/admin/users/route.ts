@@ -252,15 +252,13 @@ export async function POST(req: NextRequest) {
         await db.from('kyc_records').update({ reviewed_by: null }).eq('reviewed_by', userId);
         await db.from('ledger_entries').update({ created_by: null }).eq('created_by', userId);
 
-        // 1. Delete trade orders, demo trades & positions
+        // 1. Delete demo trades
         await db.from('demo_trades').delete().eq('user_id', userId);
-        await db.from('trade_orders').delete().eq('user_id', userId);
         // 2. Delete transactions, deposits & withdrawals
         await db.from('transactions').delete().eq('user_id', userId);
         // 3. Delete ledger entries (ON DELETE RESTRICT in DB)
         await db.from('ledger_entries').delete().eq('user_id', userId);
-        // 4. Delete kyc documents & records
-        await db.from('kyc_documents').delete().eq('user_id', userId);
+        // 4. Delete kyc records
         await db.from('kyc_records').delete().eq('user_id', userId);
         // 5. Delete legal, consent, and data requests
         await db.from('legal_acceptances').delete().eq('user_id', userId);
@@ -351,10 +349,8 @@ export async function DELETE(req: NextRequest) {
     await db.from('ledger_entries').update({ created_by: null }).eq('created_by', userId);
 
     await db.from('demo_trades').delete().eq('user_id', userId);
-    await db.from('trade_orders').delete().eq('user_id', userId);
     await db.from('transactions').delete().eq('user_id', userId);
     await db.from('ledger_entries').delete().eq('user_id', userId);
-    await db.from('kyc_documents').delete().eq('user_id', userId);
     await db.from('kyc_records').delete().eq('user_id', userId);
     await db.from('legal_acceptances').delete().eq('user_id', userId);
     await db.from('consent_logs').delete().eq('user_id', userId);
