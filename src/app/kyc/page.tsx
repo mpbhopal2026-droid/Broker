@@ -320,6 +320,7 @@ export default function ClientKycRealityPage() {
           title: 'KYC & Bank Setup Submitted',
           message: 'Your verification has been dispatched to compliance desk. You may now enter the platform.',
         });
+        router.push('/kyc/submitted');
       } else {
         showToast({
           type: 'error',

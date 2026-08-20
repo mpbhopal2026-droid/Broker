@@ -73,7 +73,7 @@ export const MobileBottomNav: React.FC = () => {
     {
       title: 'Account & Compliance',
       items: [
-        { href: '/kyc', label: 'Identity Verification', desc: 'Aadhaar & PAN verification', icon: ShieldCheck },
+        { href: '/verification', label: 'Identity Verification', desc: 'Aadhaar & PAN verification', icon: ShieldCheck },
         { href: '/profile', label: 'Profile Settings', desc: 'User profile & payout bank', icon: User },
         { href: '/profile/security', label: 'Security & Access', desc: 'Active sessions & password', icon: Lock },
         { href: '/settings', label: 'Preferences', desc: 'Display & settings', icon: Settings },

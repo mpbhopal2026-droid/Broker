@@ -47,7 +47,7 @@ export const AppSidebar: React.FC = () => {
 
   const clientAccountNav = [
     { label: 'Profile', href: '/profile', icon: User },
-    { label: 'Verification', href: '/kyc', icon: ShieldCheck },
+    { label: 'Verification', href: '/verification', icon: ShieldCheck },
     { label: 'Settings', href: '/settings', icon: Settings },
     { label: 'Support', href: '/help', icon: HelpCircle },
   ];

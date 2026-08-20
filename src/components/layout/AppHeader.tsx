@@ -182,7 +182,7 @@ export const AppHeader: React.FC = () => {
                         <span>Account Profile</span>
                       </Link>
                       <Link
-                        href="/kyc"
+                        href="/verification"
                         onClick={() => setUserDropdownOpen(false)}
                         className="flex items-center gap-2 px-3 py-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900"
                       >

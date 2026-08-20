@@ -77,7 +77,7 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // Mandatory KYC & Bank Details Gate: Clients who haven't submitted KYC cannot use the app
     const hasSubmittedKyc = currentUser?.kycStatus === 'approved' || currentUser?.kycStatus === 'pending';
-    if (isAuthenticated && !isOperator && !hasSubmittedKyc && pathname !== '/kyc' && !isPublic && !isAuthPage) {
+    if (isAuthenticated && !isOperator && !hasSubmittedKyc && pathname !== '/kyc' && pathname !== '/kyc/submitted' && !isPublic && !isAuthPage) {
       router.replace('/kyc');
       return;
     }
