@@ -317,11 +317,11 @@ export default function ClientKycRealityPage() {
   const kycStatus = currentUser?.kycStatus || 'not_submitted';
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center px-3 sm:px-6 py-6 sm:py-10 bg-[#f8fafc] text-slate-900">
-      <div className="w-full max-w-4xl space-y-6">
+    <div className="min-h-screen w-full flex items-center justify-center px-3 sm:px-6 py-6 sm:py-10 bg-[#f8fafc] text-slate-900 overflow-x-hidden">
+      <div className="w-full max-w-5xl space-y-6 min-w-0">
         
         {/* Main Card Container */}
-        <div className="bg-white p-6 sm:p-10 rounded-3xl sm:rounded-[32px] border border-slate-200/90 shadow-2xl shadow-slate-200/60 space-y-7">
+        <div className="bg-white p-5 sm:p-8 md:p-10 rounded-3xl sm:rounded-[32px] border border-slate-200/90 shadow-2xl shadow-slate-200/60 space-y-7 min-w-0 w-full overflow-hidden">
           
           {/* Header Brand */}
           <div className="text-center space-y-2">
@@ -593,10 +593,10 @@ export default function ClientKycRealityPage() {
           {/* REALITY CASE 4: SUBMISSION FORM (2-COLUMN GRID MATCHING REFERENCE UI) */}
           {/* ========================================================================= */}
           {(kycStatus === 'not_submitted' || isResubmitting) && (
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-start pt-1">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-start pt-1 min-w-0 w-full">
               
               {/* LEFT COLUMN: FEATURES CARD */}
-              <div className="md:col-span-4 rounded-2xl bg-gradient-to-b from-[#f0fdf4] to-[#f8fafc] border border-emerald-100 p-5 sm:p-6 space-y-6 relative overflow-hidden">
+              <div className="md:col-span-4 rounded-2xl bg-gradient-to-b from-[#f0fdf4] to-[#f8fafc] border border-emerald-100 p-5 sm:p-6 space-y-6 relative overflow-hidden min-w-0">
                 {currentStep === 1 ? (
                   <>
                     {/* Feature 1 */}
@@ -693,18 +693,18 @@ export default function ClientKycRealityPage() {
               </div>
 
               {/* RIGHT COLUMN: STEP 1 (IDENTITY) OR STEP 2 (BANK DETAILS) */}
-              <div className="md:col-span-8 space-y-5">
+              <div className="md:col-span-8 space-y-5 min-w-0 w-full">
                 
                 {/* STEP 1 FORM */}
                 {currentStep === 1 && (
-                  <form onSubmit={handleStep1Submit} className="space-y-5">
+                  <form onSubmit={handleStep1Submit} className="space-y-5 min-w-0 w-full">
                     
                     {/* Full Legal Name */}
-                    <div className="space-y-1.5">
-                      <label className="block text-xs font-semibold text-slate-800">
+                    <div className="space-y-1.5 min-w-0 w-full">
+                      <label className="block text-xs font-semibold text-slate-800 truncate">
                         Full Legal Name (as per PAN & Aadhaar) *
                       </label>
-                      <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all">
+                      <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all min-w-0 w-full">
                         <User className="w-4 h-4 text-slate-400 shrink-0" />
                         <input
                           type="text"
@@ -712,7 +712,7 @@ export default function ClientKycRealityPage() {
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
                           placeholder="e.g. Rahul Sharma"
-                          className="w-full text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
+                          className="w-full min-w-0 flex-1 text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
                         />
                         {fullName.trim().length >= 3 && (
                           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -721,13 +721,13 @@ export default function ClientKycRealityPage() {
                     </div>
 
                     {/* 12-Digit Aadhaar Number */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="block text-xs font-semibold text-slate-800">
+                    <div className="space-y-1.5 min-w-0 w-full">
+                      <div className="flex items-center justify-between gap-2 min-w-0">
+                        <label className="block text-xs font-semibold text-slate-800 truncate">
                           12-Digit Aadhaar Number *
                         </label>
                         {aadhaarNumber.length === 12 && (
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
                             isAadhaarValid
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : 'bg-rose-50 text-rose-600 border border-rose-200'
@@ -737,7 +737,7 @@ export default function ClientKycRealityPage() {
                         )}
                       </div>
 
-                      <div className={`flex items-center gap-3 bg-white border rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all ${
+                      <div className={`flex items-center gap-3 bg-white border rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all min-w-0 w-full ${
                         aadhaarNumber.length === 12
                           ? isAadhaarValid
                             ? 'border-emerald-600'
@@ -755,7 +755,7 @@ export default function ClientKycRealityPage() {
                             setAadhaarAutoFilled(false);
                           }}
                           placeholder="Enter 12-digit number"
-                          className="w-full text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none tracking-wider bg-transparent"
+                          className="w-full min-w-0 flex-1 text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none tracking-wider bg-transparent"
                         />
                         <button
                           type="button"
@@ -771,13 +771,13 @@ export default function ClientKycRealityPage() {
                     </div>
 
                     {/* Permanent Account Number (PAN) */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="block text-xs font-semibold text-slate-800">
+                    <div className="space-y-1.5 min-w-0 w-full">
+                      <div className="flex items-center justify-between gap-2 min-w-0">
+                        <label className="block text-xs font-semibold text-slate-800 truncate">
                           Permanent Account Number (PAN) *
                         </label>
                         {panNumber.length === 10 && (
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
                             isPanValid
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : 'bg-rose-50 text-rose-600 border border-rose-200'
@@ -787,7 +787,7 @@ export default function ClientKycRealityPage() {
                         )}
                       </div>
 
-                      <div className={`flex items-center gap-3 bg-white border rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all ${
+                      <div className={`flex items-center gap-3 bg-white border rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all min-w-0 w-full ${
                         panNumber.length === 10
                           ? isPanValid
                             ? 'border-emerald-600'
@@ -802,7 +802,7 @@ export default function ClientKycRealityPage() {
                           value={panNumber}
                           onChange={(e) => setPanNumber(e.target.value.toUpperCase().slice(0, 10))}
                           placeholder="E.g. ABCDE1234F"
-                          className="w-full text-xs sm:text-sm text-slate-900 font-medium uppercase placeholder:text-slate-400 focus:outline-none tracking-widest bg-transparent"
+                          className="w-full min-w-0 flex-1 text-xs sm:text-sm text-slate-900 font-medium uppercase placeholder:text-slate-400 focus:outline-none tracking-widest bg-transparent"
                         />
                         {isPanValid && (
                           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -814,15 +814,15 @@ export default function ClientKycRealityPage() {
                     </div>
 
                     {/* Document Photos Upload Box */}
-                    <div className="space-y-2 pt-1">
+                    <div className="space-y-2 pt-1 min-w-0 w-full">
                       <label className="block text-xs font-semibold text-slate-800">
                         Aadhaar Card Photos (Front & Back) *
                       </label>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0 w-full">
                         {/* Front Side */}
-                        <div className="space-y-1.5">
-                          <span className="text-[11px] text-slate-500">Front Side (Photo & Details)</span>
+                        <div className="space-y-1.5 min-w-0 w-full">
+                          <span className="text-[11px] text-slate-500 truncate block">Front Side (Photo & Details)</span>
                           {aadhaarFront || aadhaarFrontPreview ? (
                             <KycImagePreview
                               previewUrl={aadhaarFrontPreview}
@@ -834,7 +834,7 @@ export default function ClientKycRealityPage() {
                               }}
                             />
                           ) : (
-                            <label className="h-32 rounded-2xl border-2 border-dashed border-slate-200 hover:border-emerald-500 bg-[#fbfcfd] hover:bg-emerald-50/20 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all p-3 text-center group">
+                            <label className="h-32 rounded-2xl border-2 border-dashed border-slate-200 hover:border-emerald-500 bg-[#fbfcfd] hover:bg-emerald-50/20 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all p-3 text-center group min-w-0 w-full">
                               {uploadingFront ? (
                                 <UploadSpinner />
                               ) : (
@@ -857,8 +857,8 @@ export default function ClientKycRealityPage() {
                         </div>
 
                         {/* Back Side */}
-                        <div className="space-y-1.5">
-                          <span className="text-[11px] text-slate-500">Back Side (Address & QR)</span>
+                        <div className="space-y-1.5 min-w-0 w-full">
+                          <span className="text-[11px] text-slate-500 truncate block">Back Side (Address & QR)</span>
                           {aadhaarBack || aadhaarBackPreview ? (
                             <KycImagePreview
                               previewUrl={aadhaarBackPreview}
@@ -870,7 +870,7 @@ export default function ClientKycRealityPage() {
                               }}
                             />
                           ) : (
-                            <label className="h-32 rounded-2xl border-2 border-dashed border-slate-200 hover:border-emerald-500 bg-[#fbfcfd] hover:bg-emerald-50/20 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all p-3 text-center group">
+                            <label className="h-32 rounded-2xl border-2 border-dashed border-slate-200 hover:border-emerald-500 bg-[#fbfcfd] hover:bg-emerald-50/20 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all p-3 text-center group min-w-0 w-full">
                               {uploadingBack ? (
                                 <UploadSpinner />
                               ) : (
@@ -895,7 +895,7 @@ export default function ClientKycRealityPage() {
                     </div>
 
                     {/* Tips Box */}
-                    <div className="rounded-2xl bg-[#f0fdf4] border border-emerald-200/80 p-4 space-y-2">
+                    <div className="rounded-2xl bg-[#f0fdf4] border border-emerald-200/80 p-4 space-y-2 min-w-0 w-full">
                       <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
                         <Lightbulb className="w-4 h-4 text-emerald-600 shrink-0" />
                         <span>Tips for a smooth verification</span>
@@ -917,11 +917,11 @@ export default function ClientKycRealityPage() {
                     </div>
 
                     {/* Action Buttons Row */}
-                    <div className="flex items-center justify-between gap-4 pt-2">
+                    <div className="flex items-center justify-between gap-4 pt-2 min-w-0 w-full">
                       <button
                         type="button"
                         onClick={() => router.push('/dashboard')}
-                        className="px-6 py-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-2 transition-all shadow-sm active:scale-98"
+                        className="px-6 py-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-2 transition-all shadow-sm active:scale-98 shrink-0"
                       >
                         <X className="w-4 h-4" />
                         <span>Cancel</span>
@@ -930,7 +930,7 @@ export default function ClientKycRealityPage() {
                       <button
                         type="submit"
                         disabled={!isAadhaarValid || !isPanValid || !aadhaarFront || !aadhaarBack}
-                        className="flex-1 sm:flex-initial px-8 py-3 rounded-xl bg-[#05603a] hover:bg-[#044e2f] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 active:scale-98 transition-all disabled:opacity-40 cursor-pointer"
+                        className="flex-1 sm:flex-initial px-8 py-3 rounded-xl bg-[#05603a] hover:bg-[#044e2f] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 active:scale-98 transition-all disabled:opacity-40 cursor-pointer shrink-0"
                       >
                         <span>Save & Continue</span>
                         <ArrowRight className="w-4 h-4" />
@@ -942,14 +942,14 @@ export default function ClientKycRealityPage() {
 
                 {/* STEP 2 FORM: PAYOUT BANK DETAILS */}
                 {currentStep === 2 && (
-                  <form onSubmit={handleFinalSubmit} className="space-y-5">
+                  <form onSubmit={handleFinalSubmit} className="space-y-5 min-w-0 w-full">
                     
                     {/* Account Holder Name */}
-                    <div className="space-y-1.5">
-                      <label className="block text-xs font-semibold text-slate-800">
+                    <div className="space-y-1.5 min-w-0 w-full">
+                      <label className="block text-xs font-semibold text-slate-800 truncate">
                         Account Holder Name (as per Bank Records) *
                       </label>
-                      <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all">
+                      <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all min-w-0 w-full">
                         <User className="w-4 h-4 text-slate-400 shrink-0" />
                         <input
                           type="text"
@@ -957,24 +957,24 @@ export default function ClientKycRealityPage() {
                           value={bankAccountName}
                           onChange={(e) => setBankAccountName(e.target.value)}
                           placeholder="e.g. Rahul Sharma"
-                          className="w-full text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
+                          className="w-full min-w-0 flex-1 text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
                         />
                       </div>
                     </div>
 
                     {/* Bank Name */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="block text-xs font-semibold text-slate-800">
+                    <div className="space-y-1.5 min-w-0 w-full">
+                      <div className="flex items-center justify-between gap-2 min-w-0">
+                        <label className="block text-xs font-semibold text-slate-800 truncate">
                           Bank Name *
                         </label>
                         {detectedBank && (
-                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                          <span className="shrink-0 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                             Detected: {detectedBank}
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all">
+                      <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all min-w-0 w-full">
                         <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
                         <input
                           type="text"
@@ -982,18 +982,18 @@ export default function ClientKycRealityPage() {
                           value={bankName || detectedBank || ''}
                           onChange={(e) => setBankName(e.target.value)}
                           placeholder="e.g. HDFC Bank, State Bank of India"
-                          className="w-full text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
+                          className="w-full min-w-0 flex-1 text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
                         />
                       </div>
                     </div>
 
                     {/* Double-Entry Account Number */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="block text-xs font-semibold text-slate-800">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0 w-full">
+                      <div className="space-y-1.5 min-w-0 w-full">
+                        <label className="block text-xs font-semibold text-slate-800 truncate">
                           Bank Account Number *
                         </label>
-                        <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all">
+                        <div className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-xl px-3 py-2.5 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all min-w-0 w-full">
                           <CreditCard className="w-4 h-4 text-slate-400 shrink-0" />
                           <input
                             type={showAccountNumber ? 'text' : 'password'}
@@ -1001,7 +1001,7 @@ export default function ClientKycRealityPage() {
                             value={bankAccountNumber}
                             onChange={(e) => setBankAccountNumber(e.target.value.replace(/\D/g, ''))}
                             placeholder="Enter account number"
-                            className="w-full text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
+                            className="w-full min-w-0 flex-1 text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
                           />
                           <button
                             type="button"
@@ -1013,20 +1013,20 @@ export default function ClientKycRealityPage() {
                         </div>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <label className="block text-xs font-semibold text-slate-800">
+                      <div className="space-y-1.5 min-w-0 w-full">
+                        <div className="flex items-center justify-between gap-1 min-w-0">
+                          <label className="block text-xs font-semibold text-slate-800 truncate">
                             Confirm Account Number *
                           </label>
                           {reBankAccountNumber && (
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            <span className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                               isAccountMatch ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'
                             }`}>
                               {isAccountMatch ? '✔ Match' : '✕ Mismatch'}
                             </span>
                           )}
                         </div>
-                        <div className={`flex items-center gap-3 bg-white border rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all ${
+                        <div className={`flex items-center gap-2.5 bg-white border rounded-xl px-3 py-2.5 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all min-w-0 w-full ${
                           reBankAccountNumber
                             ? isAccountMatch
                               ? 'border-emerald-600'
@@ -1040,28 +1040,28 @@ export default function ClientKycRealityPage() {
                             value={reBankAccountNumber}
                             onChange={(e) => setReBankAccountNumber(e.target.value.replace(/\D/g, ''))}
                             placeholder="Confirm account number"
-                            className="w-full text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
+                            className="w-full min-w-0 flex-1 text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
                           />
                         </div>
                       </div>
                     </div>
 
                     {/* Double-Entry IFSC Code */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <label className="block text-xs font-semibold text-slate-800">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0 w-full">
+                      <div className="space-y-1.5 min-w-0 w-full">
+                        <div className="flex items-center justify-between gap-1 min-w-0">
+                          <label className="block text-xs font-semibold text-slate-800 truncate">
                             Bank IFSC Code *
                           </label>
                           {bankIfsc && (
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            <span className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                               isIfscValid ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'
                             }`}>
                               {isIfscValid ? '✔ Format OK' : '✕ Invalid IFSC'}
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all">
+                        <div className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-xl px-3 py-2.5 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all min-w-0 w-full">
                           <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
                           <input
                             type="text"
@@ -1070,25 +1070,25 @@ export default function ClientKycRealityPage() {
                             value={bankIfsc}
                             onChange={(e) => setBankIfsc(e.target.value.toUpperCase().slice(0, 11))}
                             placeholder="e.g. HDFC0001234"
-                            className="w-full text-xs sm:text-sm text-slate-900 font-medium uppercase tracking-wider placeholder:text-slate-400 focus:outline-none bg-transparent"
+                            className="w-full min-w-0 flex-1 text-xs sm:text-sm text-slate-900 font-medium uppercase tracking-wider placeholder:text-slate-400 focus:outline-none bg-transparent"
                           />
                         </div>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <label className="block text-xs font-semibold text-slate-800">
+                      <div className="space-y-1.5 min-w-0 w-full">
+                        <div className="flex items-center justify-between gap-1 min-w-0">
+                          <label className="block text-xs font-semibold text-slate-800 truncate">
                             Confirm IFSC Code *
                           </label>
                           {reBankIfsc && (
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            <span className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                               isIfscMatch ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'
                             }`}>
                               {isIfscMatch ? '✔ Match' : '✕ Mismatch'}
                             </span>
                           )}
                         </div>
-                        <div className={`flex items-center gap-3 bg-white border rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all ${
+                        <div className={`flex items-center gap-2.5 bg-white border rounded-xl px-3 py-2.5 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all min-w-0 w-full ${
                           reBankIfsc
                             ? isIfscMatch
                               ? 'border-emerald-600'
@@ -1103,31 +1103,31 @@ export default function ClientKycRealityPage() {
                             value={reBankIfsc}
                             onChange={(e) => setReBankIfsc(e.target.value.toUpperCase().slice(0, 11))}
                             placeholder="Confirm IFSC code"
-                            className="w-full text-xs sm:text-sm text-slate-900 font-medium uppercase tracking-wider placeholder:text-slate-400 focus:outline-none bg-transparent"
+                            className="w-full min-w-0 flex-1 text-xs sm:text-sm text-slate-900 font-medium uppercase tracking-wider placeholder:text-slate-400 focus:outline-none bg-transparent"
                           />
                         </div>
                       </div>
                     </div>
 
                     {/* Personal UPI ID (Optional) */}
-                    <div className="space-y-1.5">
-                      <label className="block text-xs font-semibold text-slate-800">
+                    <div className="space-y-1.5 min-w-0 w-full">
+                      <label className="block text-xs font-semibold text-slate-800 truncate">
                         Personal UPI ID (Optional for fast settlements)
                       </label>
-                      <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all">
+                      <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all min-w-0 w-full">
                         <Wallet className="w-4 h-4 text-slate-400 shrink-0" />
                         <input
                           type="text"
                           value={userUpiId}
                           onChange={(e) => setUserUpiId(e.target.value)}
                           placeholder="e.g. name@okaxis"
-                          className="w-full text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
+                          className="w-full min-w-0 flex-1 text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
                         />
                       </div>
                     </div>
 
                     {/* Tips Box */}
-                    <div className="rounded-2xl bg-[#f0fdf4] border border-emerald-200/80 p-4 space-y-2">
+                    <div className="rounded-2xl bg-[#f0fdf4] border border-emerald-200/80 p-4 space-y-2 min-w-0 w-full">
                       <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
                         <Lightbulb className="w-4 h-4 text-emerald-600 shrink-0" />
                         <span>Payout Account Guidelines</span>
@@ -1149,14 +1149,14 @@ export default function ClientKycRealityPage() {
                     </div>
 
                     {/* Action Buttons Row */}
-                    <div className="flex items-center justify-between gap-4 pt-2">
+                    <div className="flex items-center justify-between gap-4 pt-2 min-w-0 w-full">
                       <button
                         type="button"
                         onClick={() => {
                           setCurrentStep(1);
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className="px-6 py-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-2 transition-all shadow-sm active:scale-98 cursor-pointer"
+                        className="px-6 py-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-2 transition-all shadow-sm active:scale-98 cursor-pointer shrink-0"
                       >
                         <ArrowLeft className="w-4 h-4" />
                         <span>Back</span>
@@ -1165,7 +1165,7 @@ export default function ClientKycRealityPage() {
                       <button
                         type="submit"
                         disabled={loading || !isAccountMatch || !isIfscMatch}
-                        className="flex-1 sm:flex-initial px-8 py-3 rounded-xl bg-[#05603a] hover:bg-[#044e2f] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 active:scale-98 transition-all disabled:opacity-40 cursor-pointer"
+                        className="flex-1 sm:flex-initial px-8 py-3 rounded-xl bg-[#05603a] hover:bg-[#044e2f] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 active:scale-98 transition-all disabled:opacity-40 cursor-pointer shrink-0"
                       >
                         {loading ? (
                           <>
