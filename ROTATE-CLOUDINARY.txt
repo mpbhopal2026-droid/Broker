@@ -5,8 +5,8 @@ WHAT HAPPENED
 -------------
 src/lib/cloudinary.ts contained hardcoded fallback credentials:
 
-    apiKey:    292762116366424
-    apiSecret: xlCJeVwcYlAqZ0_3rL2v4HpOkBI
+    apiKey:    <redacted>
+    apiSecret: <redacted — the leaked pair, since rotated and dead>
 
 That file is committed to https://github.com/mpbhopal2026-droid/Broker,
 which is PUBLIC. Verified: the secret is readable from raw.githubusercontent
