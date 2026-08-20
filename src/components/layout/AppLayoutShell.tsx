@@ -26,8 +26,8 @@ import { KycVerificationPromptModal } from '@/components/kyc/KycVerificationProm
  */
 
 
-// Screens requiring approved KYC for live settlement
-const VERIFIED_ONLY_ROUTES = ['/withdraw', '/orders'];
+// Screens requiring approved KYC for live settlement & trading
+const VERIFIED_ONLY_ROUTES = ['/withdraw', '/deposit', '/orders', '/funds'];
 
 const PUBLIC_ROUTES = ['/', '/login', '/register', '/legal', '/privacy', '/grievance', '/help'];
 
@@ -42,7 +42,7 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const isPublic = PUBLIC_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`));
   const isAuthPage = pathname === '/login' || pathname === '/register';
-  const isKycPage = pathname === '/kyc';
+  const isKycOnboardingPage = pathname === '/kyc' || pathname === '/kyc/submitted';
   const isTradePage = pathname === '/trade';
 
   // Operator areas get the admin sidebar. Presentation only — access is enforced
@@ -50,6 +50,7 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
   const isOperator = currentUser?.role === 'admin' || currentUser?.role === 'staff' || currentUser?.role === 'developer';
   const isAdminArea = isOperator || pathname.startsWith('/admin') || pathname.startsWith('/developer');
   const needsVerification = !isOperator && VERIFIED_ONLY_ROUTES.some((r) => pathname.startsWith(r));
+  const hasSubmittedKyc = currentUser?.kycStatus === 'approved' || currentUser?.kycStatus === 'pending';
 
   React.useEffect(() => {
     if (!isLoaded) return;
@@ -63,6 +64,8 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
     if (isAuthenticated && pathname === '/') {
       if (isOperator) {
         router.replace('/admin');
+      } else if (!hasSubmittedKyc) {
+        router.replace('/kyc');
       } else {
         router.replace('/dashboard');
       }
@@ -75,13 +78,12 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
       return;
     }
 
-    // Mandatory KYC & Bank Details Gate: Clients who haven't submitted KYC cannot use the app
-    const hasSubmittedKyc = currentUser?.kycStatus === 'approved' || currentUser?.kycStatus === 'pending';
-    if (isAuthenticated && !isOperator && !hasSubmittedKyc && pathname !== '/kyc' && pathname !== '/kyc/submitted' && !isPublic && !isAuthPage) {
+    // Mandatory KYC Lockout Gate: Clients who haven't submitted KYC CANNOT use the app
+    if (isAuthenticated && !isOperator && !hasSubmittedKyc && !isKycOnboardingPage && !isPublic && !isAuthPage) {
       router.replace('/kyc');
       return;
     }
-  }, [isLoaded, isAuthenticated, isPublic, isOperator, isAuthPage, pathname, router, currentUser?.kycStatus]);
+  }, [isLoaded, isAuthenticated, isPublic, isOperator, isAuthPage, pathname, router, hasSubmittedKyc, isKycOnboardingPage]);
 
   // Auth & Welcome pages for visitors are standalone — zero chrome around them.
   if (isAuthPage || (pathname === '/' && !isAuthenticated) || (isPublic && !isAuthenticated)) {
@@ -91,6 +93,15 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
   // Session still resolving, or we are about to redirect. Show the shape.
   if (!isLoaded || (!isAuthenticated && !isPublic)) {
     return isAuthenticated ? <AppSkeleton /> : <AuthSkeleton />;
+  }
+
+  // Unsubmitted clients are strictly locked to the standalone KYC onboarding flow
+  if (isAuthenticated && !isOperator && !hasSubmittedKyc) {
+    if (isKycOnboardingPage) {
+      return <main className="min-h-screen w-full">{children}</main>;
+    }
+    // Hard block any attempt to render dashboard/trades before redirecting
+    return <AppSkeleton />;
   }
 
   // Dedicated Full-Screen OctaFX Trading Terminal — zero chrome overlap
