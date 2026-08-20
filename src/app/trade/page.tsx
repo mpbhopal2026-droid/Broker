@@ -20,14 +20,15 @@ import { formatUSD } from '@/lib/utils';
 import { TradingViewWidget } from '@/components/trading/TradingViewWidget';
 import { InsufficientFundsModal } from '@/components/trading/InsufficientFundsModal';
 import { TradeOrder } from '@/lib/types';
+import { useLivePrices } from '@/hooks/useLivePrices';
 
 const INSTRUMENTS = [
-  { symbol: 'XAU/USD', name: 'Gold vs US Dollar', tvSymbol: 'OANDA:XAUUSD', defaultPrice: 2418.50, spread: 0.30, change24h: '+0.84%' },
+  { symbol: 'XAU/USD', name: 'Gold vs US Dollar', tvSymbol: 'OANDA:XAUUSD', defaultPrice: 2915.40, spread: 0.30, change24h: '+0.84%' },
   { symbol: 'EUR/USD', name: 'Euro vs US Dollar', tvSymbol: 'FX:EURUSD', defaultPrice: 1.0875, spread: 0.00012, change24h: '+0.15%' },
   { symbol: 'GBP/USD', name: 'British Pound vs US Dollar', tvSymbol: 'FX:GBPUSD', defaultPrice: 1.2940, spread: 0.00015, change24h: '-0.22%' },
-  { symbol: 'BTC/USD', name: 'Bitcoin vs US Dollar', tvSymbol: 'BINANCE:BTCUSDT', defaultPrice: 63850.00, spread: 1.50, change24h: '+2.40%' },
-  { symbol: 'USD/JPY', name: 'US Dollar vs Japanese Yen', tvSymbol: 'FX:USDJPY', defaultPrice: 155.60, spread: 0.015, change24h: '+0.38%' },
-  { symbol: 'ETH/USD', name: 'Ethereum vs US Dollar', tvSymbol: 'BINANCE:ETHUSDT', defaultPrice: 3420.00, spread: 0.50, change24h: '-1.10%' },
+  { symbol: 'BTC/USD', name: 'Bitcoin vs US Dollar', tvSymbol: 'BINANCE:BTCUSDT', defaultPrice: 96450.00, spread: 1.50, change24h: '+2.40%' },
+  { symbol: 'USD/JPY', name: 'US Dollar vs Japanese Yen', tvSymbol: 'FX:USDJPY', defaultPrice: 154.20, spread: 0.015, change24h: '+0.38%' },
+  { symbol: 'ETH/USD', name: 'Ethereum vs US Dollar', tvSymbol: 'BINANCE:ETHUSDT', defaultPrice: 2740.00, spread: 0.50, change24h: '-1.10%' },
 ];
 
 const LOT_CHIPS = [0.01, 0.05, 0.10, 0.50, 1.00];
@@ -57,6 +58,8 @@ function TradePageInner() {
     demo,
   } = useApp();
 
+  const { prices } = useLivePrices();
+
   // Selected Instrument
   const [selectedSymbol, setSelectedSymbol] = useState<string>(symbolParam);
   const [showSymbolPicker, setShowSymbolPicker] = useState(false);
@@ -66,11 +69,13 @@ function TradePageInner() {
     return INSTRUMENTS.find((i) => i.symbol === selectedSymbol) || INSTRUMENTS[0];
   }, [selectedSymbol]);
 
+  const liveData = prices[selectedSymbol];
+
   // Pricing & Live Spreads
-  const livePrice = currentInstrument.defaultPrice;
-  const spreadValue = currentInstrument.spread;
-  const bidPrice = (livePrice - spreadValue / 2).toFixed(selectedSymbol.includes('JPY') ? 2 : selectedSymbol.includes('EUR') || selectedSymbol.includes('GBP') ? 4 : 2);
-  const askPrice = (livePrice + spreadValue / 2).toFixed(selectedSymbol.includes('JPY') ? 2 : selectedSymbol.includes('EUR') || selectedSymbol.includes('GBP') ? 4 : 2);
+  const livePrice = liveData?.price ?? currentInstrument.defaultPrice;
+  const spreadValue = liveData?.spread ?? currentInstrument.spread;
+  const bidPrice = (liveData?.bid ?? (livePrice - spreadValue / 2)).toFixed(selectedSymbol.includes('JPY') ? 2 : selectedSymbol.includes('EUR') || selectedSymbol.includes('GBP') ? 4 : 2);
+  const askPrice = (liveData?.ask ?? (livePrice + spreadValue / 2)).toFixed(selectedSymbol.includes('JPY') ? 2 : selectedSymbol.includes('EUR') || selectedSymbol.includes('GBP') ? 4 : 2);
 
   // Financial Metrics Ribbon (Balance, Equity, Free Margin)
   const balance = isDemo ? (demo?.balance ?? 10000) : (currentUser?.walletBalance ?? 0);

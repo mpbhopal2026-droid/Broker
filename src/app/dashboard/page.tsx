@@ -18,6 +18,7 @@ import { useApp } from '@/lib/store';
 import { formatUSD } from '@/lib/utils';
 import { MarketAsset } from '@/lib/types';
 import { MiniSparkline } from '@/components/charts/MiniSparkline';
+import { useLivePrices } from '@/hooks/useLivePrices';
 
 const CATEGORIES = ['All', 'Majors', 'Minors', 'Exotics', 'Commodities', 'Indices', 'Crypto'];
 
@@ -30,6 +31,8 @@ export default function GlobalForexDashboard() {
     watchlist = [],
     toggleWatchlist,
   } = useApp();
+
+  const { prices } = useLivePrices();
 
   const [hideBalance, setHideBalance] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -48,17 +51,26 @@ export default function GlobalForexDashboard() {
   const top4Cards = useMemo(() => {
     const defaultSymbols = ['XAU/USD', 'EUR/USD', 'GBP/USD', 'USD/INR'];
     return defaultSymbols.map((sym) => {
+      const live = prices[sym];
       const found = marketAssets.find((a) => a.symbol === sym) || {
         symbol: sym,
         name: sym === 'XAU/USD' ? 'Gold Spot' : sym === 'EUR/USD' ? 'Euro' : sym === 'GBP/USD' ? 'British Pound' : 'US Dollar / Indian Rupee',
-        price: sym === 'XAU/USD' ? 2436.95 : sym === 'EUR/USD' ? 1.0861 : sym === 'GBP/USD' ? 1.2739 : 84.056,
-        change: sym === 'XAU/USD' ? 20.23 : sym === 'EUR/USD' ? 0.0002 : sym === 'GBP/USD' ? 0.0036 : 0.009,
-        changePercent: sym === 'XAU/USD' ? 0.83 : sym === 'EUR/USD' ? 0.02 : sym === 'GBP/USD' ? 0.28 : 0.01,
+        price: live?.price ?? (sym === 'XAU/USD' ? 2915.40 : sym === 'EUR/USD' ? 1.0875 : sym === 'GBP/USD' ? 1.2940 : 86.85),
+        change: live?.change ?? (sym === 'XAU/USD' ? 20.23 : sym === 'EUR/USD' ? 0.0002 : sym === 'GBP/USD' ? 0.0036 : 0.009),
+        changePercent: live ? parseFloat(live.changePercent) : (sym === 'XAU/USD' ? 0.83 : sym === 'EUR/USD' ? 0.02 : sym === 'GBP/USD' ? 0.28 : 0.01),
         category: sym === 'XAU/USD' ? 'Commodities' : 'Forex',
       };
+      if (live) {
+        return {
+          ...found,
+          price: live.price,
+          change: live.change,
+          changePercent: parseFloat(live.changePercent),
+        };
+      }
       return found;
     });
-  }, [marketAssets]);
+  }, [marketAssets, prices]);
 
   // Filtered Assets for Table
   const filteredAssets = useMemo(() => {

@@ -34,6 +34,8 @@ import { TradeOrder } from '@/lib/types';
 import { MiniSparkline } from '@/components/charts/MiniSparkline';
 import { InteractiveMarketChart, ChartDataPoint } from '@/components/charts/InteractiveMarketChart';
 
+import { useLivePrices } from '@/hooks/useLivePrices';
+
 // Detailed Market Assets Catalog
 const INSTRUMENTS_DATABASE = [
   {
@@ -41,16 +43,16 @@ const INSTRUMENTS_DATABASE = [
     name: 'Gold Spot / US Dollar',
     category: 'COMMODITIES',
     tvSymbol: 'OANDA:XAUUSD',
-    defaultPrice: 2436.21,
+    defaultPrice: 2915.40,
     spread: 0.30,
     change24h: '+0.75%',
-    changeValue: 18.15,
-    low24h: 2409.29,
-    high24h: 2442.80,
-    low52w: 1810.50,
-    high52w: 2483.60,
-    openPrice: 2418.06,
-    prevClose: 2418.06,
+    changeValue: 21.80,
+    low24h: 2890.50,
+    high24h: 2928.00,
+    low52w: 2010.50,
+    high52w: 2950.00,
+    openPrice: 2893.60,
+    prevClose: 2893.60,
     contractSize: '100 oz',
     leverage: '1:100',
     description: 'Gold spot traded against the US Dollar. Regarded globally as a primary hedge against inflation and safe-haven reserve asset.',
@@ -81,16 +83,16 @@ const INSTRUMENTS_DATABASE = [
     name: 'British Pound / US Dollar',
     category: 'FOREX',
     tvSymbol: 'FX:GBPUSD',
-    defaultPrice: 1.27330,
+    defaultPrice: 1.2940,
     spread: 0.00015,
     change24h: '+0.12%',
     changeValue: 0.0015,
-    low24h: 1.2690,
-    high24h: 1.2765,
+    low24h: 1.2890,
+    high24h: 1.2965,
     low52w: 1.2035,
     high52w: 1.3140,
-    openPrice: 1.2718,
-    prevClose: 1.2718,
+    openPrice: 1.2918,
+    prevClose: 1.2918,
     contractSize: '100,000 GBP',
     leverage: '1:100',
     description: 'Also known as "Cable", one of the oldest and most liquid currency pairs in global financial markets.',
@@ -101,16 +103,16 @@ const INSTRUMENTS_DATABASE = [
     name: 'US Dollar / Indian Rupee',
     category: 'FOREX',
     tvSymbol: 'FX_IDC:USDINR',
-    defaultPrice: 84.134,
+    defaultPrice: 86.85,
     spread: 0.012,
     change24h: '+0.06%',
     changeValue: 0.05,
-    low24h: 83.95,
-    high24h: 84.22,
+    low24h: 86.60,
+    high24h: 86.95,
     low52w: 82.80,
-    high52w: 84.35,
-    openPrice: 84.08,
-    prevClose: 84.08,
+    high52w: 87.10,
+    openPrice: 86.72,
+    prevClose: 86.72,
     contractSize: '1,000 USD',
     leverage: '1:100',
     description: 'The exchange rate between the US Dollar and Indian Rupee, reflecting trade flows and economic trends in the Indian sub-continent.',
@@ -121,16 +123,16 @@ const INSTRUMENTS_DATABASE = [
     name: 'Bitcoin / US Dollar',
     category: 'CRYPTO',
     tvSymbol: 'BINANCE:BTCUSDT',
-    defaultPrice: 64150.00,
+    defaultPrice: 96450.00,
     spread: 2.50,
     change24h: '+2.40%',
-    changeValue: 1500.00,
-    low24h: 62400.00,
-    high24h: 64800.00,
-    low52w: 25100.00,
-    high52w: 73750.00,
-    openPrice: 62650.00,
-    prevClose: 62650.00,
+    changeValue: 2250.00,
+    low24h: 93800.00,
+    high24h: 97100.00,
+    low52w: 38100.00,
+    high52w: 104500.00,
+    openPrice: 94200.00,
+    prevClose: 94200.00,
     contractSize: '1 BTC',
     leverage: '1:50',
     description: 'The pioneering digital cryptocurrency asset with decentralised consensus and fixed supply issuance.',
@@ -141,16 +143,16 @@ const INSTRUMENTS_DATABASE = [
     name: 'US Dollar / Japanese Yen',
     category: 'FOREX',
     tvSymbol: 'FX:USDJPY',
-    defaultPrice: 155.60,
+    defaultPrice: 154.20,
     spread: 0.015,
     change24h: '+0.38%',
     changeValue: 0.58,
-    low24h: 154.80,
-    high24h: 156.10,
+    low24h: 153.50,
+    high24h: 154.60,
     low52w: 140.25,
     high52w: 161.95,
-    openPrice: 155.02,
-    prevClose: 155.02,
+    openPrice: 153.80,
+    prevClose: 153.80,
     contractSize: '100,000 USD',
     leverage: '1:100',
     description: 'The second most liquid currency pair globally, widely traded for interest rate differentials and carry trade strategies.',
@@ -161,16 +163,16 @@ const INSTRUMENTS_DATABASE = [
     name: 'Ethereum / US Dollar',
     category: 'CRYPTO',
     tvSymbol: 'BINANCE:ETHUSDT',
-    defaultPrice: 3420.00,
+    defaultPrice: 2740.00,
     spread: 0.50,
     change24h: '-1.10%',
     changeValue: -38.00,
-    low24h: 3380.00,
-    high24h: 3495.00,
-    low52w: 1520.00,
+    low24h: 2650.00,
+    high24h: 2785.00,
+    low52w: 2120.00,
     high52w: 4090.00,
-    openPrice: 3458.00,
-    prevClose: 3458.00,
+    openPrice: 2680.00,
+    prevClose: 2680.00,
     contractSize: '1 ETH',
     leverage: '1:50',
     description: 'Leading smart contract blockchain native token powering decentralized finance and digital tokenized applications.',
@@ -181,16 +183,16 @@ const INSTRUMENTS_DATABASE = [
     name: 'WTI Crude Oil',
     category: 'COMMODITIES',
     tvSymbol: 'TVC:USOIL',
-    defaultPrice: 82.51,
+    defaultPrice: 74.50,
     spread: 0.04,
     change24h: '+0.52%',
     changeValue: 0.43,
-    low24h: 81.60,
-    high24h: 83.10,
+    low24h: 73.40,
+    high24h: 75.20,
     low52w: 67.70,
     high52w: 93.60,
-    openPrice: 82.08,
-    prevClose: 82.08,
+    openPrice: 73.80,
+    prevClose: 73.80,
     contractSize: '1,000 bbl',
     leverage: '1:100',
     description: 'West Texas Intermediate light sweet crude oil, the global benchmark for petroleum commodities pricing.',
@@ -245,29 +247,33 @@ function InstrumentDetailPageContent() {
   const [showSlTp, setShowSlTp] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showGatekeeperModal, setShowGatekeeperModal] = useState<boolean>(false);
+  const { prices } = useLivePrices();
+  const liveData = prices[instrument.symbol];
 
   // Pricing calculations
-  const livePrice = instrument.defaultPrice;
-  const spread = instrument.spread;
-  const isUp = instrument.change24h.startsWith('+');
+  const livePrice = liveData?.price ?? instrument.defaultPrice;
+  const spread = liveData?.spread ?? instrument.spread;
+  const changePercentStr = liveData?.changePercent ?? instrument.change24h;
+  const changeValueNum = liveData?.change ?? instrument.changeValue;
+  const isUp = changePercentStr.startsWith('+');
 
   // Dynamic Hover Scrubber Display Values
   const displayPrice = hoveredPoint ? hoveredPoint.price : livePrice;
   const isHovering = hoveredPoint !== null;
-  const referencePrice = instrument.openPrice || livePrice;
-  const displayDelta = isHovering ? displayPrice - referencePrice : instrument.changeValue;
+  const referencePrice = liveData?.prevClose || instrument.openPrice || livePrice;
+  const displayDelta = isHovering ? displayPrice - referencePrice : changeValueNum;
   const displayDeltaPercent = isHovering
     ? referencePrice > 0
       ? (displayDelta / referencePrice) * 100
       : 0
-    : parseFloat(instrument.change24h);
+    : parseFloat(changePercentStr);
   const isDisplayUp = isHovering ? displayDelta >= 0 : isUp;
   const displayDeltaStr = isHovering
     ? `${displayDeltaPercent >= 0 ? '+' : ''}${displayDeltaPercent.toFixed(2)}%`
-    : instrument.change24h;
+    : changePercentStr;
 
-  const bidPrice = (livePrice - spread / 2).toFixed(instrument.symbol.includes('JPY') ? 2 : instrument.symbol.includes('EUR') || instrument.symbol.includes('GBP') ? 5 : 2);
-  const askPrice = (livePrice + spread / 2).toFixed(instrument.symbol.includes('JPY') ? 2 : instrument.symbol.includes('EUR') || instrument.symbol.includes('GBP') ? 5 : 2);
+  const bidPrice = (liveData?.bid ?? (livePrice - spread / 2)).toFixed(instrument.symbol.includes('JPY') ? 2 : instrument.symbol.includes('EUR') || instrument.symbol.includes('GBP') ? 5 : 2);
+  const askPrice = (liveData?.ask ?? (livePrice + spread / 2)).toFixed(instrument.symbol.includes('JPY') ? 2 : instrument.symbol.includes('EUR') || instrument.symbol.includes('GBP') ? 5 : 2);
 
   // Balances & Margin
   const balance = isDemo ? (demo?.balance ?? 10000) : (currentUser?.walletBalance ?? 0);
@@ -511,7 +517,7 @@ function InstrumentDetailPageContent() {
                 <div className="w-full h-full">
                   <InteractiveMarketChart
                     symbol={instrument.symbol}
-                    currentPrice={instrument.defaultPrice}
+                    currentPrice={livePrice}
                     timeframe={selectedTimeframe}
                     isPositive={isUp}
                     onHoverPoint={setHoveredPoint}

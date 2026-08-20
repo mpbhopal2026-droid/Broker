@@ -18,10 +18,12 @@ import {
 import { useApp } from '@/lib/store';
 import { MarketAsset } from '@/lib/types';
 import { MiniSparkline } from '@/components/charts/MiniSparkline';
+import { useLivePrices } from '@/hooks/useLivePrices';
 
 export default function MarketsDiscoveryPage() {
   const router = useRouter();
   const { marketAssets, watchlist = [], toggleWatchlist } = useApp();
+  const { prices } = useLivePrices();
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -37,17 +39,26 @@ export default function MarketsDiscoveryPage() {
   const top4Benchmarks = useMemo(() => {
     const defaultSymbols = ['XAU/USD', 'EUR/USD', 'GBP/USD', 'USD/INR'];
     return defaultSymbols.map((sym) => {
+      const live = prices[sym];
       const found = marketAssets.find((a) => a.symbol === sym) || {
         symbol: sym,
         name: sym === 'XAU/USD' ? 'Gold Spot' : sym === 'EUR/USD' ? 'Euro' : sym === 'GBP/USD' ? 'British Pound' : 'US Dollar / Indian Rupee',
-        price: sym === 'XAU/USD' ? 2436.95 : sym === 'EUR/USD' ? 1.0861 : sym === 'GBP/USD' ? 1.2739 : 84.056,
-        change: sym === 'XAU/USD' ? 20.23 : sym === 'EUR/USD' ? 0.0002 : sym === 'GBP/USD' ? 0.0036 : 0.009,
-        changePercent: sym === 'XAU/USD' ? 0.83 : sym === 'EUR/USD' ? 0.02 : sym === 'GBP/USD' ? 0.28 : 0.01,
+        price: live?.price ?? (sym === 'XAU/USD' ? 2915.40 : sym === 'EUR/USD' ? 1.0875 : sym === 'GBP/USD' ? 1.2940 : 86.85),
+        change: live?.change ?? (sym === 'XAU/USD' ? 20.23 : sym === 'EUR/USD' ? 0.0002 : sym === 'GBP/USD' ? 0.0036 : 0.009),
+        changePercent: live ? parseFloat(live.changePercent) : (sym === 'XAU/USD' ? 0.83 : sym === 'EUR/USD' ? 0.02 : sym === 'GBP/USD' ? 0.28 : 0.01),
         category: sym === 'XAU/USD' ? 'Commodities' : 'Forex',
       };
+      if (live) {
+        return {
+          ...found,
+          price: live.price,
+          change: live.change,
+          changePercent: parseFloat(live.changePercent),
+        };
+      }
       return found;
     });
-  }, [marketAssets]);
+  }, [marketAssets, prices]);
 
   const filteredAssets = useMemo(() => {
     return marketAssets.filter((asset) => {
