@@ -39,7 +39,7 @@ export default function AdminUsersPage() {
   } = useAdmin();
 
   const isStaff = currentUser?.role === 'staff';
-  const isDeveloper = currentUser?.role === 'developer';
+  const isDeveloper = currentUser?.role === 'developer' || currentUser?.role === 'admin';
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -315,7 +315,8 @@ export default function AdminUsersPage() {
                 • Wipes wallet balance (${userToDelete.walletBalance.toFixed(2)})<br />
                 • Deletes all trade orders & positions<br />
                 • Deletes all deposit & withdrawal history<br />
-                • Purges uploaded KYC documents & sessions
+                • Purges uploaded KYC documents & active sessions<br />
+                • <strong>Completely removes authentication credentials so the user must re-register from scratch</strong>
               </p>
             </div>
 

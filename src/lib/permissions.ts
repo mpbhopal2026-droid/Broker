@@ -26,6 +26,7 @@ export type Capability =
   | 'client:view'
   | 'client:edit'
   | 'client:suspend'
+  | 'client:delete'
   | 'balance:adjust'
   | 'settings:view'
   | 'settings:edit'
@@ -65,6 +66,7 @@ const MATRIX: Record<UserRole, Capability[]> = {
     'client:view',
     'client:edit',
     'client:suspend',
+    'client:delete',
     'balance:adjust',
     'settings:view',
     'settings:edit',
@@ -79,7 +81,7 @@ const MATRIX: Record<UserRole, Capability[]> = {
     'notification:test',
   ],
 
-  // Developer has full system observability, flags, notification testing, and complete role promotion powers.
+  // Developer has full system observability, flags, notification testing, and complete user purge powers.
   developer: [
     'flags:view',
     'flags:edit',
@@ -90,6 +92,8 @@ const MATRIX: Record<UserRole, Capability[]> = {
     'settings:view',
     'role:manage',
     'notification:test',
+    'client:view',
+    'client:delete',
   ],
 };
 

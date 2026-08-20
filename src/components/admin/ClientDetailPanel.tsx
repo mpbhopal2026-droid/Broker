@@ -37,7 +37,7 @@ export const ClientDetailPanel: React.FC<{ client: UserProfile; onClose: () => v
   const { adminUpdateUserProfile, setUserActive, setClientPaymentConfig, deleteUser } = useAdmin();
   const { showToast, paymentSettings, currentUser } = useApp();
 
-  const isDeveloper = currentUser?.role === 'developer';
+  const isDeveloper = currentUser?.role === 'developer' || currentUser?.role === 'admin';
 
   const [activeTab, setActiveTab] = useState<'profile' | 'banking' | 'routing' | 'security'>('profile');
   const [saving, setSaving] = useState(false);
@@ -512,7 +512,7 @@ export const ClientDetailPanel: React.FC<{ client: UserProfile; onClose: () => v
                   <div className="space-y-1">
                     <h4 className="text-xs font-bold text-rose-700 dark:text-rose-400">Permanent Account Purge (Developer Action)</h4>
                     <p className="text-xs text-rose-600/80 dark:text-rose-300/80">
-                      Permanently delete this user, their wallet balances, trade ledger, and documents.
+                      Completely remove this user, credentials, and all records. The user will be treated as unregistered and must re-register.
                     </p>
                   </div>
 
@@ -520,7 +520,7 @@ export const ClientDetailPanel: React.FC<{ client: UserProfile; onClose: () => v
                     type="button"
                     disabled={deletingUser}
                     onClick={async () => {
-                      if (confirm(`Are you absolutely sure you want to permanently delete ${client.fullName} (${client.email})? This action cannot be undone.`)) {
+                      if (confirm(`Are you absolutely sure you want to completely purge ${client.fullName} (${client.email})? This user will be wiped from auth and the database, and will have to re-register.`)) {
                         setDeletingUser(true);
                         const res = await deleteUser(client.id);
                         setDeletingUser(false);

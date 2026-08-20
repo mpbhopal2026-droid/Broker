@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     const { data: target } = await db
       .from('profiles')
-      .select('id, email, role, is_active')
+      .select('id, email, phone, role, is_active')
       .eq('id', userId)
       .maybeSingle();
 
@@ -236,23 +236,50 @@ export async function POST(req: NextRequest) {
       case 'delete_user': {
         if (userId === admin.id) return fail(400, 'You cannot delete your own admin account.');
 
-        // Delete all user related data in sequence
-        await db.from('trade_orders').delete().eq('user_id', userId);
-        await db.from('transactions').delete().eq('user_id', userId);
-        await db.from('ledger_entries').delete().eq('user_id', userId);
-        await db.from('kyc_records').delete().eq('user_id', userId);
-        await db.from('sessions').delete().eq('user_id', userId);
-        await db.from('notifications').delete().eq('user_id', userId);
-        const { error } = await db.from('profiles').delete().eq('id', userId);
+        const userEmail = target.email?.toLowerCase().trim();
+        const userPhone = target.phone;
 
-        if (error) return fail(500, 'Could not delete user account: ' + error.message);
+        // 1. Delete trade orders & positions
+        await db.from('trade_orders').delete().eq('user_id', userId);
+        // 2. Delete transactions & deposits & withdrawals
+        await db.from('transactions').delete().eq('user_id', userId);
+        // 3. Delete ledger entries
+        await db.from('ledger_entries').delete().eq('user_id', userId);
+        // 4. Delete kyc documents & records
+        await db.from('kyc_documents').delete().eq('user_id', userId);
+        await db.from('kyc_records').delete().eq('user_id', userId);
+        // 5. Delete active sessions and tokens
+        await db.from('sessions').delete().eq('user_id', userId);
+        // 6. Delete notifications
+        await db.from('notifications').delete().eq('user_id', userId);
+        
+        // 7. Delete ALL OTP records for this email/phone so they can cleanly re-register
+        if (userEmail) {
+          await db.from('auth_otps').delete().or(`identifier.eq.${userEmail},email.eq.${userEmail}`);
+        }
+        if (userPhone) {
+          await db.from('auth_otps').delete().eq('identifier', userPhone);
+        }
+
+        // 8. Delete from profiles table
+        const { error: profileError } = await db.from('profiles').delete().eq('id', userId);
+        if (profileError) {
+          console.error('[admin] profile delete failed:', profileError);
+        }
+
+        // 9. Permanently delete from Supabase Auth so the user MUST re-register
+        try {
+          await db.auth.admin.deleteUser(userId);
+        } catch (authErr) {
+          console.warn('[admin] auth.admin.deleteUser skipped or failed:', authErr);
+        }
 
         await auditServer(req, 'ADMIN_USER_DELETED', {
           userId: admin.id,
-          metadata: { deletedUserId: userId, targetEmail: target.email },
+          metadata: { deletedUserId: userId, targetEmail: target.email, completelyPurged: true },
         });
 
-        return ok({ message: 'User account and all associated records permanently deleted.' });
+        return ok({ message: 'User account completely removed. The user must now re-register.' });
       }
 
       default:
@@ -276,28 +303,45 @@ export async function DELETE(req: NextRequest) {
 
     const { data: target } = await db
       .from('profiles')
-      .select('id, email')
+      .select('id, email, phone')
       .eq('id', userId)
       .maybeSingle();
 
     if (!target) return fail(404, 'No such client.');
 
+    const userEmail = target.email?.toLowerCase().trim();
+    const userPhone = target.phone;
+
     await db.from('trade_orders').delete().eq('user_id', userId);
     await db.from('transactions').delete().eq('user_id', userId);
     await db.from('ledger_entries').delete().eq('user_id', userId);
+    await db.from('kyc_documents').delete().eq('user_id', userId);
     await db.from('kyc_records').delete().eq('user_id', userId);
     await db.from('sessions').delete().eq('user_id', userId);
     await db.from('notifications').delete().eq('user_id', userId);
-    const { error } = await db.from('profiles').delete().eq('id', userId);
 
+    if (userEmail) {
+      await db.from('auth_otps').delete().or(`identifier.eq.${userEmail},email.eq.${userEmail}`);
+    }
+    if (userPhone) {
+      await db.from('auth_otps').delete().eq('identifier', userPhone);
+    }
+
+    const { error } = await db.from('profiles').delete().eq('id', userId);
     if (error) return fail(500, 'Could not delete user: ' + error.message);
+
+    try {
+      await db.auth.admin.deleteUser(userId);
+    } catch (authErr) {
+      console.warn('[admin] auth.admin.deleteUser skipped or failed:', authErr);
+    }
 
     await auditServer(req, 'ADMIN_USER_DELETED', {
       userId: admin.id,
-      metadata: { deletedUserId: userId, targetEmail: target.email },
+      metadata: { deletedUserId: userId, targetEmail: target.email, completelyPurged: true },
     });
 
-    return ok({ message: 'User account and all associated records permanently deleted.' });
+    return ok({ message: 'User account completely removed. The user must now re-register.' });
   } catch (err) {
     return handleRouteError(err);
   }
