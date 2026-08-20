@@ -188,7 +188,7 @@ export async function POST(req: NextRequest) {
 
     if (!profile) {
       if (channel === 'sms') {
-        return fail(404, 'No account found for that mobile number. Please register with your email first.', {
+        return fail(404, 'No account found for that mobile number. Please sign up with your email address first.', {
           needsRegistration: true,
         });
       }
@@ -199,11 +199,7 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      if (!fullNameInput) {
-        return fail(404, 'No account found with this email. Please register first.', {
-          needsRegistration: true,
-        });
-      }
+      const derivedFullName = fullNameInput || cleanEmail.split('@')[0];
 
       if (phoneInput) {
         const { data: takenBy } = await db
@@ -252,7 +248,7 @@ export async function POST(req: NextRequest) {
           .insert({
             id: authUserId,
             email: cleanEmail,
-            full_name: fullNameInput || cleanEmail.split('@')[0],
+            full_name: derivedFullName,
             phone: phoneInput || null,
             role: 'client',
             email_verified: true,
@@ -283,22 +279,17 @@ export async function POST(req: NextRequest) {
     } else {
       // Existing profile:
       if (profile.is_active === false) {
-        if (fullNameInput) {
-          // User is re-registering after an account purge/deletion: reactivate cleanly
-          await db.from('profiles').update({
-            is_active: true,
-            full_name: fullNameInput,
-            email_verified: true,
-            kyc_status: 'not_submitted',
-            wallet_balance: 0,
-          }).eq('id', profile.id);
-          profile.is_active = true;
-          profile.full_name = fullNameInput;
-          isNewAccount = true;
-        } else {
-          await auditServer(req, 'AUTH_LOGIN_BLOCKED_INACTIVE', { userId: profile.id, metadata: { email } });
-          return fail(403, 'This account is currently suspended. If you deleted your account, please register on the Sign Up page to start fresh.');
-        }
+        const reactivatedName = fullNameInput || profile.full_name || cleanEmail.split('@')[0];
+        await db.from('profiles').update({
+          is_active: true,
+          full_name: reactivatedName,
+          email_verified: true,
+          kyc_status: 'not_submitted',
+          wallet_balance: 0,
+        }).eq('id', profile.id);
+        profile.is_active = true;
+        profile.full_name = reactivatedName;
+        isNewAccount = true;
       } else if (fullNameInput && (!profile.full_name || profile.full_name.includes('@'))) {
         await db.from('profiles').update({ full_name: fullNameInput }).eq('id', profile.id);
         profile.full_name = fullNameInput;

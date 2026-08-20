@@ -60,34 +60,13 @@ export async function POST(req: NextRequest) {
 
     const cleanIdentifier = identifier.toLowerCase().trim();
 
-    // Strict Rule 2: For login purpose, verify user exists in profiles. If not found, reject with 404.
-    if (purpose === 'login') {
-      const { data: profile } = await (channel === 'sms'
-        ? db.from('profiles').select('id, is_active').eq('phone', cleanIdentifier).maybeSingle()
-        : db.from('profiles').select('id, is_active').ilike('email', cleanIdentifier).maybeSingle());
+    const { data: profile } = await (channel === 'sms'
+      ? db.from('profiles').select('id, is_active').eq('phone', cleanIdentifier).maybeSingle()
+      : db.from('profiles').select('id, is_active').ilike('email', cleanIdentifier).maybeSingle());
 
-      if (!profile) {
-        return fail(404, `No registered account found with this ${channel === 'sms' ? 'mobile number' : 'email address'}. Please create an account first.`, {
-          notRegistered: true,
-        });
-      }
-
-      if (profile.is_active === false) {
-        return fail(403, 'This account is currently suspended. Please contact support.');
-      }
-    }
-
-    // Strict Rule 1: For registration purpose, allow if no profile exists OR if existing profile is inactive/purged
-    if (purpose === 'email_verify') {
-      const { data: existingProfile } = await (channel === 'sms'
-        ? db.from('profiles').select('id, is_active').eq('phone', cleanIdentifier).maybeSingle()
-        : db.from('profiles').select('id, is_active').ilike('email', cleanIdentifier).maybeSingle());
-
-      if (existingProfile && existingProfile.is_active !== false) {
-        return fail(409, `An account is already registered with this ${channel === 'sms' ? 'mobile number' : 'email address'}. Please sign in instead.`, {
-          alreadyRegistered: true,
-        });
-      }
+    // If account was suspended/purged and attempting login, prompt to register or allow reactivation
+    if (profile && profile.is_active === false && purpose === 'login') {
+      // Auto-permit so user can verify OTP and reactivate their account
     }
 
     const code = randomNumericCode(6);
