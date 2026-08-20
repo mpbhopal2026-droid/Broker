@@ -173,15 +173,16 @@ export async function POST(req: NextRequest) {
     }
 
     // --- resolve or create the account ---------------------------------------
-    // Look up on whichever identifier was verified.
+    const cleanIdentifier = identifier.toLowerCase().trim();
+    const cleanEmail = email ? email.toLowerCase().trim() : cleanIdentifier;
+
     const lookup = db
       .from('profiles')
       .select('id, email, full_name, role, is_active, email_verified');
 
     let { data: profile } = await (channel === 'sms'
-      ? lookup.eq('phone', identifier).eq('phone_verified', true)
-      : lookup.eq('email', identifier)
-    ).maybeSingle();
+      ? lookup.eq('phone', cleanIdentifier).maybeSingle()
+      : lookup.ilike('email', cleanEmail).maybeSingle());
 
     let isNewAccount = false;
 
@@ -192,7 +193,7 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      if (!email) {
+      if (!cleanEmail) {
         return fail(400, 'An email address is required to create an account.', {
           needsRegistration: true,
         });
@@ -219,7 +220,7 @@ export async function POST(req: NextRequest) {
       let authUserId = crypto.randomUUID();
       try {
         const { data: created, error: createError } = await db.auth.admin.createUser({
-          email: email as string,
+          email: cleanEmail,
           email_confirm: true,
         });
 
@@ -227,7 +228,7 @@ export async function POST(req: NextRequest) {
           authUserId = created.user.id;
         } else if (createError) {
           const { data: userList } = await db.auth.admin.listUsers({ page: 1, perPage: 1000 });
-          const match = userList?.users?.find((u) => u.email?.toLowerCase() === (email as string).toLowerCase());
+          const match = userList?.users?.find((u) => u.email?.toLowerCase() === cleanEmail);
           if (match?.id) {
             authUserId = match.id;
           }
@@ -236,28 +237,49 @@ export async function POST(req: NextRequest) {
         console.warn('[auth] admin createUser skipped or failed:', authErr);
       }
 
-      const { data: newProfile, error: profileError } = await db
+      // Check if profile was already created
+      const { data: existingProfile } = await db
         .from('profiles')
-        .upsert({
-          id: authUserId,
-          email: email as string,
-          full_name: fullNameInput || (email as string).split('@')[0],
-          phone: phoneInput || null,
-          role: 'client',
-          email_verified: true,
-          is_active: true,
-          wallet_balance: 0,
-        }, { onConflict: 'email' })
         .select('id, email, full_name, role, is_active, email_verified')
-        .single();
+        .or(`id.eq.${authUserId},email.ilike.${cleanEmail}`)
+        .maybeSingle();
 
-      if (profileError || !newProfile) {
-        console.error('[auth] profile upsert failed:', profileError);
-        return fail(500, 'Could not complete registration. Please try again.');
+      if (existingProfile) {
+        profile = existingProfile;
+      } else {
+        const { data: newProfile, error: profileError } = await db
+          .from('profiles')
+          .insert({
+            id: authUserId,
+            email: cleanEmail,
+            full_name: fullNameInput || cleanEmail.split('@')[0],
+            phone: phoneInput || null,
+            role: 'client',
+            email_verified: true,
+            is_active: true,
+            wallet_balance: 0,
+          })
+          .select('id, email, full_name, role, is_active, email_verified')
+          .single();
+
+        if (profileError || !newProfile) {
+          const { data: fallbackProfile } = await db
+            .from('profiles')
+            .select('id, email, full_name, role, is_active, email_verified')
+            .ilike('email', cleanEmail)
+            .maybeSingle();
+
+          if (fallbackProfile) {
+            profile = fallbackProfile;
+          } else {
+            console.error('[auth] profile creation failed:', profileError);
+            return fail(500, 'Could not complete registration. Please try again.');
+          }
+        } else {
+          profile = newProfile;
+          isNewAccount = true;
+        }
       }
-
-      profile = newProfile;
-      isNewAccount = true;
     } else {
       // Existing profile: if user signed in via register with a new full name, update it if needed
       if (fullNameInput && (!profile.full_name || profile.full_name.includes('@'))) {

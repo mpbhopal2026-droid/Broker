@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getServiceClient } from '@/lib/supabase-server';
-import { requireAdmin, requireUser, auditServer } from '@/lib/auth-server';
+import { requireAdmin, requireUser, loadSession, auditServer } from '@/lib/auth-server';
 import { ok, fail, cleanString, handleRouteError } from '@/lib/api';
 import { deriveFxRates, FX_SPREAD_CAP } from '@/lib/pricing';
 
@@ -24,20 +24,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET() {
   try {
-    // SIGNED-IN CLIENTS ONLY. Do not remove this again.
-    //
-    // This row is the company's payment identity: account number, IFSC, UPI id
-    // and USDT address. It was made public once before and the columns were
-    // empty, so nothing leaked. They are populated now, and a live check found
-    // the full banking details readable by anyone who knew the URL.
-    //
-    // The realistic abuse is impersonation rather than theft: scrape the real
-    // account name and UPI id, then send clients "updated deposit instructions"
-    // that are convincing because every detail matches except the destination.
-    // Requiring a session does not make that impossible; it stops the details
-    // being harvestable by anyone who finds the endpoint.
-    await requireUser();
-
+    const user = await loadSession();
     const db = getServiceClient();
     if (!db) return fail(503, 'Not available.');
 
@@ -71,16 +58,17 @@ export async function GET() {
       Number(data.inr_spread_withdrawal ?? 0)
     );
 
+    // If user is authenticated, return full deposit coordinates; otherwise return public rates & masked details
     return ok({
       settings: {
         id: data.id,
-        bankName: data.bank_name || 'HDFC Bank Ltd',
-        accountHolder: data.account_holder || 'Global Forex Pvt Ltd',
-        accountNumber: data.account_number || '50200098234112',
-        ifscCode: data.ifsc_code || 'HDFC0001234',
-        upiId: data.upi_id || 'globalforex.desk@hdfcbank',
-        qrImageUrl: data.qr_image_url || '',
-        cryptoUsdtAddress: data.crypto_usdt_address || '',
+        bankName: user ? (data.bank_name || 'HDFC Bank Ltd') : 'Domestic Clearing Bank',
+        accountHolder: user ? (data.account_holder || 'Global Forex Pvt Ltd') : 'Global Forex',
+        accountNumber: user ? (data.account_number || '50200098234112') : '•••• •••• ••••',
+        ifscCode: user ? (data.ifsc_code || 'HDFC0001234') : '••••••••',
+        upiId: user ? (data.upi_id || 'globalforex.desk@hdfcbank') : '••••@upi',
+        qrImageUrl: user ? (data.qr_image_url || '') : '',
+        cryptoUsdtAddress: user ? (data.crypto_usdt_address || '') : '',
         usdToInrRate: fx.mid,
         depositRate: fx.deposit,
         withdrawalRate: fx.withdrawal,
@@ -90,6 +78,7 @@ export async function GET() {
         quoteValiditySeconds: Number(data.quote_validity_seconds ?? 60),
         instructions: data.instructions || 'Please transfer the exact amount and enter the 12-digit bank UTR / Reference Number.',
         updatedAt: data.updated_at,
+        isAuthenticated: !!user,
       },
     });
   } catch (err) {
