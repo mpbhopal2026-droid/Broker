@@ -172,13 +172,6 @@ export async function POST(req: NextRequest) {
       return fail(401, 'Incorrect verification code. Please check your latest email and enter the 6-digit code.');
     }
 
-    // Single-use: burn all pending codes for this user immediately
-    await db
-      .from('auth_otps')
-      .update({ consumed_at: new Date().toISOString() })
-      .or(`identifier.eq.${identifier},email.eq.${identifier}`)
-      .is('consumed_at', null);
-
     // --- resolve or create the account ---------------------------------------
     // Look up on whichever identifier was verified.
     const lookup = db
@@ -190,41 +183,27 @@ export async function POST(req: NextRequest) {
       : lookup.eq('email', identifier)
     ).maybeSingle();
 
-    // Rule 1: If user is attempting registration (fullNameInput supplied) but profile already exists:
-    if (fullNameInput && profile) {
-      return fail(409, 'An account is already registered with this email address or mobile number. Please sign in instead.', {
-        alreadyRegistered: true,
-      });
-    }
-
-    // Rule 2: If user is attempting login (no fullNameInput) but profile does NOT exist:
-    if (!fullNameInput && !profile) {
-      return fail(404, 'No account found with this email address or mobile number. Please create an account first.', {
-        notRegistered: true,
-      });
-    }
-
     let isNewAccount = false;
 
-    if (!profile && channel === 'sms') {
-      return fail(404, 'No account found for that number. Please register with your email first.', {
-        needsRegistration: true,
-      });
-    }
-
-    if (!profile && !email) {
-      return fail(400, 'An email address is required to create an account.', {
-        needsRegistration: true,
-      });
-    }
-
-    if (!profile && !fullNameInput) {
-      return fail(404, 'No account found for that email. Please register first.', {
-        needsRegistration: true,
-      });
-    }
-
     if (!profile) {
+      if (channel === 'sms') {
+        return fail(404, 'No account found for that mobile number. Please register with your email first.', {
+          needsRegistration: true,
+        });
+      }
+
+      if (!email) {
+        return fail(400, 'An email address is required to create an account.', {
+          needsRegistration: true,
+        });
+      }
+
+      if (!fullNameInput) {
+        return fail(404, 'No account found with this email. Please register first.', {
+          needsRegistration: true,
+        });
+      }
+
       if (phoneInput) {
         const { data: takenBy } = await db
           .from('profiles')
@@ -247,7 +226,6 @@ export async function POST(req: NextRequest) {
         if (created?.user?.id) {
           authUserId = created.user.id;
         } else if (createError) {
-          // If auth user exists in auth.users, find their ID
           const { data: userList } = await db.auth.admin.listUsers({ page: 1, perPage: 1000 });
           const match = userList?.users?.find((u) => u.email?.toLowerCase() === (email as string).toLowerCase());
           if (match?.id) {
@@ -280,6 +258,12 @@ export async function POST(req: NextRequest) {
 
       profile = newProfile;
       isNewAccount = true;
+    } else {
+      // Existing profile: if user signed in via register with a new full name, update it if needed
+      if (fullNameInput && (!profile.full_name || profile.full_name.includes('@'))) {
+        await db.from('profiles').update({ full_name: fullNameInput }).eq('id', profile.id);
+        profile.full_name = fullNameInput;
+      }
     }
 
     if (profile.is_active === false) {
@@ -296,11 +280,9 @@ export async function POST(req: NextRequest) {
     const role = normaliseRole(profile.role);
     const { cookieValue, sidHash, expiresAt } = await createSessionCookieValue(profile.id, role);
 
-    // Approximate location from edge headers — no IP-geolocation service is
-    // called, so nothing about where an operator signs in leaves our infra.
     const geo = geoFromHeaders(req.headers);
 
-    const { error: sessionError } = await db.from('sessions').insert({
+    let { error: sessionError } = await db.from('sessions').insert({
       user_id: profile.id,
       sid_hash: sidHash,
       ip_address: ip,
@@ -312,9 +294,28 @@ export async function POST(req: NextRequest) {
     });
 
     if (sessionError) {
+      console.warn('[auth] session insert with geo columns failed, trying base schema:', sessionError.message);
+      const { error: baseSessionError } = await db.from('sessions').insert({
+        user_id: profile.id,
+        sid_hash: sidHash,
+        ip_address: ip,
+        user_agent: userAgent,
+        expires_at: expiresAt.toISOString(),
+      });
+      sessionError = baseSessionError;
+    }
+
+    if (sessionError) {
       console.error('[auth] session persist failed:', sessionError);
       return fail(500, 'Could not complete sign-in. Please try again.');
     }
+
+    // Single-use: burn pending OTP codes for this user once session is established
+    await db
+      .from('auth_otps')
+      .update({ consumed_at: new Date().toISOString() })
+      .or(`identifier.eq.${identifier},email.eq.${identifier}`)
+      .is('consumed_at', null);
 
     cookies().set(SESSION_COOKIE, cookieValue, sessionCookieOptions);
 
