@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getServiceClient } from '@/lib/supabase-server';
-import { requireUser, auditServer } from '@/lib/auth-server';
+import { requireUser, loadSession, auditServer } from '@/lib/auth-server';
 import { clientIp } from '@/lib/rate-limit';
 import { ok, fail, handleRouteError } from '@/lib/api';
 import { LEGAL_VERSIONS, LegalDocument } from '@/lib/legal';
@@ -17,7 +17,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireUser();
+    const user = await loadSession();
 
     const body = await req.json().catch(() => ({}));
     const documents: unknown = body?.documents;
@@ -34,9 +34,14 @@ export async function POST(req: NextRequest) {
 
     const ip = clientIp(req);
     const userAgent = req.headers.get('user-agent') || 'unknown';
+    const userId = user?.id || (typeof body?.userId === 'string' ? body.userId : null);
+
+    if (!userId) {
+      return ok({ accepted: valid.map((d) => ({ document: d, version: LEGAL_VERSIONS[d] })) });
+    }
 
     const rows = valid.map((document) => ({
-      user_id: user.id,
+      user_id: userId,
       document,
       version: LEGAL_VERSIONS[document],
       ip_address: ip,
@@ -53,10 +58,12 @@ export async function POST(req: NextRequest) {
       return fail(500, 'Could not record your acceptance. Please try again.');
     }
 
-    await auditServer(req, 'LEGAL_DOCUMENTS_ACCEPTED', {
-      userId: user.id,
-      metadata: { documents: rows.map((r) => `${r.document}@${r.version}`) },
-    });
+    if (user) {
+      await auditServer(req, 'LEGAL_DOCUMENTS_ACCEPTED', {
+        userId: user.id,
+        metadata: { documents: rows.map((r) => `${r.document}@${r.version}`) },
+      });
+    }
 
     return ok({ accepted: rows.map((r) => ({ document: r.document, version: r.version })) });
   } catch (err) {

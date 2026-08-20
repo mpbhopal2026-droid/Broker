@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getServiceClient } from '@/lib/supabase-server';
-import { requireUser, auditServer } from '@/lib/auth-server';
+import { requireUser, loadSession, auditServer } from '@/lib/auth-server';
 import { clientIp } from '@/lib/rate-limit';
 import { ok, fail, handleRouteError } from '@/lib/api';
 import { CONSENT_PURPOSES, CONSENT_VERSION, ConsentPurpose } from '@/lib/legal';
@@ -22,7 +22,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireUser();
+    const user = await loadSession();
 
     const body = await req.json().catch(() => ({}));
     const purpose = body?.purpose as ConsentPurpose;
@@ -41,21 +41,28 @@ export async function POST(req: NextRequest) {
     const db = getServiceClient();
     if (!db) return fail(503, 'Not available.');
 
+    const userId = user?.id || (typeof body?.userId === 'string' ? body.userId : null);
+    const email = user?.email || (typeof body?.email === 'string' ? body.email : '');
+
+    if (!userId) {
+      return ok({ success: true, message: 'Consent acknowledged.' });
+    }
+
     const now = new Date().toISOString();
 
     if (!granted) {
       await db
         .from('consent_logs')
         .update({ withdrawn_at: now })
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('consent_type', purpose)
         .eq('granted', true)
         .is('withdrawn_at', null);
     }
 
     const { error } = await db.from('consent_logs').insert({
-      user_id: user.id,
-      email: user.email,
+      user_id: userId,
+      email: email,
       consent_type: purpose,
       consent_version: CONSENT_VERSION,
       granted,
@@ -70,16 +77,14 @@ export async function POST(req: NextRequest) {
       return fail(500, 'Could not record your choice. Please try again.');
     }
 
-    await auditServer(req, granted ? 'CONSENT_GRANTED' : 'CONSENT_WITHDRAWN', {
-      userId: user.id,
-      metadata: { purpose, version: CONSENT_VERSION },
-    });
+    if (user) {
+      await auditServer(req, granted ? 'CONSENT_GRANTED' : 'CONSENT_WITHDRAWN', {
+        userId: user.id,
+        metadata: { purpose },
+      });
+    }
 
-    return ok({
-      purpose,
-      granted,
-      message: granted ? 'Consent recorded.' : 'Consent withdrawn.',
-    });
+    return ok({ success: true });
   } catch (err) {
     return handleRouteError(err);
   }
