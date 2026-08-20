@@ -299,11 +299,40 @@ export async function POST(req: NextRequest) {
           }).eq('id', userId);
         }
 
-        // 10. Permanently delete from Supabase Auth so the user MUST re-register
-        try {
-          await db.auth.admin.deleteUser(userId);
-        } catch (authErr) {
-          console.warn('[admin] auth.admin delete error:', authErr);
+        // 10. Free the email in Supabase Auth so the address can register again.
+        //
+        // deleteUser() FAILS here whenever the profile above was scrambled
+        // rather than hard-deleted, because profiles.id references
+        // auth.users(id) and that row still exists. The old code swallowed that
+        // error, which left the two out of step:
+        //
+        //   auth.users : veer@example.com          <- still the real address
+        //   profiles   : purged_…@purged.invalid   <- scrambled
+        //
+        // An OTP for the real address then succeeded, the profile lookup missed,
+        // and sign-in resolved back to the same auth id — logging the person
+        // into the purged shell account. Verified in production.
+        //
+        // So: delete when we can, and when we cannot, scramble the auth email to
+        // match. Either way the original address is released.
+        const { error: authDeleteError } = await db.auth.admin.deleteUser(userId);
+
+        if (authDeleteError) {
+          const scrambledAuth = `purged_${Date.now()}_${userId.slice(0, 8)}@purged.invalid`;
+          const { error: authUpdateError } = await db.auth.admin.updateUserById(userId, {
+            email: scrambledAuth,
+            email_confirm: false,
+            user_metadata: { purged: true, purged_at: new Date().toISOString() },
+          });
+
+          if (authUpdateError) {
+            // Do not claim success. A caller told the account is gone while the
+            // address still authenticates is the worst possible outcome here.
+            return fail(
+              500,
+              'The account was partially removed but the sign-in address could not be released. Do not re-register this address yet.',
+            );
+          }
         }
 
         await auditServer(req, 'ADMIN_USER_DELETED', {

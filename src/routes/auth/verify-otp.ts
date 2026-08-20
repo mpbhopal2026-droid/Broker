@@ -310,7 +310,34 @@ export async function POST(req: NextRequest) {
         }
       }
     } else {
-      // Existing profile:
+      // A purged profile is not a suspended account waiting to be woken up — it
+      // is a deleted one. The reactivation branch below exists so a client whose
+      // account was disabled can sign back in, but it was also un-purging
+      // deleted accounts and signing people into them.
+      //
+      // Confirmed in production: an OTP for a live address resolved to
+      // "purged_…@purged.invalid" and returned 200 with a session cookie. That
+      // happened because the purge left auth.users holding the real address
+      // while profiles held the scrambled one, and this branch then revived the
+      // shell it landed on.
+      //
+      // Checked here as well as at the purge site deliberately: this is the last
+      // gate before a session is issued, and it must not depend on the delete
+      // path having behaved.
+      const isPurged =
+        String(profile.email ?? '').endsWith('@purged.invalid') ||
+        profile.full_name === 'Purged User';
+
+      if (isPurged) {
+        await auditServer(req, 'AUTH_LOGIN_BLOCKED_PURGED', {
+          userId: profile.id,
+          metadata: { attemptedIdentifier: identifier },
+        });
+        return fail(404, 'No account found for that address. Please register first.', {
+          needsRegistration: true,
+        });
+      }
+
       if (profile.is_active === false) {
         const reactivatedName = fullNameInput || profile.full_name || cleanEmail.split('@')[0];
         await db.from('profiles').update({
