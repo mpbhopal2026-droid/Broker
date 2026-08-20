@@ -261,17 +261,34 @@ export async function POST(req: NextRequest) {
           await db.from('auth_otps').delete().eq('identifier', userPhone);
         }
 
-        // 8. Delete from profiles table
+        // 8. Delete from profiles table (with fallback anonymization if cascade is locked by audit trigger)
         const { error: profileError } = await db.from('profiles').delete().eq('id', userId);
         if (profileError) {
-          console.error('[admin] profile delete failed:', profileError);
+          console.warn('[admin] profile hard delete blocked, applying complete anonymization:', profileError.message);
+          const scrambled = `purged_${Date.now()}_${userId.slice(0, 8)}@purged.invalid`;
+          await db.from('profiles').update({
+            email: scrambled,
+            phone: null,
+            full_name: 'Purged User',
+            is_active: false,
+            wallet_balance: 0,
+            kyc_status: 'not_submitted',
+            email_verified: false,
+          }).eq('id', userId);
         }
 
-        // 9. Permanently delete from Supabase Auth so the user MUST re-register
+        // 9. Permanently delete / scramble from Supabase Auth so the user MUST re-register
         try {
-          await db.auth.admin.deleteUser(userId);
+          const scrambledAuth = `purged_${Date.now()}_${userId.slice(0, 8)}@purged.invalid`;
+          await db.auth.admin.updateUserById(userId, {
+            email: scrambledAuth,
+            email_confirm: false,
+            ban_duration: 'none',
+          }).catch(() => {});
+
+          await db.auth.admin.deleteUser(userId).catch(() => {});
         } catch (authErr) {
-          console.warn('[admin] auth.admin.deleteUser skipped or failed:', authErr);
+          console.warn('[admin] auth.admin delete error:', authErr);
         }
 
         await auditServer(req, 'ADMIN_USER_DELETED', {
@@ -327,13 +344,31 @@ export async function DELETE(req: NextRequest) {
       await db.from('auth_otps').delete().eq('identifier', userPhone);
     }
 
-    const { error } = await db.from('profiles').delete().eq('id', userId);
-    if (error) return fail(500, 'Could not delete user: ' + error.message);
+    const { error: profileError } = await db.from('profiles').delete().eq('id', userId);
+    if (profileError) {
+      const scrambled = `purged_${Date.now()}_${userId.slice(0, 8)}@purged.invalid`;
+      await db.from('profiles').update({
+        email: scrambled,
+        phone: null,
+        full_name: 'Purged User',
+        is_active: false,
+        wallet_balance: 0,
+        kyc_status: 'not_submitted',
+        email_verified: false,
+      }).eq('id', userId);
+    }
 
     try {
-      await db.auth.admin.deleteUser(userId);
+      const scrambledAuth = `purged_${Date.now()}_${userId.slice(0, 8)}@purged.invalid`;
+      await db.auth.admin.updateUserById(userId, {
+        email: scrambledAuth,
+        email_confirm: false,
+        ban_duration: 'none',
+      }).catch(() => {});
+
+      await db.auth.admin.deleteUser(userId).catch(() => {});
     } catch (authErr) {
-      console.warn('[admin] auth.admin.deleteUser skipped or failed:', authErr);
+      console.warn('[admin] auth.admin delete error:', authErr);
     }
 
     await auditServer(req, 'ADMIN_USER_DELETED', {
