@@ -239,21 +239,27 @@ export async function POST(req: NextRequest) {
         const userEmail = target.email?.toLowerCase().trim();
         const userPhone = target.phone;
 
-        // 1. Delete trade orders & positions
+        // 1. Delete trade orders, demo trades & positions
+        await db.from('demo_trades').delete().eq('user_id', userId);
         await db.from('trade_orders').delete().eq('user_id', userId);
-        // 2. Delete transactions & deposits & withdrawals
+        // 2. Delete transactions, deposits & withdrawals
         await db.from('transactions').delete().eq('user_id', userId);
-        // 3. Delete ledger entries
+        // 3. Delete ledger entries (ON DELETE RESTRICT in DB)
         await db.from('ledger_entries').delete().eq('user_id', userId);
         // 4. Delete kyc documents & records
         await db.from('kyc_documents').delete().eq('user_id', userId);
         await db.from('kyc_records').delete().eq('user_id', userId);
-        // 5. Delete active sessions and tokens
+        // 5. Delete legal, consent, and data requests
+        await db.from('legal_acceptances').delete().eq('user_id', userId);
+        await db.from('consent_logs').delete().eq('user_id', userId);
+        await db.from('data_requests').delete().eq('user_id', userId);
+        // 6. Delete active sessions and tokens
         await db.from('sessions').delete().eq('user_id', userId);
-        // 6. Delete notifications
+        // 7. Delete notifications and audit logs pointing to this user
         await db.from('notifications').delete().eq('user_id', userId);
+        await db.from('audit_logs').delete().eq('user_id', userId);
         
-        // 7. Delete ALL OTP records for this email/phone so they can cleanly re-register
+        // 8. Delete ALL OTP records for this email/phone so they can cleanly re-register
         if (userEmail) {
           await db.from('auth_otps').delete().or(`identifier.eq.${userEmail},email.eq.${userEmail}`);
         }
@@ -261,31 +267,15 @@ export async function POST(req: NextRequest) {
           await db.from('auth_otps').delete().eq('identifier', userPhone);
         }
 
-        // 8. Delete from profiles table (with fallback anonymization if cascade is locked by audit trigger)
+        // 9. Permanently delete from profiles table
         const { error: profileError } = await db.from('profiles').delete().eq('id', userId);
         if (profileError) {
-          console.warn('[admin] profile hard delete blocked, applying complete anonymization:', profileError.message);
-          const scrambled = `purged_${Date.now()}_${userId.slice(0, 8)}@purged.invalid`;
-          await db.from('profiles').update({
-            email: scrambled,
-            phone: null,
-            full_name: 'Purged User',
-            is_active: false,
-            wallet_balance: 0,
-            kyc_status: 'not_submitted',
-            email_verified: false,
-          }).eq('id', userId);
+          console.error('[admin] profile delete error:', profileError.message);
+          return fail(500, `Could not delete profile: ${profileError.message}`);
         }
 
-        // 9. Permanently delete / scramble from Supabase Auth so the user MUST re-register
+        // 10. Permanently delete from Supabase Auth so the user MUST re-register
         try {
-          const scrambledAuth = `purged_${Date.now()}_${userId.slice(0, 8)}@purged.invalid`;
-          await db.auth.admin.updateUserById(userId, {
-            email: scrambledAuth,
-            email_confirm: false,
-            ban_duration: 'none',
-          }).catch(() => {});
-
           await db.auth.admin.deleteUser(userId).catch(() => {});
         } catch (authErr) {
           console.warn('[admin] auth.admin delete error:', authErr);
@@ -296,7 +286,7 @@ export async function POST(req: NextRequest) {
           metadata: { deletedUserId: userId, targetEmail: target.email, completelyPurged: true },
         });
 
-        return ok({ message: 'User account completely removed. The user must now re-register.' });
+        return ok({ message: 'User account completely purged. The user must now re-register.' });
       }
 
       default:
@@ -329,13 +319,18 @@ export async function DELETE(req: NextRequest) {
     const userEmail = target.email?.toLowerCase().trim();
     const userPhone = target.phone;
 
+    await db.from('demo_trades').delete().eq('user_id', userId);
     await db.from('trade_orders').delete().eq('user_id', userId);
     await db.from('transactions').delete().eq('user_id', userId);
     await db.from('ledger_entries').delete().eq('user_id', userId);
     await db.from('kyc_documents').delete().eq('user_id', userId);
     await db.from('kyc_records').delete().eq('user_id', userId);
+    await db.from('legal_acceptances').delete().eq('user_id', userId);
+    await db.from('consent_logs').delete().eq('user_id', userId);
+    await db.from('data_requests').delete().eq('user_id', userId);
     await db.from('sessions').delete().eq('user_id', userId);
     await db.from('notifications').delete().eq('user_id', userId);
+    await db.from('audit_logs').delete().eq('user_id', userId);
 
     if (userEmail) {
       await db.from('auth_otps').delete().or(`identifier.eq.${userEmail},email.eq.${userEmail}`);
@@ -346,16 +341,14 @@ export async function DELETE(req: NextRequest) {
 
     const { error: profileError } = await db.from('profiles').delete().eq('id', userId);
     if (profileError) {
-      const scrambled = `purged_${Date.now()}_${userId.slice(0, 8)}@purged.invalid`;
-      await db.from('profiles').update({
-        email: scrambled,
-        phone: null,
-        full_name: 'Purged User',
-        is_active: false,
-        wallet_balance: 0,
-        kyc_status: 'not_submitted',
-        email_verified: false,
-      }).eq('id', userId);
+      console.error('[admin] profile delete error:', profileError.message);
+      return fail(500, `Could not delete profile: ${profileError.message}`);
+    }
+
+    try {
+      await db.auth.admin.deleteUser(userId).catch(() => {});
+    } catch (authErr) {
+      console.warn('[admin] auth.admin delete error:', authErr);
     }
 
     try {

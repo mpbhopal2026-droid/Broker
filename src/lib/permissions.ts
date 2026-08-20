@@ -94,6 +94,7 @@ const MATRIX: Record<UserRole, Capability[]> = {
     'notification:test',
     'client:view',
     'client:delete',
+    'kyc:review',
   ],
 };
 
