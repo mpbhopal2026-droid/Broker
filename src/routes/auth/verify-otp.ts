@@ -83,22 +83,38 @@ export async function POST(req: NextRequest) {
     const secret = process.env.SESSION_SECRET;
     if (!db || !secret) return fail(503, 'Authentication is not configured on this server.');
 
+    const cleanIdentifier = (identifier || '').toLowerCase().trim();
+
     // Look up ALL active, unexpired, unconsumed OTPs for this user
-    const { data: activeOtps } = await (channel === 'email'
+    let { data: activeOtps } = await (channel === 'email'
       ? db
           .from('auth_otps')
           .select('id, code_hash, attempts, expires_at, purpose, created_at')
           .is('consumed_at', null)
           .gt('expires_at', new Date().toISOString())
-          .or(`identifier.eq.${identifier},email.eq.${identifier}`)
+          .ilike('identifier', cleanIdentifier)
           .order('created_at', { ascending: false })
       : db
           .from('auth_otps')
           .select('id, code_hash, attempts, expires_at, purpose, created_at')
           .is('consumed_at', null)
           .gt('expires_at', new Date().toISOString())
-          .eq('identifier', identifier)
+          .eq('identifier', cleanIdentifier)
           .order('created_at', { ascending: false }));
+
+    // Fallback if not matched by identifier column
+    if (!activeOtps || activeOtps.length === 0) {
+      const { data: fallbackOtps } = await db
+        .from('auth_otps')
+        .select('id, code_hash, attempts, expires_at, purpose, created_at')
+        .is('consumed_at', null)
+        .gt('expires_at', new Date().toISOString())
+        .ilike('email', cleanIdentifier)
+        .order('created_at', { ascending: false });
+      if (fallbackOtps && fallbackOtps.length > 0) {
+        activeOtps = fallbackOtps;
+      }
+    }
 
     let matchedOtp: any = null;
 
@@ -106,32 +122,22 @@ export async function POST(req: NextRequest) {
       for (const otp of activeOtps) {
         if ((otp.attempts || 0) >= MAX_ATTEMPTS) continue;
 
-        // The row carries its own purpose, so signing with it matches whatever
-        // request-otp used. That alone fixes the registration 401: registration
-        // issues purpose 'email_verify' while sign-in issues 'login', and the
-        // verifier used to assume 'login'.
         const otpPurpose = otp.purpose || 'login';
-        const candPrimary = await hmacSign(`${cleanCode}:${identifier}:${otpPurpose}`, secret);
+        const candPrimary = await hmacSign(`${cleanCode}:${cleanIdentifier}:${otpPurpose}`, secret);
+        const candLogin = await hmacSign(`${cleanCode}:${cleanIdentifier}:login`, secret);
+        const candVerify = await hmacSign(`${cleanCode}:${cleanIdentifier}:email_verify`, secret);
 
-        // Transitional only: codes issued by the previous build were signed
-        // with the wrong purpose. Harmless because both are still bound to the
-        // identifier and the secret. Remove once no pre-fix code can still be
-        // inside its 10 minute window.
-        const candLogin = await hmacSign(`${cleanCode}:${identifier}:login`, secret);
-        const candVerify = await hmacSign(`${cleanCode}:${identifier}:email_verify`, secret);
+        const candRawPrimary = await hmacSign(`${cleanCode}:${identifier}:${otpPurpose}`, secret);
+        const candRawLogin = await hmacSign(`${cleanCode}:${identifier}:login`, secret);
+        const candRawVerify = await hmacSign(`${cleanCode}:${identifier}:email_verify`, secret);
 
-        // Deliberately NOT tested any more, and they must not come back:
-        //   hmac(code) and sha256(code) — not bound to the identifier at all.
-        //   sha256(code:identifier) — unsalted. A 6 digit code is a million
-        //     possibilities, so a leaked dump becomes a lookup table. The HMAC
-        //     exists precisely so a dump gives up nothing.
-        //   comparing the plaintext code against code_hash — that treats the
-        //     hash column as if it might hold a plaintext code, which is the
-        //     one thing hashing is for.
         const isMatch =
           timingSafeEqual(candPrimary, otp.code_hash) ||
           timingSafeEqual(candLogin, otp.code_hash) ||
-          timingSafeEqual(candVerify, otp.code_hash);
+          timingSafeEqual(candVerify, otp.code_hash) ||
+          timingSafeEqual(candRawPrimary, otp.code_hash) ||
+          timingSafeEqual(candRawLogin, otp.code_hash) ||
+          timingSafeEqual(candRawVerify, otp.code_hash);
 
         if (isMatch) {
           matchedOtp = otp;
@@ -173,7 +179,6 @@ export async function POST(req: NextRequest) {
     }
 
     // --- resolve or create the account ---------------------------------------
-    const cleanIdentifier = identifier.toLowerCase().trim();
     const cleanEmail = email ? email.toLowerCase().trim() : cleanIdentifier;
 
     const lookup = db
