@@ -336,23 +336,22 @@ export default function ClientKycRealityPage() {
   const kycStatus = currentUser?.kycStatus || 'not_submitted';
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center px-3 sm:px-6 py-6 sm:py-10 bg-[#f8fafc] text-slate-900 overflow-x-hidden">
-      <div className="w-full max-w-5xl space-y-6 min-w-0">
+    <div className="w-full max-w-5xl mx-auto space-y-6 min-w-0 py-2 sm:py-4">
+      
+      {/* Main Card Container */}
+      <div className="bg-white dark:bg-slate-900 p-5 sm:p-8 md:p-10 rounded-3xl sm:rounded-[32px] border border-slate-200/90 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none space-y-7 min-w-0 w-full overflow-hidden">
         
-        {/* Main Card Container */}
-        <div className="bg-white p-5 sm:p-8 md:p-10 rounded-3xl sm:rounded-[32px] border border-slate-200/90 shadow-2xl shadow-slate-200/60 space-y-7 min-w-0 w-full overflow-hidden">
-          
-          {/* Header Brand */}
-          <div className="text-center space-y-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icons/logo-full.svg" alt="GLOBAL FOREX" width={220} height={70} className="h-14 sm:h-16 w-auto mx-auto" />
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-              Identity Verification & Bank Setup
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500">
-              Statutory KYC clearance and domestic payout account registration
-            </p>
-          </div>
+        {/* Header Brand */}
+        <div className="text-center space-y-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/logo-full.svg" alt="GLOBAL FOREX" width={220} height={70} className="h-14 sm:h-16 w-auto mx-auto" />
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+            Identity Verification & Bank Setup
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+            Statutory KYC clearance and domestic payout account registration
+          </p>
+        </div>
 
           {/* Stepper Tabs - only shown during active document submission */}
           {(kycStatus === 'not_submitted' || isResubmitting) && (
@@ -1343,6 +1342,5 @@ export default function ClientKycRealityPage() {
         </div>
 
       </div>
-    </div>
-  );
+    );
 }

@@ -102,11 +102,6 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
     );
   }
 
-  // Isolated Distraction-Free Institutional KYC Portal
-  if (isKycPage) {
-    return <main className="min-h-screen w-full">{children}</main>;
-  }
-
   return (
     <div className="flex min-h-screen w-full">
       {isAdminArea ? <AdminSidebar /> : <AppSidebar />}
