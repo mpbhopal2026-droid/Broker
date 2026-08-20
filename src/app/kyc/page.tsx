@@ -49,6 +49,78 @@ function UploadSpinner() {
   );
 }
 
+function KycImagePreview({
+  previewUrl,
+  storagePath,
+  alt,
+  onRemove,
+}: {
+  previewUrl?: string;
+  storagePath?: string;
+  alt: string;
+  onRemove: () => void;
+}) {
+  const [resolvedUrl, setResolvedUrl] = useState<string>(previewUrl || '');
+
+  useEffect(() => {
+    if (previewUrl) {
+      setResolvedUrl(previewUrl);
+      return;
+    }
+
+    if (!storagePath) {
+      setResolvedUrl('');
+      return;
+    }
+
+    if (storagePath.startsWith('data:') || storagePath.startsWith('http://') || storagePath.startsWith('https://') || storagePath.startsWith('blob:')) {
+      setResolvedUrl(storagePath);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/upload?purpose=kyc&path=${encodeURIComponent(storagePath)}`, {
+          credentials: 'same-origin',
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!cancelled && res.ok && data?.url) {
+          setResolvedUrl(data.url);
+        }
+      } catch {}
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [previewUrl, storagePath]);
+
+  return (
+    <div className="relative h-32 rounded-2xl overflow-hidden border border-emerald-500 group bg-slate-50 shadow-sm">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={resolvedUrl || previewUrl || storagePath}
+        alt={alt}
+        className="w-full h-full object-cover"
+      />
+      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+        <button
+          type="button"
+          onClick={onRemove}
+          className="p-2 rounded-full bg-rose-600 text-white hover:bg-rose-700 transition-colors shadow-md"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="absolute bottom-2 left-2 px-2.5 py-0.5 rounded-full bg-[#05603a] text-white text-[10px] font-bold flex items-center gap-1 shadow-sm">
+        <Check className="w-3 h-3" />
+        <span>Uploaded</span>
+      </div>
+    </div>
+  );
+}
+
 export default function ClientKycRealityPage() {
   const router = useRouter();
   const { currentUser, submitKYC, showToast, saveKycDraft, getKycDraft, refreshSession } = useApp();
@@ -66,6 +138,8 @@ export default function ClientKycRealityPage() {
   const [panNumber, setPanNumber] = useState('');
   const [aadhaarFront, setAadhaarFront] = useState<string>('');
   const [aadhaarBack, setAadhaarBack] = useState<string>('');
+  const [aadhaarFrontPreview, setAadhaarFrontPreview] = useState<string>('');
+  const [aadhaarBackPreview, setAadhaarBackPreview] = useState<string>('');
   const [uploadingFront, setUploadingFront] = useState(false);
   const [uploadingBack, setUploadingBack] = useState(false);
 
@@ -95,8 +169,18 @@ export default function ClientKycRealityPage() {
       if (draft.fullName) setFullName(draft.fullName);
       if (draft.aadhaarNumber) setAadhaarNumber(draft.aadhaarNumber);
       if (draft.panNumber) setPanNumber(draft.panNumber);
-      if (draft.aadhaarFront) setAadhaarFront(draft.aadhaarFront);
-      if (draft.aadhaarBack) setAadhaarBack(draft.aadhaarBack);
+      if (draft.aadhaarFront) {
+        setAadhaarFront(draft.aadhaarFront);
+        if (draft.aadhaarFront.startsWith('data:') || draft.aadhaarFront.startsWith('http')) {
+          setAadhaarFrontPreview(draft.aadhaarFront);
+        }
+      }
+      if (draft.aadhaarBack) {
+        setAadhaarBack(draft.aadhaarBack);
+        if (draft.aadhaarBack.startsWith('data:') || draft.aadhaarBack.startsWith('http')) {
+          setAadhaarBackPreview(draft.aadhaarBack);
+        }
+      }
       if (draft.bankAccountName) setBankAccountName(draft.bankAccountName);
       if (draft.bankName) setBankName(draft.bankName);
       if (draft.bankAccountNumber) {
@@ -113,8 +197,14 @@ export default function ClientKycRealityPage() {
 
   // Handle Document Uploads
   const handleUpload = async (file: File, type: 'front' | 'back') => {
-    if (type === 'front') setUploadingFront(true);
-    else setUploadingBack(true);
+    const localUrl = URL.createObjectURL(file);
+    if (type === 'front') {
+      setAadhaarFrontPreview(localUrl);
+      setUploadingFront(true);
+    } else {
+      setAadhaarBackPreview(localUrl);
+      setUploadingBack(true);
+    }
 
     try {
       const res = await uploadFile(file, 'kyc', type === 'front' ? { documentType: 'aadhaar' } : undefined);
@@ -733,24 +823,16 @@ export default function ClientKycRealityPage() {
                         {/* Front Side */}
                         <div className="space-y-1.5">
                           <span className="text-[11px] text-slate-500">Front Side (Photo & Details)</span>
-                          {aadhaarFront ? (
-                            <div className="relative h-32 rounded-2xl overflow-hidden border border-emerald-500 group bg-slate-50 shadow-sm">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={aadhaarFront} alt="Aadhaar Front" className="w-full h-full object-cover" />
-                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <button
-                                  type="button"
-                                  onClick={() => setAadhaarFront('')}
-                                  className="p-2 rounded-full bg-rose-600 text-white hover:bg-rose-700 transition-colors shadow-md"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                              <div className="absolute bottom-2 left-2 px-2.5 py-0.5 rounded-full bg-[#05603a] text-white text-[10px] font-bold flex items-center gap-1 shadow-sm">
-                                <Check className="w-3 h-3" />
-                                <span>Uploaded</span>
-                              </div>
-                            </div>
+                          {aadhaarFront || aadhaarFrontPreview ? (
+                            <KycImagePreview
+                              previewUrl={aadhaarFrontPreview}
+                              storagePath={aadhaarFront}
+                              alt="Aadhaar Front"
+                              onRemove={() => {
+                                setAadhaarFront('');
+                                setAadhaarFrontPreview('');
+                              }}
+                            />
                           ) : (
                             <label className="h-32 rounded-2xl border-2 border-dashed border-slate-200 hover:border-emerald-500 bg-[#fbfcfd] hover:bg-emerald-50/20 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all p-3 text-center group">
                               {uploadingFront ? (
@@ -777,24 +859,16 @@ export default function ClientKycRealityPage() {
                         {/* Back Side */}
                         <div className="space-y-1.5">
                           <span className="text-[11px] text-slate-500">Back Side (Address & QR)</span>
-                          {aadhaarBack ? (
-                            <div className="relative h-32 rounded-2xl overflow-hidden border border-emerald-500 group bg-slate-50 shadow-sm">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={aadhaarBack} alt="Aadhaar Back" className="w-full h-full object-cover" />
-                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <button
-                                  type="button"
-                                  onClick={() => setAadhaarBack('')}
-                                  className="p-2 rounded-full bg-rose-600 text-white hover:bg-rose-700 transition-colors shadow-md"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                              <div className="absolute bottom-2 left-2 px-2.5 py-0.5 rounded-full bg-[#05603a] text-white text-[10px] font-bold flex items-center gap-1 shadow-sm">
-                                <Check className="w-3 h-3" />
-                                <span>Uploaded</span>
-                              </div>
-                            </div>
+                          {aadhaarBack || aadhaarBackPreview ? (
+                            <KycImagePreview
+                              previewUrl={aadhaarBackPreview}
+                              storagePath={aadhaarBack}
+                              alt="Aadhaar Back"
+                              onRemove={() => {
+                                setAadhaarBack('');
+                                setAadhaarBackPreview('');
+                              }}
+                            />
                           ) : (
                             <label className="h-32 rounded-2xl border-2 border-dashed border-slate-200 hover:border-emerald-500 bg-[#fbfcfd] hover:bg-emerald-50/20 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all p-3 text-center group">
                               {uploadingBack ? (
