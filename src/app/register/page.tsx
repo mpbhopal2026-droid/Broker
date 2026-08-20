@@ -117,7 +117,7 @@ function RegisterForm() {
     if (nextPath && nextPath.startsWith('/')) {
       router.push(nextPath);
     } else {
-      router.push('/dashboard');
+      router.push('/kyc');
     }
   };
 

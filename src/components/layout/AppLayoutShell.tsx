@@ -74,7 +74,14 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
       router.replace('/admin');
       return;
     }
-  }, [isLoaded, isAuthenticated, isPublic, isOperator, isAuthPage, pathname, router]);
+
+    // Mandatory KYC & Bank Details Gate: Clients who haven't submitted KYC cannot use the app
+    const hasSubmittedKyc = currentUser?.kycStatus === 'approved' || currentUser?.kycStatus === 'pending';
+    if (isAuthenticated && !isOperator && !hasSubmittedKyc && pathname !== '/kyc' && !isPublic && !isAuthPage) {
+      router.replace('/kyc');
+      return;
+    }
+  }, [isLoaded, isAuthenticated, isPublic, isOperator, isAuthPage, pathname, router, currentUser?.kycStatus]);
 
   // Auth & Welcome pages for visitors are standalone — zero chrome around them.
   if (isAuthPage || (pathname === '/' && !isAuthenticated) || (isPublic && !isAuthenticated)) {
@@ -97,13 +104,7 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Isolated Distraction-Free Institutional KYC Portal
   if (isKycPage) {
-    return (
-      <div className="min-h-screen w-full bg-slate-50 dark:bg-[#0b0f17] text-slate-900 dark:text-white flex flex-col transition-colors">
-        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          {children}
-        </main>
-      </div>
-    );
+    return <main className="min-h-screen w-full">{children}</main>;
   }
 
   return (
