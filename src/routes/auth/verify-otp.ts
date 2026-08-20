@@ -281,16 +281,28 @@ export async function POST(req: NextRequest) {
         }
       }
     } else {
-      // Existing profile: if user signed in via register with a new full name, update it if needed
-      if (fullNameInput && (!profile.full_name || profile.full_name.includes('@'))) {
+      // Existing profile:
+      if (profile.is_active === false) {
+        if (fullNameInput) {
+          // User is re-registering after an account purge/deletion: reactivate cleanly
+          await db.from('profiles').update({
+            is_active: true,
+            full_name: fullNameInput,
+            email_verified: true,
+            kyc_status: 'not_submitted',
+            wallet_balance: 0,
+          }).eq('id', profile.id);
+          profile.is_active = true;
+          profile.full_name = fullNameInput;
+          isNewAccount = true;
+        } else {
+          await auditServer(req, 'AUTH_LOGIN_BLOCKED_INACTIVE', { userId: profile.id, metadata: { email } });
+          return fail(403, 'This account is currently suspended. If you deleted your account, please register on the Sign Up page to start fresh.');
+        }
+      } else if (fullNameInput && (!profile.full_name || profile.full_name.includes('@'))) {
         await db.from('profiles').update({ full_name: fullNameInput }).eq('id', profile.id);
         profile.full_name = fullNameInput;
       }
-    }
-
-    if (profile.is_active === false) {
-      await auditServer(req, 'AUTH_LOGIN_BLOCKED_INACTIVE', { userId: profile.id, metadata: { email } });
-      return fail(403, 'This account is suspended. Contact support.');
     }
 
     if (!profile.email_verified) {

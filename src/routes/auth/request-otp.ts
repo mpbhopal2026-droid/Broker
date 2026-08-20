@@ -77,13 +77,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Strict Rule 1: For registration purpose, verify user does not already exist. If found, reject with 409.
+    // Strict Rule 1: For registration purpose, allow if no profile exists OR if existing profile is inactive/purged
     if (purpose === 'email_verify') {
       const { data: existingProfile } = await (channel === 'sms'
-        ? db.from('profiles').select('id').eq('phone', cleanIdentifier).maybeSingle()
-        : db.from('profiles').select('id').ilike('email', cleanIdentifier).maybeSingle());
+        ? db.from('profiles').select('id, is_active').eq('phone', cleanIdentifier).maybeSingle()
+        : db.from('profiles').select('id, is_active').ilike('email', cleanIdentifier).maybeSingle());
 
-      if (existingProfile) {
+      if (existingProfile && existingProfile.is_active !== false) {
         return fail(409, `An account is already registered with this ${channel === 'sms' ? 'mobile number' : 'email address'}. Please sign in instead.`, {
           alreadyRegistered: true,
         });
