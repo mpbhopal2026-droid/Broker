@@ -60,6 +60,23 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
       return;
     }
 
+    // A signed-in user must never be left sitting on the login screen.
+    //
+    // This is the bug behind "the OTP works but nothing happens". After a
+    // successful verify the page calls router.push('/dashboard'); if the
+    // session context has not propagated by the time this effect runs on the
+    // new path, the guard above sees isAuthenticated === false and bounces
+    // straight back to /login. Session state then arrives — and nothing moved
+    // them off, because the equivalent middleware rule was removed. They end up
+    // parked on the login form while actually signed in, which reads as the
+    // login being broken.
+    if (isAuthenticated && isAuthPage) {
+      if (isOperator) router.replace('/admin');
+      else if (!hasSubmittedKyc) router.replace('/kyc');
+      else router.replace('/dashboard');
+      return;
+    }
+
     // Authenticated users on root "/" should immediately go to /dashboard (or /admin for operators)
     if (isAuthenticated && pathname === '/') {
       if (isOperator) {

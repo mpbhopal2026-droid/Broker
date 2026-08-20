@@ -177,6 +177,8 @@ export function buildOtpEmailHtml(params: {
       </div>
       <p style="color: #475569; font-size: 13px; line-height: 1.6;">
         This code expires in ${escapeHtml(String(params.expiryMinutes))} minutes and can be used once.
+        If you asked for another code, only the newest email will work — this one stops working the
+        moment a newer code is sent.
         ${params.ipAddress ? `Requested from IP ${escapeHtml(params.ipAddress)}.` : ''}
       </p>
       <p style="color: #f43f5e; font-size: 13px; line-height: 1.6; font-weight: bold;">

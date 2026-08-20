@@ -158,6 +158,34 @@ export async function POST(req: NextRequest) {
             db.from('auth_otps').update({ attempts: (o.attempts || 0) + 1 }).eq('id', o.id),
           ),
         );
+
+        // Almost always, a "wrong" code here is the RIGHT code from an OLDER
+        // email. Requesting a new code consumes every previous one, so a client
+        // who taps resend and then types the first code they received gets
+        // "Incorrect verification code" — which is true and useless. They read
+        // it as the system being broken, request another code, and repeat.
+        //
+        // If a code was superseded in the last fifteen minutes, say that
+        // instead. Production logs showed exactly this loop: three 401s, then a
+        // success five seconds later once the newest email was used.
+        const supersededSince = new Date(Date.now() - 15 * 60_000).toISOString();
+        const { data: superseded } = await db
+          .from('auth_otps')
+          .select('id')
+          .or(`identifier.eq.${identifier},email.eq.${identifier}`)
+          .not('consumed_at', 'is', null)
+          .gte('consumed_at', supersededSince)
+          .limit(1);
+
+        if (superseded && superseded.length > 0) {
+          await auditServer(req, 'AUTH_OTP_VERIFY_FAILED', {
+            metadata: { email, reason: 'superseded_code' },
+          });
+          return fail(
+            401,
+            'That code is no longer valid because a newer one was sent. Please use the code from the most recent email.',
+          );
+        }
       } else {
         // Check past consumed/expired
         const { data: pastOtp } = await (channel === 'email'
