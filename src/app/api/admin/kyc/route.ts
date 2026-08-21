@@ -6,11 +6,12 @@ import { sendMailBestEffort } from '@/lib/mailer';
 import { buildKycStatusEmailHtml } from '@/lib/resend';
 import { mapKycRecord } from '@/lib/mappers';
 import { notifications } from '@/lib/notify';
+import { decryptField } from '@/lib/field-crypto';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-/** Review queue. Returns masked identifiers only — never the decrypted number. */
+/** Review queue. Returns full decrypted document numbers for authorized compliance staff. */
 export async function GET() {
   try {
     await requireAdmin();
@@ -19,7 +20,7 @@ export async function GET() {
 
     const { data: records, error } = await db
       .from('kyc_records')
-      .select('id, user_id, document_type, document_number_masked, file_paths, status, admin_notes, submitted_at, reviewed_at')
+      .select('id, user_id, document_type, document_number_masked, document_number_encrypted, file_paths, status, admin_notes, submitted_at, reviewed_at')
       .order('submitted_at', { ascending: false })
       .limit(200);
 
@@ -43,13 +44,23 @@ export async function GET() {
       }
     }
 
-    const mapped = rawRecords.map((r) => {
-      const p = profileMap[r.user_id] || {};
-      return mapKycRecord({
-        ...r,
-        profiles: p,
-      });
-    });
+    const mapped = await Promise.all(
+      rawRecords.map(async (r) => {
+        const p = profileMap[r.user_id] || {};
+        let fullDocNumber = r.document_number_masked;
+        if (r.document_number_encrypted) {
+          const decrypted = await decryptField(r.document_number_encrypted);
+          if (decrypted) fullDocNumber = decrypted;
+        }
+        return {
+          ...mapKycRecord({
+            ...r,
+            profiles: p,
+          }),
+          documentNumber: fullDocNumber || r.document_number_masked || '',
+        };
+      })
+    );
 
     return ok({ records: mapped });
   } catch (err) {

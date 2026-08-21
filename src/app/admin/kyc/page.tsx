@@ -15,6 +15,7 @@ import {
   Filter,
   Search,
   Check,
+  Copy,
   CreditCard,
   Building2,
   ExternalLink,
@@ -34,7 +35,7 @@ import { AdminManualKycModal } from '@/components/admin/modals/AdminManualKycMod
 import { validateAadhaarVerhoeff, validatePAN, validateIFSC, getBankNameFromIFSC } from '@/lib/verhoeff';
 
 export default function AdminKycConsolePage() {
-  const { kycRecords, users, reviewKYC, manualVerifyUserKyc, deleteUser, showToast } = useAdmin();
+  const { kycRecords, users, reviewKYC, manualVerifyUserKyc, deleteUser, refreshAdminData, showToast } = useAdmin();
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const [searchQuery, setSearchQuery] = useState('');
   const [inspectRecord, setInspectRecord] = useState<KYCRecord | null>(null);
@@ -44,6 +45,25 @@ export default function AdminKycConsolePage() {
   const [manualVerifyUser, setManualVerifyUser] = useState<UserProfile | null>(null);
   const [showUserPicker, setShowUserPicker] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [copiedDoc, setCopiedDoc] = useState(false);
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshAdminData();
+    setTimeout(() => {
+      setIsRefreshing(false);
+      showToast({ type: 'info', title: 'Data Refreshed', message: 'KYC queue is synchronized with the database.' });
+    }, 400);
+  };
+
+  const copyToClipboard = (text: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedDoc(true);
+    showToast({ type: 'info', title: 'Copied', message: 'Document number copied to clipboard.' });
+    setTimeout(() => setCopiedDoc(false), 2000);
+  };
 
   // Filter records
   const filtered = kycRecords.filter((k) => {
@@ -103,6 +123,17 @@ export default function AdminKycConsolePage() {
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          {/* Real-time sync indicator & refresh button */}
+          <button
+            type="button"
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-bold transition-colors cursor-pointer border border-zinc-200 dark:border-zinc-800"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-600' : ''}`} />
+            <span>{isRefreshing ? 'Syncing…' : 'Live Sync'}</span>
+          </button>
+
           {/* Manual Verify Override Dropdown */}
           <div className="relative">
             <button
@@ -419,17 +450,38 @@ export default function AdminKycConsolePage() {
 
             {/* Extracted Identity & Bank Verification Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
-                <span className="text-[10px] uppercase font-bold text-zinc-400 block">ID Document ({inspectRecord.documentType.toUpperCase()})</span>
-                <div className="font-bold text-zinc-950 dark:text-white text-sm font-mono">{inspectRecord.documentNumber}</div>
+              <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-bold text-zinc-400 block">ID Document ({inspectRecord.documentType.toUpperCase()})</span>
+                  {inspectRecord.documentNumber && (
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(inspectRecord.documentNumber)}
+                      className="text-[10px] text-zinc-500 hover:text-emerald-600 font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                      title="Copy full number"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>{copiedDoc ? 'Copied!' : 'Copy'}</span>
+                    </button>
+                  )}
+                </div>
+                <div className="font-bold text-zinc-950 dark:text-white text-sm font-mono tracking-wider break-all">
+                  {inspectRecord.documentNumber || '—'}
+                </div>
                 {inspectRecord.documentNumber && inspectRecord.documentNumber.length === 12 && (
                   <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 block">
-                    ✔ Verhoeff Checksum Valid
+                    ✔ 12-Digit Verhoeff Valid
                   </span>
+                )}
+                {inspectedUser?.panNumber && (
+                  <div className="pt-1 border-t border-zinc-200/60 dark:border-zinc-800/60 text-[11px] text-zinc-600 dark:text-zinc-300">
+                    <span className="text-zinc-400">PAN: </span>
+                    <span className="font-mono font-bold">{inspectedUser.panNumber}</span>
+                  </div>
                 )}
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
+              <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1.5">
                 <span className="text-[10px] uppercase font-bold text-zinc-400 block">Registered Bank Name</span>
                 <div className="font-bold text-zinc-950 dark:text-white text-sm">
                   {inspectedUser?.bankName || getBankNameFromIFSC(inspectedUser?.bankIfsc || '') || 'Domestic Bank'}
@@ -437,12 +489,18 @@ export default function AdminKycConsolePage() {
                 <span className="text-[10px] text-zinc-500 font-mono block">
                   IFSC: {inspectedUser?.bankIfsc || 'Verified'}
                 </span>
+                {inspectedUser?.userUpiId && (
+                  <div className="pt-1 border-t border-zinc-200/60 dark:border-zinc-800/60 text-[11px] text-zinc-600 dark:text-zinc-300">
+                    <span className="text-zinc-400">UPI: </span>
+                    <span className="font-mono font-medium">{inspectedUser.userUpiId}</span>
+                  </div>
+                )}
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
+              <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1.5">
                 <span className="text-[10px] uppercase font-bold text-zinc-400 block">Payout Account Destination</span>
-                <div className="font-bold text-zinc-950 dark:text-white text-sm font-mono">
-                  {inspectedUser?.bankAccountNumber ? `•••• ${inspectedUser.bankAccountNumber.slice(-4)}` : 'Verified Account'}
+                <div className="font-bold text-zinc-950 dark:text-white text-sm font-mono break-all">
+                  {inspectedUser?.bankAccountNumber || 'Verified Account'}
                 </div>
                 <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 block">
                   Holder: {inspectedUser?.bankAccountName || inspectedUser?.fullName || 'Matched'}
@@ -457,7 +515,7 @@ export default function AdminKycConsolePage() {
                   <FileText className="w-4 h-4 text-emerald-600" />
                   <span>Document Proofs ({inspectRecord.filePaths?.length || 0} Uploaded Images)</span>
                 </span>
-                <span className="text-[11px] text-zinc-400">Click any image to enlarge in full-resolution lightbox</span>
+                <span className="text-[11px] text-zinc-400">Click any image to zoom, rotate & inspect full card</span>
               </div>
 
               {(!inspectRecord.filePaths || inspectRecord.filePaths.length === 0) ? (
@@ -483,7 +541,7 @@ export default function AdminKycConsolePage() {
                           <span className="text-[10px] text-zinc-400 uppercase shrink-0">Image #{idx + 1}</span>
                         </div>
                         
-                        <div className="rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 h-64 sm:h-72 bg-white dark:bg-black flex items-center justify-center">
+                        <div className="rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 h-72 sm:h-80 lg:h-96 bg-white dark:bg-black flex items-center justify-center">
                           <KycDocumentImage path={path} alt={docLabel} purpose="kyc" />
                         </div>
                       </div>

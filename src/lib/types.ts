@@ -41,6 +41,8 @@ export interface UserProfile {
   bankAccountNumber?: string;
   bankIfsc?: string;
   userUpiId?: string;
+  panNumber?: string;
+  aadhaarNumber?: string;
   tradingExperience?: 'beginner' | 'intermediate' | 'expert';
   riskTolerance?: 'conservative' | 'moderate' | 'aggressive';
   twoFactorOtpEnabled?: boolean;

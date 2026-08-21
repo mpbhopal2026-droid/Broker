@@ -161,6 +161,35 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     void refreshAdminData();
   }, [refreshAdminData]);
 
+  // Real-time auto-refresh across admin console: polls every 5s & refreshes on window focus
+  useEffect(() => {
+    if (!isOperator) return;
+
+    const poll = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        void refreshAdminData();
+      }
+    };
+
+    const timer = setInterval(poll, 5000);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void refreshAdminData();
+      }
+    };
+    const onFocus = () => void refreshAdminData();
+
+    window.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [isOperator, refreshAdminData]);
+
   /** Shared shape for the four transaction decisions. */
   const decide = useCallback(
     async (

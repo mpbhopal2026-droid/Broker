@@ -9,7 +9,8 @@ import {
   X,
   FileText,
   DollarSign,
-  AlertCircle
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { KycDocumentImage } from '@/components/admin/KycDocumentImage';
 import { useAdmin } from '@/lib/admin-store';
@@ -18,12 +19,22 @@ import { formatUSD, formatINR, formatDate } from '@/lib/utils';
 import { Transaction } from '@/lib/types';
 
 export default function AdminDepositsPage() {
-  const { currentUser } = useApp();
-  const { transactions, approveDeposit, rejectDeposit, deleteTransaction, paymentSettings, getClientPaymentConfig } = useAdmin();
+  const { currentUser, showToast } = useApp();
+  const { transactions, approveDeposit, rejectDeposit, deleteTransaction, paymentSettings, getClientPaymentConfig, refreshAdminData } = useAdmin();
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [customCreditUSD, setCustomCreditUSD] = useState<string>('');
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshAdminData();
+    setTimeout(() => {
+      setIsRefreshing(false);
+      showToast({ type: 'info', title: 'Data Refreshed', message: 'Deposits ledger is up to date.' });
+    }, 400);
+  };
 
   const isDeveloper = currentUser?.role === 'developer';
   const deposits = transactions.filter((t) => t.type === 'deposit');
@@ -83,8 +94,20 @@ export default function AdminDepositsPage() {
           </p>
         </div>
 
-        <div className="text-xs font-mono text-slate-500">
-          Conversion Rate: 1 USD = ₹{paymentSettings.usdToInrRate} (Desk Fee: {(paymentSettings.commissionPercent ?? 0)}%)
+        <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
+          <button
+            type="button"
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-bold transition-colors cursor-pointer border border-zinc-200 dark:border-zinc-800"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-600' : ''}`} />
+            <span>{isRefreshing ? 'Syncing…' : 'Live Sync'}</span>
+          </button>
+
+          <div className="text-xs font-mono text-slate-500">
+            Conversion Rate: 1 USD = ₹{paymentSettings.usdToInrRate} (Desk Fee: {(paymentSettings.commissionPercent ?? 0)}%)
+          </div>
         </div>
       </div>
 

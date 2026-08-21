@@ -601,6 +601,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     void refreshSession().finally(() => setIsLoaded(true));
   }, [applyTheme, refreshSession]);
 
+  // Real-time auto-refresh across client application: polls every 6s & refreshes on window focus
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+
+    const poll = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        void refreshSession();
+      }
+    };
+
+    timer = setInterval(poll, 6000);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void refreshSession();
+      }
+    };
+    const onFocus = () => void refreshSession();
+
+    window.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      if (timer) clearInterval(timer);
+      window.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [refreshSession]);
+
   // --- auth -----------------------------------------------------------------
 
   const requestOtp = useCallback(
