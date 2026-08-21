@@ -91,23 +91,30 @@ async function fetchTwelveData(symbols: string[]): Promise<Map<string, Partial<Q
   // costs 6 credits — not 1. At a 5s refresh that is 72 credits/minute, which
   // overruns the free tier (8/min) in seconds and the Grow tier (55/min) too.
   //
-  // Hence the refresh window is configurable: set MARKET_DATA_REFRESH_SECONDS
-  // to (60 * symbols) / your_per_minute_credits, rounded up. For 6 symbols on
-  // Grow that is 7 seconds. Overrunning does not degrade gracefully — the
-  // provider starts returning errors and every quote silently falls back to
-  // simulated, which is the one outcome we cannot afford to be quiet about.
-  // Default sized for the FREE tier, because that is what an unset variable
-  // means in practice. 6 symbols at 7s is 74,000 credits/day against a budget
-  // of 800 — production burned 8,046 and then served stale prices for hours.
+  // Overrunning the plan does not degrade gracefully: the provider starts
+  // erroring and every quote silently falls back to simulated. Production
+  // burned 8,046 credits against a budget of 800 and then served hours-old
+  // prices. So rather than a fixed default, the refresh window is DERIVED from
+  // the daily credit budget and the number of symbols actually being asked
+  // for:
   //
-  //   7s   -> 74,057/day   needs Grow
-  //   60s  ->  8,640/day   needs Grow
-  //   650s ->    798/day   fits free
+  //   refresh = (seconds/day x symbols) / daily_budget, plus 10% headroom
   //
-  // On Grow, set MARKET_DATA_REFRESH_SECONDS=7 explicitly. A default that
-  // silently exceeds the plan is worse than a slow one: the feed dies quietly
-  // and the screen keeps showing numbers.
-  const refresh = Number(process.env.MARKET_DATA_REFRESH_SECONDS) || 650;
+  // Deriving it matters because that symbol count is no longer fixed. Binance
+  // now answers BTC, gold and EUR/USD for free, so only three symbols reach
+  // this adapter instead of six — which halves the cost per refresh and buys
+  // twice the frequency at no charge. A hardcoded default could not notice
+  // that. Equally, if a symbol is ever added, the window widens on its own
+  // instead of quietly overrunning.
+  //
+  //   3 symbols, 800/day  -> ~356s   fits free
+  //   6 symbols, 800/day  -> ~713s   fits free
+  //   6 symbols, Grow     -> set MARKET_DATA_DAILY_CREDITS to the plan's
+  //
+  // MARKET_DATA_REFRESH_SECONDS still overrides outright when set.
+  const dailyCredits = Number(process.env.MARKET_DATA_DAILY_CREDITS) || 800;
+  const derived = Math.ceil(((86_400 * symbols.length) / dailyCredits) * 1.1);
+  const refresh = Number(process.env.MARKET_DATA_REFRESH_SECONDS) || derived;
 
   const res = await fetch(url, { next: { revalidate: refresh } });
   if (!res.ok) throw new Error(`market data provider returned ${res.status}`);
