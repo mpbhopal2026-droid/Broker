@@ -26,6 +26,7 @@ export default function AdminDepositsPage() {
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
@@ -64,19 +65,33 @@ export default function AdminDepositsPage() {
     }
   }, [selectedTx, paymentSettings]);
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!selectedTx) return;
     const finalUSD = Number(customCreditUSD) || Number(((selectedTx.amountINR || 0) / paymentSettings.usdToInrRate).toFixed(2));
-    void approveDeposit(selectedTx.id, finalUSD);
-    setSelectedTx(null);
+    setActionLoading(true);
+    const res = await approveDeposit(selectedTx.id, finalUSD);
+    setActionLoading(false);
+    if (res.success) {
+      showToast({ type: 'success', title: 'Deposit Cleared', message: res.message || `Wallet successfully credited with $${finalUSD.toFixed(2)}.` });
+      setSelectedTx(null);
+    } else {
+      showToast({ type: 'error', title: 'Clearing Failed', message: res.error || 'Could not approve deposit.' });
+    }
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!selectedTx) return;
-    rejectDeposit(selectedTx.id, rejectReason || 'UTR not verified in broker bank account.');
-    setShowRejectModal(false);
-    setSelectedTx(null);
-    setRejectReason('');
+    setActionLoading(true);
+    const res = await rejectDeposit(selectedTx.id, rejectReason || 'UTR not verified in broker bank account.');
+    setActionLoading(false);
+    if (res.success) {
+      showToast({ type: 'info', title: 'Deposit Rejected', message: res.message || 'Deposit was marked as rejected.' });
+      setShowRejectModal(false);
+      setSelectedTx(null);
+      setRejectReason('');
+    } else {
+      showToast({ type: 'error', title: 'Rejection Failed', message: res.error || 'Could not reject deposit.' });
+    }
   };
 
   return (
@@ -464,17 +479,19 @@ export default function AdminDepositsPage() {
                 <div className="flex gap-2">
                   <button
                     type="button"
+                    disabled={actionLoading}
                     onClick={() => setShowRejectModal(true)}
-                    className="flex-1 py-2.5 rounded-xl border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-bold transition-all text-xs"
+                    className="flex-1 py-2.5 rounded-xl border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-bold transition-all text-xs disabled:opacity-50 cursor-pointer"
                   >
                     Reject Deposit
                   </button>
                   <button
                     type="button"
+                    disabled={actionLoading}
                     onClick={handleApprove}
-                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all text-xs shadow-md shadow-emerald-500/20 active:scale-95"
+                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all text-xs shadow-md shadow-emerald-500/20 active:scale-95 disabled:opacity-50 cursor-pointer"
                   >
-                    Approve & Credit Balance
+                    {actionLoading ? 'Clearing & Crediting…' : 'Approve & Credit Balance'}
                   </button>
                 </div>
                 {isDeveloper && (

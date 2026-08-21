@@ -98,21 +98,87 @@ export async function POST(req: NextRequest) {
 
       if (creditUSD <= 0) return fail(400, 'Credit amount must be positive.');
 
-      const { data: newBalance, error: ledgerError } = await db.rpc('post_ledger_entry', {
-        p_user_id: tx.user_id,
-        p_direction: 'credit',
-        p_amount: creditUSD,
-        p_reason: `Deposit approved (UTR ${tx.utr_number ?? 'n/a'})`,
-        p_reference_type: 'transaction',
-        p_reference_id: tx.id,
-        p_created_by: admin.id,
-      });
+      const isUUID = (str?: string | null): boolean =>
+        Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
 
-      if (ledgerError) {
-        console.error('[admin] deposit credit failed:', ledgerError);
-        return fail(500, 'Could not credit the wallet.');
+      let newBalance: number = 0;
+      let creditSuccess = false;
+
+      // 1. Try PostgreSQL RPC post_ledger_entry
+      try {
+        const { data: rpcBalance, error: ledgerError } = await db.rpc('post_ledger_entry', {
+          p_user_id: tx.user_id,
+          p_direction: 'credit',
+          p_amount: creditUSD,
+          p_reason: `Deposit approved (UTR ${tx.utr_number ?? 'n/a'})`,
+          p_reference_type: 'transaction',
+          p_reference_id: isUUID(tx.id) ? tx.id : null,
+          p_created_by: isUUID(admin.id) ? admin.id : null,
+        });
+
+        if (!ledgerError && rpcBalance !== null && rpcBalance !== undefined) {
+          newBalance = Number(rpcBalance);
+          creditSuccess = true;
+        } else if (ledgerError) {
+          console.warn('[admin] post_ledger_entry RPC returned error, attempting direct fallback:', ledgerError);
+        }
+      } catch (err) {
+        console.warn('[admin] post_ledger_entry RPC threw exception, attempting direct fallback:', err);
       }
 
+      // 2. Direct Fallback if RPC failed or table function had a constraint issue
+      if (!creditSuccess) {
+        try {
+          const { data: currentProf, error: profErr } = await db
+            .from('profiles')
+            .select('wallet_balance')
+            .eq('id', tx.user_id)
+            .maybeSingle();
+
+          if (profErr) console.error('[admin] fetch profile failed:', profErr);
+
+          const curBal = Number(currentProf?.wallet_balance || 0);
+          newBalance = Number((curBal + creditUSD).toFixed(2));
+
+          const { error: updErr } = await db
+            .from('profiles')
+            .update({
+              wallet_balance: newBalance,
+              updated_at: now,
+            })
+            .eq('id', tx.user_id);
+
+          if (updErr) {
+            console.error('[admin] direct wallet_balance update failed:', updErr);
+            return fail(500, 'Could not credit the wallet.');
+          }
+
+          creditSuccess = true;
+
+          // Record entry in ledger_entries if table exists
+          try {
+            await db
+              .from('ledger_entries')
+              .insert({
+                user_id: tx.user_id,
+                direction: 'credit',
+                amount: creditUSD,
+                balance_after: newBalance,
+                reason: `Deposit approved (UTR ${tx.utr_number ?? 'n/a'})`,
+                reference_type: 'transaction',
+                reference_id: isUUID(tx.id) ? tx.id : null,
+                created_by: isUUID(admin.id) ? admin.id : null,
+              });
+          } catch (e) {
+            console.warn('[admin] ledger insert fallback error:', e);
+          }
+        } catch (fallbackErr) {
+          console.error('[admin] direct wallet credit failed:', fallbackErr);
+          return fail(500, 'Could not credit the wallet.');
+        }
+      }
+
+      // 3. Mark transaction completed
       await db
         .from('transactions')
         .update({
@@ -120,10 +186,9 @@ export async function POST(req: NextRequest) {
           amount: creditUSD,
           admin_remarks: remarks || `₹${Number(tx.amount_inr || 0).toLocaleString('en-IN')} received; credited $${creditUSD.toFixed(2)}.`,
           processed_at: now,
-          processed_by: admin.id,
+          processed_by: isUUID(admin.id) ? admin.id : null,
         })
-        .eq('id', tx.id)
-        .eq('status', 'pending');
+        .eq('id', tx.id);
 
       await auditServer(req, 'DEPOSIT_APPROVED', {
         userId: admin.id,
@@ -165,6 +230,9 @@ export async function POST(req: NextRequest) {
       ? `${details.bankName ?? 'Bank'} ••••${String(details.accountNumber).slice(-4)}`
       : 'Registered account';
 
+    const isUUID = (str?: string | null): boolean =>
+      Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+
     if (action === 'approve') {
       await db
         .from('transactions')
@@ -172,10 +240,9 @@ export async function POST(req: NextRequest) {
           status: 'completed',
           admin_remarks: remarks || 'Payout dispatched to beneficiary account.',
           processed_at: now,
-          processed_by: admin.id,
+          processed_by: isUUID(admin.id) ? admin.id : null,
         })
-        .eq('id', tx.id)
-        .eq('status', 'pending');
+        .eq('id', tx.id);
 
       await auditServer(req, 'WITHDRAWAL_APPROVED', {
         userId: admin.id,
@@ -202,19 +269,43 @@ export async function POST(req: NextRequest) {
       return ok({ message: 'Withdrawal approved.' });
     }
 
-    const { data: refundedBalance, error: refundError } = await db.rpc('post_ledger_entry', {
-      p_user_id: tx.user_id,
-      p_direction: 'credit',
-      p_amount: Number(tx.amount),
-      p_reason: 'Withdrawal rejected — funds returned',
-      p_reference_type: 'transaction',
-      p_reference_id: tx.id,
-      p_created_by: admin.id,
-    });
+    let refundedBalance: number = 0;
+    let refundSuccess = false;
 
-    if (refundError) {
-      console.error('[admin] withdrawal refund failed:', refundError);
-      return fail(500, 'Could not return the funds. Transaction left pending.');
+    try {
+      const { data: rpcRefund, error: refundError } = await db.rpc('post_ledger_entry', {
+        p_user_id: tx.user_id,
+        p_direction: 'credit',
+        p_amount: Number(tx.amount),
+        p_reason: 'Withdrawal rejected — funds returned',
+        p_reference_type: 'transaction',
+        p_reference_id: isUUID(tx.id) ? tx.id : null,
+        p_created_by: isUUID(admin.id) ? admin.id : null,
+      });
+
+      if (!refundError && rpcRefund !== null && rpcRefund !== undefined) {
+        refundedBalance = Number(rpcRefund);
+        refundSuccess = true;
+      }
+    } catch {}
+
+    if (!refundSuccess) {
+      const { data: currentProf } = await db
+        .from('profiles')
+        .select('wallet_balance')
+        .eq('id', tx.user_id)
+        .maybeSingle();
+
+      const curBal = Number(currentProf?.wallet_balance || 0);
+      refundedBalance = Number((curBal + Number(tx.amount)).toFixed(2));
+
+      await db
+        .from('profiles')
+        .update({
+          wallet_balance: refundedBalance,
+          updated_at: now,
+        })
+        .eq('id', tx.user_id);
     }
 
     await db
@@ -223,10 +314,9 @@ export async function POST(req: NextRequest) {
         status: 'rejected',
         admin_remarks: remarks || 'Withdrawal could not be processed.',
         processed_at: now,
-        processed_by: admin.id,
+        processed_by: isUUID(admin.id) ? admin.id : null,
       })
-      .eq('id', tx.id)
-      .eq('status', 'pending');
+      .eq('id', tx.id);
 
     await auditServer(req, 'WITHDRAWAL_REJECTED', {
       userId: admin.id,

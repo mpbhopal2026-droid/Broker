@@ -12,7 +12,9 @@ import { deriveFxRates } from './pricing';
 interface AdminContextValue {
   users: UserProfile[];
   adminTransactions: Transaction[];
+  transactions: Transaction[];
   adminKycRecords: KYCRecord[];
+  kycRecords: KYCRecord[];
   clientPaymentConfigs: Record<string, ClientPaymentConfig>;
   refreshAdminData: () => Promise<void>;
 
@@ -256,7 +258,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const value: AdminContextValue = {
     users,
     adminTransactions,
+    transactions: adminTransactions,
     adminKycRecords,
+    kycRecords: adminKycRecords,
     clientPaymentConfigs,
     refreshAdminData,
 
