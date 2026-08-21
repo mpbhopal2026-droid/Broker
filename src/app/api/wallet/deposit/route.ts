@@ -29,14 +29,33 @@ export async function POST(req: NextRequest) {
     const rawAmount = typeof body?.amountINR === 'string' ? body.amountINR.replace(/[^0-9.]/g, '') : body?.amountINR;
     const amountINR = Number(rawAmount);
     const paymentMode = cleanString(body?.paymentMode, 60) || 'Domestic INR Transfer';
+    // Separators are stripped so a UTR pasted as "ABCD 1234-5678" is accepted —
+    // banks and UPI apps format these inconsistently and clients copy them
+    // verbatim.
     const rawUtr = typeof body?.utrNumber === 'string' ? body.utrNumber.trim() : '';
     const utrNumber = rawUtr.replace(/[\s\-_:/]/g, '').toUpperCase();
+
+    // proofImagePath is deliberately not length-capped here. It may be a data
+    // URL of several megabytes, and cleanString() returns NULL rather than
+    // truncating when its limit is exceeded — so the old 500-char cap turned
+    // every screenshot-as-data-URL into "proof missing" and a 400.
+    // verifyUploadedFile() below is what bounds and validates it.
     const proofImagePath = typeof body?.proofImagePath === 'string' ? body.proofImagePath.trim() : '';
 
     if (!Number.isFinite(amountINR) || amountINR < 100 || amountINR > MAX_INR) {
       return fail(400, `Enter an amount between ₹100 and ₹${MAX_INR.toLocaleString('en-IN')}.`);
     }
-    if (!utrNumber || utrNumber.length < 4 || utrNumber.length > 50) {
+
+    // Alphanumeric-only, and this matters for money rather than tidiness.
+    //
+    // The duplicate check below is what stops one real bank transfer being
+    // claimed twice, and it compares UTR strings for equality. Allowing
+    // arbitrary characters lets a client resubmit a UTR they have already been
+    // credited for with a homoglyph swapped in — a Cyrillic А for a Latin A —
+    // which is a different string, so the lookup misses and the deposit goes
+    // into review a second time. Restricting the charset keeps that comparison
+    // meaningful. Real UTRs and UPI reference IDs are alphanumeric.
+    if (!/^[A-Z0-9]{6,40}$/.test(utrNumber)) {
       return fail(400, 'Enter the valid UTR / transaction reference number from your payment.');
     }
 
