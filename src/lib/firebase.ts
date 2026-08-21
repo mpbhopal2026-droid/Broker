@@ -49,7 +49,11 @@ export const messaging = messagingInstance;
 export async function getFcmToken(): Promise<string | null> {
   if (typeof window === 'undefined' || !messaging) return null;
   try {
-    const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+    // NEXT_PUBLIC_VAPID_PUBLIC_KEY is the name declared in lib/env.ts and the
+    // one actually set. This read NEXT_PUBLIC_FIREBASE_VAPID_KEY, which is set
+    // nowhere — so vapidKey was always undefined and getToken() could never
+    // return a usable web-push token.
+    const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
     const token = await getToken(messaging, { vapidKey });
     return token || null;
   } catch (err) {

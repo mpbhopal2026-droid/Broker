@@ -40,6 +40,10 @@ export const SERVER_ENV = [
   'RESEND_WEBHOOK_SECRET',  // verifies delivery events are really from Resend
   'MARKET_DATA_API_KEY',    // live price feed; without it quotes stay simulated
   'VAPID_PRIVATE_KEY',
+  // Firebase Admin credentials. Grants send rights on FCM for the project, so
+  // it is server-only and caught by the SERVICE_ACCOUNT fragment below if it
+  // ever gains a NEXT_PUBLIC_ prefix.
+  'FIREBASE_SERVICE_ACCOUNT_JSON',
   'MSG91_AUTH_KEY',
   'TWILIO_AUTH_TOKEN',
   'ADMIN_IP_ALLOWLIST',
@@ -55,6 +59,7 @@ const NEVER_PUBLIC = [
   'AUTH_TOKEN',
   'PRIVATE_KEY',
   'MSG91_AUTH',
+  'SERVICE_ACCOUNT',
 ];
 
 export interface EnvCheck {
