@@ -89,7 +89,34 @@ export const AdminManualKycModal: React.FC<AdminManualKycModalProps> = ({ user, 
                 {user.kycStatus || 'unverified'}
               </span>
             </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-zinc-400">Withdrawal account:</span>
+              <span
+                className={`font-bold uppercase px-2 py-0.5 rounded text-[10px] ${
+                  user.bankAccountNumber && user.bankIfsc
+                    ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400'
+                    : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400'
+                }`}
+              >
+                {user.bankAccountNumber && user.bankIfsc ? 'on file' : 'missing'}
+              </span>
+            </div>
           </div>
+
+          {/* Approving identity is only one of the three gates. Without a payout
+              account the client is still locked out, and the operator walks away
+              believing they let them in — which is how three approved clients
+              ended up unable to reach the app. Say it here, where the decision
+              is being made. */}
+          {!(user.bankAccountNumber && user.bankIfsc) && (
+            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 text-[11px] text-amber-900 dark:text-amber-300 leading-relaxed">
+              <strong>This client will still be locked out after approval.</strong> They have no
+              withdrawal account on file, and the app requires one. Either ask them to complete it
+              at <span className="font-mono">/kyc</span>, or add it yourself from Manage → Payout
+              account.
+            </div>
+          )}
 
           {/* Action Choice */}
           <div className="space-y-2">
