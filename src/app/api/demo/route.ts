@@ -5,6 +5,7 @@ import { ok, fail, tooManyRequests, handleRouteError } from '@/lib/api';
 import { loadDemoState, resetDemoAccount, demoDepositFunds, demoWithdrawFunds, loadSpreadConfig, quoteFor } from '@/lib/demo-engine';
 import { INSTRUMENTS } from '@/lib/market-data';
 import { isEnabled } from '@/lib/feature-flags';
+import { getQuotes } from '@/lib/quote-provider';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,7 +20,14 @@ export async function GET() {
       return fail(403, 'Demo trading is currently unavailable.');
     }
 
-    const [state, config] = await Promise.all([loadDemoState(user.id), loadSpreadConfig()]);
+    // getQuotes() is awaited for its side effect of populating the live price
+    // cache that quoteFor() reads, so demo prices track the same market the
+    // chart shows rather than an unrelated simulated series.
+    const [state, config] = await Promise.all([
+      loadDemoState(user.id),
+      loadSpreadConfig(),
+      getQuotes().catch(() => null),
+    ]);
     if (!state) return fail(503, 'Demo trading is unavailable.');
 
     const now = Date.now();

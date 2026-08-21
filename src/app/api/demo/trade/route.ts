@@ -4,6 +4,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { ok, fail, tooManyRequests, cleanString, handleRouteError } from '@/lib/api';
 import { openDemoPosition, closeDemoPosition } from '@/lib/demo-engine';
 import { isEnabled } from '@/lib/feature-flags';
+import { getQuotes } from '@/lib/quote-provider';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,6 +31,18 @@ export async function POST(req: NextRequest) {
 
     const limit = rateLimit(`demo:trade:${user.id}`, 120, 60 * 60);
     if (!limit.allowed) return tooManyRequests(limit.retryAfterSeconds);
+
+    // Warms the live price cache the engine prices against.
+    //
+    // The engine is synchronous and reads the last real mid recorded by
+    // getQuotes(). On serverless this request may land on an instance that has
+    // never served /api/quotes, whose cache is therefore empty — so the fill
+    // would silently drop to simulation while the client's chart shows the real
+    // market. Awaiting here guarantees a real mid on this instance. It is cheap:
+    // the underlying fetches are cached, so it is usually a cache read.
+    await getQuotes().catch(() => {
+      // Feed unreachable. The engine falls back to simulation on its own.
+    });
 
     const body = await req.json().catch(() => ({}));
     const action = body?.action;

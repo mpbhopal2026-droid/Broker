@@ -2,6 +2,7 @@ import 'server-only';
 
 import { getServiceClient } from './supabase-server';
 import { simulatedMid, findInstrument } from './market-data';
+import { getLiveAnchor } from './live-price-cache';
 import { deriveBidAsk, executionPrice, positionPnl } from './pricing';
 
 /**
@@ -44,8 +45,23 @@ export async function loadSpreadConfig(): Promise<DemoSpreadConfig> {
   };
 }
 
+/**
+ * Bid/ask for a demo trade.
+ *
+ * Prefers the real market. A demo that fills at a price unrelated to the chart
+ * beside it teaches the client the wrong thing and reads as a bug — which is
+ * exactly how this surfaced: live gold charting at 4573 while demo fills came
+ * from an independent simulated series.
+ *
+ * Falls back to simulation when no recent real mid exists (cold instance, or an
+ * instrument with no free live source such as USD/INR or WTI), so the demo
+ * always works.
+ *
+ * `atMs` is still honoured for the simulated path, which is what historical
+ * mark-to-market replays depend on.
+ */
 export function quoteFor(symbol: string, config: DemoSpreadConfig, atMs = Date.now()) {
-  const mid = simulatedMid(symbol, atMs);
+  const mid = getLiveAnchor(symbol) ?? simulatedMid(symbol, atMs);
   const bps = config.bySymbol[symbol] ?? config.defaultSpreadBps;
   return deriveBidAsk(mid, bps);
 }

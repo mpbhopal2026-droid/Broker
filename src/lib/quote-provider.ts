@@ -1,5 +1,6 @@
 import { INSTRUMENTS, findInstrument, simulatedSnapshot } from '@/lib/market-data';
 import { fetchBinance } from '@/lib/quote-sources';
+import { setLiveAnchor } from '@/lib/live-price-cache';
 
 /**
  * Market data seam.
@@ -212,6 +213,10 @@ export async function getQuotes(atMs: number = Date.now()): Promise<Quote[]> {
   return base.map((q) => {
     const l = merged.get(q.symbol);
     if (!l?.mid) return q;
+    // Publish real mids for synchronous callers such as the demo engine, so a
+    // fill is priced off the same market the chart is showing. Only reached
+    // when a source actually answered, so a simulated price never lands here.
+    if ((l.source ?? 'live') === 'live') setLiveAnchor(q.symbol, l.mid);
     return {
       ...q,
       ...l,
