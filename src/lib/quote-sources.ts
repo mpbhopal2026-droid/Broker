@@ -16,12 +16,12 @@ import type { Quote } from './quote-provider';
  * new source: if we cannot point to published terms that allow this, it does
  * not go in.
  *
- * The honest consequence: free AND real-time AND licensed exists for crypto and
- * for nothing else. Forex and commodities on a free licensed tier are
- * rate-limited to slow refreshes. Those instruments therefore update in minutes,
- * not seconds, and say so via `source` and `asOf`. Slow and true beats fast and
- * unlicensed. A paid Twelve Data plan is the fix, and is required before live
- * execution is enabled.
+ * The honest consequence: free AND real-time AND licensed covers BTC, gold and
+ * EUR/USD (the last two by proxy, see below). It does not cover GBP/USD,
+ * USD/INR or WTI, which stay on the rate-limited free Twelve Data tier and so
+ * update in minutes rather than seconds — and say so via `source` and `asOf`.
+ * Slow and true beats fast and unlicensed. A paid Twelve Data plan is the fix,
+ * and is required before live execution is enabled.
  */
 
 /**
@@ -73,34 +73,85 @@ export interface SourcedQuote {
   asOf?: string;
 }
 
+interface Ticker {
+  mid: number;
+  change: number;
+  changePercent: number;
+  high24h?: number;
+  low24h?: number;
+}
+
+/**
+ * One Binance pair, or null if it did not return a usable two-sided market.
+ *
+ * A delisted symbol still answers 200 with a zero bid and ask — GBPUSDT does
+ * exactly this. Treating that as a price would put a hard zero on a trading
+ * screen, so a non-positive side is rejected rather than trusted.
+ */
+async function fetchPair(pair: string): Promise<Ticker | null> {
+  const [book, stats] = await Promise.all([
+    fetch(`https://api.binance.com/api/v3/ticker/bookTicker?symbol=${pair}`, {
+      next: { revalidate: 10 },
+    }).then((r) => (r.ok ? r.json() : null)),
+    fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${pair}`, {
+      next: { revalidate: 60 },
+    }).then((r) => (r.ok ? r.json() : null)),
+  ]);
+
+  const bid = Number(book?.bidPrice);
+  const ask = Number(book?.askPrice);
+  if (!Number.isFinite(bid) || !Number.isFinite(ask) || bid <= 0 || ask <= 0) return null;
+
+  return {
+    mid: (bid + ask) / 2,
+    change: Number(stats?.priceChange) || 0,
+    changePercent: Number(stats?.priceChangePercent) || 0,
+    high24h: Number(stats?.highPrice) || undefined,
+    low24h: Number(stats?.lowPrice) || undefined,
+  };
+}
+
+/**
+ * Gold, as the average of the tokens that are still tracking each other.
+ *
+ * Averaging is not for precision — it is so that one token breaking its peg
+ * cannot move the displayed gold price on its own. If the two disagree by more
+ * than GOLD_MAX_DIVERGENCE something is wrong with at least one of them and we
+ * would rather show nothing than pick a side, so gold falls back to the
+ * labelled simulated quote.
+ */
+async function fetchGold(): Promise<Ticker | null> {
+  const ticks = (await Promise.all(GOLD_TOKENS.map((p) => fetchPair(p).catch(() => null))))
+    .filter((t): t is Ticker => t !== null);
+
+  if (ticks.length === 0) return null;
+
+  const mid = ticks.reduce((s, t) => s + t.mid, 0) / ticks.length;
+  const diverged = ticks.some((t) => Math.abs(t.mid - mid) / mid > GOLD_MAX_DIVERGENCE);
+  if (diverged) return null;
+
+  return {
+    mid,
+    change: ticks.reduce((s, t) => s + t.change, 0) / ticks.length,
+    changePercent: ticks.reduce((s, t) => s + t.changePercent, 0) / ticks.length,
+    high24h: Math.max(...ticks.map((t) => t.high24h ?? t.mid)),
+    low24h: Math.min(...ticks.map((t) => t.low24h ?? t.mid)),
+  };
+}
+
 export async function fetchBinance(symbols: string[]): Promise<Map<string, SourcedQuote>> {
   const out = new Map<string, SourcedQuote>();
-  const wanted = symbols.filter((s) => BINANCE_SYMBOLS[s]);
+  const wanted = symbols.filter((s) => BINANCE_SYMBOLS[s] || s === 'XAU/USD');
   if (wanted.length === 0) return out;
 
   await Promise.all(
     wanted.map(async (symbol) => {
       try {
-        const pair = BINANCE_SYMBOLS[symbol];
-        const [book, stats] = await Promise.all([
-          fetch(`https://api.binance.com/api/v3/ticker/bookTicker?symbol=${pair}`, {
-            next: { revalidate: 10 },
-          }).then((r) => (r.ok ? r.json() : null)),
-          fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${pair}`, {
-            next: { revalidate: 60 },
-          }).then((r) => (r.ok ? r.json() : null)),
-        ]);
-
-        const bid = Number(book?.bidPrice);
-        const ask = Number(book?.askPrice);
-        if (!Number.isFinite(bid) || !Number.isFinite(ask)) return;
+        const tick = symbol === 'XAU/USD' ? await fetchGold() : await fetchPair(BINANCE_SYMBOLS[symbol]);
+        if (!tick) return;
 
         out.set(symbol, {
-          mid: (bid + ask) / 2,
-          change: Number(stats?.priceChange) || 0,
-          changePercent: Number(stats?.priceChangePercent) || 0,
-          high24h: Number(stats?.highPrice) || undefined,
-          low24h: Number(stats?.lowPrice) || undefined,
+          ...tick,
           source: 'live',
           asOf: new Date().toISOString(),
         });
