@@ -157,6 +157,16 @@ export const operatorAlerts = {
       link: '/admin/deposits',
     }),
 
+  /** Pairs with notifications.payoutAccountChanged so the desk sees it too. */
+  payoutAccountChanged: (clientName: string, maskedAccount: string) =>
+    notifyOperatorsBestEffort({
+      type: 'security',
+      priority: 'high',
+      title: 'Client payout account changed',
+      body: `${clientName} changed their withdrawal bank account to ${maskedAccount}. Treat the next withdrawal from this account with extra care.`,
+      link: '/admin/withdrawals',
+    }),
+
   withdrawalRequested: (clientName: string, amountUSD: number) =>
     notifyOperatorsBestEffort({
       type: 'withdrawal',
@@ -186,6 +196,26 @@ export const operatorAlerts = {
 };
 
 export const notifications = {
+  /**
+   * Payout account changed.
+   *
+   * This is a security notice, not a convenience one. Withdrawals pay to the
+   * account stored on the profile, so changing it is the step an attacker with
+   * a stolen session must take before draining a balance. The change was
+   * audited but silent, meaning the client learned nothing until the money was
+   * gone. Telling them immediately is what turns it into something they can
+   * report while it is still recoverable.
+   */
+  payoutAccountChanged: (userId: string, maskedAccount: string) =>
+    notifyUserBestEffort({
+      userId,
+      type: 'security',
+      priority: 'high',
+      title: 'Withdrawal bank account changed',
+      body: `Your payout account was updated to ${maskedAccount}. Future withdrawals will be sent there. If this was not you, contact support immediately.`,
+      link: '/profile/security',
+    }),
+
   depositApproved: (userId: string, amountUSD: number, newBalance: number) =>
     notifyUserBestEffort({
       userId,

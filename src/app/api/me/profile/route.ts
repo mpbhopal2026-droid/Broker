@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getServiceClient } from '@/lib/supabase-server';
 import { requireUser, auditServer } from '@/lib/auth-server';
+import { notifications, operatorAlerts } from '@/lib/notify';
 import { rateLimit } from '@/lib/rate-limit';
 import { ok, fail, tooManyRequests, cleanString, handleRouteError } from '@/lib/api';
 
@@ -89,6 +90,18 @@ export async function PATCH(req: NextRequest) {
       userId: user.id,
       metadata: { fields: Object.keys(update).filter((k) => k !== 'updated_at') },
     });
+
+    // Withdrawals pay to the account stored here, so a change to it is the
+    // move an attacker holding a stolen session makes before draining the
+    // balance. Alert the client and the desk while it is still recoverable.
+    // The account number is masked — a notification should not be a way to
+    // read back the full number.
+    if (update.bank_account_number || update.bank_ifsc) {
+      const acct = String(update.bank_account_number ?? '');
+      const masked = acct ? `••••${acct.slice(-4)}` : 'a new account';
+      notifications.payoutAccountChanged(user.id, masked);
+      operatorAlerts.payoutAccountChanged(user.fullName || user.email, masked);
+    }
 
     return ok({ message: 'Profile updated.' });
   } catch (err) {

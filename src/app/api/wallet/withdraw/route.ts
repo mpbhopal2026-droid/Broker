@@ -38,24 +38,49 @@ export async function POST(req: NextRequest) {
       return fail(400, `Minimum withdrawal is $${MIN_USD}.`);
     }
 
-    const bankName = cleanString(details?.bankName, 120);
-    const accountHolder = cleanString(details?.accountHolder, 120);
-    const accountNumber = cleanString(details?.accountNumber, 34);
-    const ifscCode = cleanString(details?.ifscCode, 15);
+    const db = getServiceClient();
+    if (!db) return fail(503, 'Withdrawals are not available right now.');
+
+    // The destination is the account REGISTERED ON THE PROFILE, never the one
+    // in the request body.
+    //
+    // This route previously paid out to whatever bank details the request
+    // carried. A stolen session could therefore send a client's balance to any
+    // account of the attacker's choosing in a single call, without ever
+    // touching the registered one — which made the payout account collected
+    // during onboarding decorative rather than a control.
+    //
+    // Reading the destination server-side means an attacker must first change
+    // the payout account through the profile route, which is audited and
+    // notifies the client. That converts a silent one-step theft into a
+    // visible two-step one.
+    const { data: payee } = await db
+      .from('profiles')
+      .select('bank_name, bank_account_number, bank_ifsc, full_name')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const bankName = cleanString(payee?.bank_name, 120);
+    const accountNumber = cleanString(payee?.bank_account_number, 34);
+    const ifscCode = cleanString(payee?.bank_ifsc, 15);
+    // Payouts go to the verified account holder — the client themselves. A
+    // caller-supplied name would allow third-party payouts, which is both an
+    // AML problem and an easy way to launder a compromised account.
+    const accountHolder = cleanString(payee?.full_name, 120);
     const upiId = cleanString(details?.upiId, 80);
 
     if (!bankName || !accountHolder || !accountNumber || !ifscCode) {
-      return fail(400, 'Complete bank account details are required.');
+      return fail(
+        400,
+        'Add your withdrawal bank account in your profile before requesting a payout.',
+      );
     }
     if (!/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(ifscCode)) {
-      return fail(400, 'Enter a valid IFSC code.');
+      return fail(400, 'The bank account saved on your profile has an invalid IFSC code.');
     }
     if (!/^\d{6,20}$/.test(accountNumber)) {
-      return fail(400, 'Enter a valid bank account number.');
+      return fail(400, 'The bank account saved on your profile is invalid.');
     }
-
-    const db = getServiceClient();
-    if (!db) return fail(503, 'Withdrawals are not available right now.');
 
     const { data: settings } = await db
       .from('broker_payment_settings')
