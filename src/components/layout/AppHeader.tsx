@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AccountModeSwitch } from '@/components/trading/AccountModeSwitch';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -23,6 +23,74 @@ export const AppHeader: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+
+  /**
+   * The bell was a placeholder that always read "No new alerts" and never
+   * called anything. Deposits, KYC decisions and payout-account changes were
+   * being written to the notifications table correctly and nobody ever saw
+   * them — which is why the system looked broken from the outside.
+   */
+  interface Notice {
+    id: string;
+    type: string;
+    title: string;
+    body: string;
+    link: string | null;
+    priority: string;
+    read: boolean;
+    createdAt: string;
+  }
+
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const loadNotices = useCallback(async () => {
+    if (!currentUser) {
+      setNotices([]);
+      setUnreadCount(0);
+      return;
+    }
+    try {
+      const res = await fetch('/api/notifications?limit=10', { credentials: 'same-origin' });
+      if (!res.ok) return;
+      const body = await res.json();
+      if (!Array.isArray(body?.notifications)) return;
+      setNotices(body.notifications);
+      setUnreadCount(Number(body.unreadCount) || 0);
+    } catch {
+      /* leave the last known state rather than blanking the bell */
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    void loadNotices();
+    // A deposit alert that arrives four minutes late is still useful; polling
+    // harder would cost far more than it buys.
+    const id = setInterval(() => void loadNotices(), 60_000);
+    return () => clearInterval(id);
+  }, [loadNotices]);
+
+  // Refresh on open so the list is current even between polls.
+  useEffect(() => {
+    if (notificationsOpen) void loadNotices();
+  }, [notificationsOpen, loadNotices]);
+
+  const markAllRead = async () => {
+    // Optimistic: the badge clearing instantly is the whole point of pressing
+    // it. A failed request is corrected by the next poll.
+    setNotices((prev) => prev.map((n) => ({ ...n, read: true })));
+    setUnreadCount(0);
+    try {
+      await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ action: 'read_all' }),
+      });
+    } catch {
+      void loadNotices();
+    }
+  };
 
   const filteredSymbols = searchQuery.trim()
     ? marketAssets.filter(
@@ -117,16 +185,82 @@ export const AppHeader: React.FC = () => {
               aria-label="Notifications"
             >
               <Bell className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
 
             {notificationsOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setNotificationsOpen(false)} />
-                <div className="absolute right-0 mt-1.5 w-64 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl p-3 z-50 text-xs space-y-2">
+                <div className="absolute right-0 mt-1.5 w-72 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl p-3 z-50 text-xs space-y-2">
                   <div className="flex justify-between items-center pb-2 border-b border-zinc-100 dark:border-zinc-900">
                     <span className="font-bold text-zinc-950 dark:text-white uppercase tracking-wider text-[11px]">Notifications</span>
+                    {unreadCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={markAllRead}
+                        className="text-[10px] font-bold text-emerald-600 hover:underline"
+                      >
+                        Mark all read
+                      </button>
+                    )}
                   </div>
-                  <p className="text-[11px] text-zinc-400 py-3 text-center">No new alerts</p>
+
+                  {notices.length === 0 ? (
+                    <p className="text-[11px] text-zinc-400 py-3 text-center">No new alerts</p>
+                  ) : (
+                    <div className="max-h-80 overflow-y-auto -mx-1 px-1 space-y-1">
+                      {notices.map((n) => {
+                        const row = (
+                          <div
+                            className={`p-2 rounded-lg border transition-colors ${
+                              n.read
+                                ? 'border-transparent'
+                                : 'border-emerald-200 dark:border-emerald-900 bg-emerald-50/60 dark:bg-emerald-950/30'
+                            } hover:bg-zinc-50 dark:hover:bg-zinc-900`}
+                          >
+                            <div className="flex items-start gap-1.5">
+                              {!n.read && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1 shrink-0" />
+                              )}
+                              <div className="min-w-0">
+                                <p className="font-bold text-zinc-950 dark:text-white text-[11px] truncate">
+                                  {n.title}
+                                </p>
+                                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-2">
+                                  {n.body}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+
+                        return n.link ? (
+                          <Link
+                            key={n.id}
+                            href={n.link}
+                            onClick={() => setNotificationsOpen(false)}
+                            className="block"
+                          >
+                            {row}
+                          </Link>
+                        ) : (
+                          <div key={n.id}>{row}</div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <Link
+                    href="/notifications"
+                    onClick={() => setNotificationsOpen(false)}
+                    className="block text-center text-[10px] font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-white pt-1.5 border-t border-zinc-100 dark:border-zinc-900"
+                  >
+                    View all
+                  </Link>
                 </div>
               </>
             )}
