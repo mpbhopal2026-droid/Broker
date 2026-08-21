@@ -26,13 +26,22 @@ export const isCloudinaryConfigured = Boolean(
 );
 
 export const CLOUDINARY_FOLDERS = {
-  kyc: 'kyc-documents',
-  proof: 'payment-proofs',
-  support: 'support-screenshots',
+  kyc: 'kyc',
+  proof: 'payments',
+  support: 'support',
   assets: 'public-assets',
 } as const;
 
-export type CloudinaryFolder = (typeof CLOUDINARY_FOLDERS)[keyof typeof CLOUDINARY_FOLDERS];
+export type CloudinaryFolder =
+  | 'kyc'
+  | 'proof'
+  | 'support'
+  | 'payments'
+  | 'kyc-documents'
+  | 'payment-proofs'
+  | 'support-screenshots'
+  | 'public-assets'
+  | 'assets';
 
 /**
  * Generate a cryptographic SHA-1 signature for Cloudinary API requests.
@@ -46,6 +55,7 @@ export function generateCloudinarySignature(params: Record<string, string | numb
 
 /**
  * Upload a file buffer or base64 data URL to Cloudinary.
+ * Files are structured per user: `users/{userId}/{kyc|payments|support}`.
  */
 export async function uploadToCloudinary(params: {
   folder: CloudinaryFolder;
@@ -58,7 +68,19 @@ export async function uploadToCloudinary(params: {
 }): Promise<{ ok: true; url: string; publicId: string; secureUrl: string; ocrText?: string } | { ok: false; error: string }> {
   try {
     const timestamp = Math.floor(Date.now() / 1000);
-    const targetFolder = `${params.folder}/${params.userId}`;
+
+    // Structure folder hierarchically: users/{userId}/{kyc|payments|support}
+    let targetFolder: string;
+    if (params.folder === 'public-assets' || params.folder === 'assets') {
+      targetFolder = 'public-assets';
+    } else {
+      const sub =
+        params.folder === 'kyc' || params.folder === 'kyc-documents' ? 'kyc' :
+        params.folder === 'proof' || params.folder === 'payment-proofs' || params.folder === 'payments' ? 'payments' :
+        params.folder === 'support' || params.folder === 'support-screenshots' ? 'support' :
+        params.folder;
+      targetFolder = `users/${params.userId}/${sub}`;
+    }
 
     // Prepare parameters for signature
     // 'authenticated' means Cloudinary will not serve this asset from a plain

@@ -199,11 +199,8 @@ export async function createSignedReadUrl(
     return path;
   }
 
-  // Cloudinary public id, e.g. "kyc-documents/<userId>/<file>". Uploads are
-  // authenticated, so a plain delivery URL returns 401 — it has to be signed.
-  // Without this branch the reviewer saw an empty frame for every document,
-  // because the lookup fell through to Supabase, which has never held the file.
-  if (CLOUDINARY_CONFIG.cloudName && /^(kyc-documents|payment-proofs|support-screenshots)\//.test(path)) {
+  // Cloudinary public id, e.g. "users/<userId>/kyc/<file>" or legacy "kyc-documents/<userId>/<file>".
+  if (CLOUDINARY_CONFIG.cloudName && /^(users|kyc-documents|payment-proofs|support-screenshots)\//.test(path)) {
     return generateSignedDeliveryUrl(path);
   }
 
