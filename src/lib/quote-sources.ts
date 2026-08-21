@@ -48,9 +48,14 @@ import type { Quote } from './quote-provider';
  * and NOT fine for filling client orders, where a fill must be justifiable
  * against the actual market. Use a licensed feed for execution.
  *
- * GBP/USD, USD/INR and WTI/USD have no Binance equivalent. GBPUSDT exists as a
- * symbol but is delisted and returns a zero bid/ask — do not be fooled by the
- * 200 response. Those three need a licensed provider.
+ * GBPUSDT exists as a Binance symbol but is delisted and returns a zero bid and
+ * ask — do not be fooled by the 200 response. GBP/USD is instead derived from
+ * Kraken further down.
+ *
+ * USD/INR and WTI/USD have no free live source at all and stay on Twelve Data.
+ * For USD/INR specifically, do not reach for an Indian crypto exchange: USDT
+ * trades there at a capital-controls premium, measured at 98.92 against a true
+ * 95.77 — 3.3% off, which is not a rounding error on an FX rate.
  */
 const BINANCE_SYMBOLS: Record<string, string> = {
   'BTC/USD': 'BTCUSDT',
@@ -139,15 +144,80 @@ async function fetchGold(): Promise<Ticker | null> {
   };
 }
 
+/**
+ * GBP/USD, derived from Kraken as (BTC/USD) / (BTC/GBP).
+ *
+ * There is no free licensed real-time GBP/USD quote. But BTC is quoted against
+ * both currencies on the same order book at the same instant, and dividing one
+ * by the other cancels BTC out and leaves the exchange rate. Kraken is a
+ * regulated venue with a documented, keyless public API, so the inputs are
+ * legitimate and so is the arithmetic.
+ *
+ * Measured against an independently-sourced GBP/USD it came within 0.11%, and
+ * held 1.36274-1.36332 across 15 seconds with a 1-4 pip implied spread.
+ *
+ * DISPLAY GRADE, NOT EXECUTION GRADE. That 0.11% is roughly 15 pips, and the
+ * BTC/GBP leg is the thinner of the two, so its noise lands in the result. It
+ * is a good live number to show and a bad one to fill against.
+ */
+async function fetchKrakenGbpUsd(): Promise<Ticker | null> {
+  const res = await fetch('https://api.kraken.com/0/public/Ticker?pair=XBTUSD,XBTGBP', {
+    next: { revalidate: 10 },
+  });
+  if (!res.ok) return null;
+
+  const r = (await res.json())?.result;
+  const usd = r?.XXBTZUSD;
+  const gbp = r?.XXBTZGBP;
+  if (!usd || !gbp) return null;
+
+  const num = (v: unknown) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  };
+  const uBid = num(usd.b?.[0]);
+  const uAsk = num(usd.a?.[0]);
+  const gBid = num(gbp.b?.[0]);
+  const gAsk = num(gbp.a?.[0]);
+  if (!uBid || !uAsk || !gBid || !gAsk) return null;
+
+  const mid = (uBid + uAsk) / 2 / ((gBid + gAsk) / 2);
+
+  // A division of two independent legs turns one stale or broken leg into a
+  // confident-looking nonsense rate rather than an obvious failure. GBP/USD has
+  // not left this band in its history, so anything outside it means an input is
+  // wrong and we show the labelled simulated quote instead.
+  if (mid < 0.8 || mid > 3) return null;
+
+  const open = num(usd.o) && num(gbp.o) ? Number(usd.o) / Number(gbp.o) : null;
+
+  return {
+    mid,
+    change: open ? mid - open : 0,
+    changePercent: open ? ((mid - open) / open) * 100 : 0,
+    // Kraken's 24h high/low are per-pair and do not survive the division, so
+    // they are left off rather than fabricated from the ones that do exist.
+    high24h: undefined,
+    low24h: undefined,
+  };
+}
+
 export async function fetchBinance(symbols: string[]): Promise<Map<string, SourcedQuote>> {
   const out = new Map<string, SourcedQuote>();
-  const wanted = symbols.filter((s) => BINANCE_SYMBOLS[s] || s === 'XAU/USD');
+  const derived: Record<string, () => Promise<Ticker | null>> = {
+    'XAU/USD': fetchGold,
+    'GBP/USD': fetchKrakenGbpUsd,
+  };
+
+  const wanted = symbols.filter((s) => BINANCE_SYMBOLS[s] || derived[s]);
   if (wanted.length === 0) return out;
 
   await Promise.all(
     wanted.map(async (symbol) => {
       try {
-        const tick = symbol === 'XAU/USD' ? await fetchGold() : await fetchPair(BINANCE_SYMBOLS[symbol]);
+        const tick = derived[symbol]
+          ? await derived[symbol]()
+          : await fetchPair(BINANCE_SYMBOLS[symbol]);
         if (!tick) return;
 
         out.set(symbol, {
