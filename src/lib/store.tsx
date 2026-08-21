@@ -84,7 +84,7 @@ interface AppContextType {
   tradeSignals: TradeSignal[];
   marketAssets: MarketAsset[];
   /** Whether displayed prices come from a real feed or the simulator. */
-  quoteFeed: 'live' | 'simulated';
+  quoteFeed: 'live' | 'stale' | 'simulated';
   newsArticles: NewsArticle[];
 
   /**
@@ -300,7 +300,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [tradeOrders] = useState<TradeOrder[]>([]);
   const [tradeSignals] = useState<TradeSignal[]>([]);
   const [marketAssets, setMarketAssets] = useState<MarketAsset[]>(DISPLAY_MARKET_ASSETS);
-  const [quoteFeed, setQuoteFeed] = useState<'live' | 'simulated'>('simulated');
+  const [quoteFeed, setQuoteFeed] = useState<'live' | 'stale' | 'simulated'>('simulated');
   const [newsArticles] = useState<NewsArticle[]>([]);
 
   const [theme, setThemeState] = useState<ThemeMode>('light');

@@ -13,7 +13,7 @@ import { INSTRUMENTS, findInstrument, simulatedSnapshot } from '@/lib/market-dat
  * it never dresses simulated prices up as live.
  */
 
-export type QuoteSource = 'live' | 'simulated';
+export type QuoteSource = 'live' | 'stale' | 'simulated';
 
 export interface Quote {
   symbol: string;
@@ -37,6 +37,16 @@ export function hasLiveFeed(): boolean {
 }
 
 /** Half-spread applied either side of the mid to produce a dealable bid/ask. */
+/**
+ * A provider tick older than this is no longer 'live'.
+ *
+ * Generous on purpose: forex closes at weekends and some instruments trade in
+ * sessions, so a legitimately quiet market must not be flagged stale. This is
+ * aimed at the failure that actually happened — the feed silently stopping
+ * while cached prices kept being served as current.
+ */
+const STALE_AFTER_MS = 30 * 60_000;
+
 const HALF_SPREAD = 0.0002;
 
 function withSpread(mid: number) {
@@ -85,7 +95,18 @@ async function fetchTwelveData(symbols: string[]): Promise<Map<string, Partial<Q
   // Grow that is 7 seconds. Overrunning does not degrade gracefully — the
   // provider starts returning errors and every quote silently falls back to
   // simulated, which is the one outcome we cannot afford to be quiet about.
-  const refresh = Number(process.env.MARKET_DATA_REFRESH_SECONDS) || 7;
+  // Default sized for the FREE tier, because that is what an unset variable
+  // means in practice. 6 symbols at 7s is 74,000 credits/day against a budget
+  // of 800 — production burned 8,046 and then served stale prices for hours.
+  //
+  //   7s   -> 74,057/day   needs Grow
+  //   60s  ->  8,640/day   needs Grow
+  //   650s ->    798/day   fits free
+  //
+  // On Grow, set MARKET_DATA_REFRESH_SECONDS=7 explicitly. A default that
+  // silently exceeds the plan is worse than a slow one: the feed dies quietly
+  // and the screen keeps showing numbers.
+  const refresh = Number(process.env.MARKET_DATA_REFRESH_SECONDS) || 650;
 
   const res = await fetch(url, { next: { revalidate: refresh } });
   if (!res.ok) throw new Error(`market data provider returned ${res.status}`);
@@ -99,13 +120,30 @@ async function fetchTwelveData(symbols: string[]): Promise<Map<string, Partial<Q
     const mid = Number(row.close);
     if (!Number.isFinite(mid)) continue;
 
+    // A price is only "live" if the provider says it is recent.
+    //
+    // Next serves a cached fetch stale-while-revalidate, so once revalidation
+    // starts failing — a 429 when the daily credit budget is gone — it keeps
+    // returning the last successful response indefinitely. Production showed
+    // exactly that: five instruments labelled 'live' at prices that had not
+    // moved in hours, while the provider was refusing every request.
+    //
+    // A stale price presented as live is the worst kind of wrong on a trading
+    // screen: it looks authoritative and a client can act on it.
+    const tickMs = Number(row.timestamp) * 1000;
+    const ageMs = Number.isFinite(tickMs) && tickMs > 0 ? Date.now() - tickMs : 0;
+    const isStale = ageMs > STALE_AFTER_MS;
+
     out.set(symbol, {
       mid,
       change: Number(row.change) || 0,
       changePercent: Number(row.percent_change) || 0,
       high24h: Number(row.high) || mid,
       low24h: Number(row.low) || mid,
-      source: 'live',
+      // Downgraded rather than hidden. The last real price is still the most
+      // useful number to show — it just must not claim to be current.
+      source: isStale ? 'stale' : 'live',
+      asOf: Number.isFinite(tickMs) && tickMs > 0 ? new Date(tickMs).toISOString() : undefined,
     });
   }
   return out;
@@ -136,8 +174,10 @@ export async function getQuotes(atMs: number = Date.now()): Promise<Quote[]> {
         ...l,
         mid: l.mid,
         ...withSpread(l.mid),
-        source: 'live' as const,
-        asOf: new Date(atMs).toISOString(),
+        // Carry the adapter's own verdict through. Hardcoding 'live' here is
+        // what let a stale cached tick reach the client wearing a live label.
+        source: (l.source ?? 'live') as QuoteSource,
+        asOf: l.asOf ?? new Date(atMs).toISOString(),
       };
     });
   } catch {
