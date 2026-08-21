@@ -50,7 +50,20 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
   const isOperator = currentUser?.role === 'admin' || currentUser?.role === 'staff' || currentUser?.role === 'developer';
   const isAdminArea = isOperator || pathname.startsWith('/admin') || pathname.startsWith('/developer');
   const needsVerification = !isOperator && VERIFIED_ONLY_ROUTES.some((r) => pathname.startsWith(r));
-  const hasSubmittedKyc = currentUser?.kycStatus === 'approved' || currentUser?.kycStatus === 'pending';
+  // Three gates, all required before the app opens:
+  //   1. Register       — name, mobile, email
+  //   2. Identity       — Aadhaar and PAN uploaded
+  //   3. Withdrawal a/c — where their money comes back to
+  //
+  // The third was not enforced. The gate only read kycStatus, so anyone
+  // approved manually by an operator walked in with no payout account on file —
+  // and that only surfaces later, when they try to withdraw and cannot, which
+  // is the worst possible moment to discover it.
+  const kycSubmitted = currentUser?.kycStatus === 'approved' || currentUser?.kycStatus === 'pending';
+  const hasWithdrawalAccount = Boolean(
+    currentUser?.bankAccountNumber && currentUser?.bankIfsc,
+  );
+  const hasSubmittedKyc = kycSubmitted && hasWithdrawalAccount;
 
   React.useEffect(() => {
     if (!isLoaded) return;

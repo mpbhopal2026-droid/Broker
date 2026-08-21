@@ -129,6 +129,16 @@ export default function ClientKycRealityPage() {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
   const [isResubmitting, setIsResubmitting] = useState<boolean>(false);
+
+  // Missing payout details must always leave a way to add them.
+  //
+  // The form only rendered for 'not_submitted'. A client sitting at 'pending'
+  // without a withdrawal account — which happens whenever an operator sets the
+  // status by hand — saw the 'under review' screen, had no form, and the gate
+  // kept sending them back here. A locked door with no handle.
+  const needsWithdrawalAccount = !(currentUser?.bankAccountNumber && currentUser?.bankIfsc);
+  const showOnboardingForm =
+    currentUser?.kycStatus === 'not_submitted' || isResubmitting || needsWithdrawalAccount;
   const [checkingStatus, setCheckingStatus] = useState<boolean>(false);
 
   // Auto-refresh status if in pending review every 15 seconds
@@ -355,7 +365,7 @@ export default function ClientKycRealityPage() {
         </div>
 
           {/* Stepper Tabs - only shown during active document submission */}
-          {(kycStatus === 'not_submitted' || isResubmitting) && (
+          {showOnboardingForm && (
             <>
               <div className="max-w-xl mx-auto flex items-center justify-center gap-3 sm:gap-4">
                 {/* Step 1 Tab */}
@@ -452,7 +462,7 @@ export default function ClientKycRealityPage() {
           {/* ========================================================================= */}
           {/* REALITY CASE 1: APPROVED STATE */}
           {/* ========================================================================= */}
-          {kycStatus === 'approved' && !isResubmitting && (
+          {kycStatus === 'approved' && !showOnboardingForm && (
             <div className="p-6 sm:p-10 rounded-3xl bg-gradient-to-b from-emerald-50/70 via-white to-slate-50 border border-emerald-200 space-y-7 text-center shadow-xl shadow-emerald-950/5 relative overflow-hidden">
               <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-emerald-600 to-[#044e2f] border-2 border-white shadow-xl shadow-emerald-900/20 flex items-center justify-center text-white">
                 <CheckCircle2 className="w-9 h-9 stroke-[2.3]" />
@@ -535,7 +545,7 @@ export default function ClientKycRealityPage() {
           {/* ========================================================================= */}
           {/* REALITY CASE 2: PENDING QUEUE */}
           {/* ========================================================================= */}
-          {kycStatus === 'pending' && !isResubmitting && (
+          {kycStatus === 'pending' && !showOnboardingForm && (
             <div className="p-6 sm:p-10 rounded-3xl bg-gradient-to-b from-[#f0fdf4]/80 via-white to-slate-50 border border-emerald-200/90 space-y-8 text-center shadow-xl shadow-emerald-950/5 relative overflow-hidden">
               
               {/* Decorative background glow */}
@@ -706,7 +716,7 @@ export default function ClientKycRealityPage() {
           {/* ========================================================================= */}
           {/* REALITY CASE 3: REJECTED STATE */}
           {/* ========================================================================= */}
-          {kycStatus === 'rejected' && !isResubmitting && (
+          {kycStatus === 'rejected' && !showOnboardingForm && (
             <div className="p-6 sm:p-10 rounded-3xl bg-gradient-to-b from-rose-50/80 via-white to-slate-50 border border-rose-200 space-y-7 text-center shadow-xl shadow-rose-950/5 relative overflow-hidden">
               <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-rose-600 to-rose-800 border-2 border-white shadow-xl shadow-rose-900/20 flex items-center justify-center text-white">
                 <AlertCircle className="w-9 h-9 stroke-[2.3]" />
@@ -743,7 +753,7 @@ export default function ClientKycRealityPage() {
           {/* ========================================================================= */}
           {/* REALITY CASE 4: SUBMISSION FORM (2-COLUMN GRID MATCHING REFERENCE UI) */}
           {/* ========================================================================= */}
-          {(kycStatus === 'not_submitted' || isResubmitting) && (
+          {showOnboardingForm && (
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-start pt-1 min-w-0 w-full">
               
               {/* LEFT COLUMN: FEATURES CARD */}
@@ -1094,7 +1104,25 @@ export default function ClientKycRealityPage() {
                 {/* STEP 2 FORM: PAYOUT BANK DETAILS */}
                 {currentStep === 2 && (
                   <form onSubmit={handleFinalSubmit} className="space-y-5 min-w-0 w-full">
-                    
+
+                    {/* Said plainly and said big. This is the account their money
+                        comes BACK to, and a client who fills it in casually — or
+                        enters someone else's — only finds out at the withdrawal,
+                        which is the worst moment to discover it. */}
+                    <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <Wallet className="w-5 h-5 text-emerald-700 shrink-0" aria-hidden="true" />
+                        <h3 className="text-base sm:text-lg font-black text-emerald-900 tracking-tight">
+                          ADD YOUR WITHDRAWAL ACCOUNT
+                        </h3>
+                      </div>
+                      <p className="text-xs text-emerald-900/80 leading-relaxed">
+                        This is where your money is sent when you withdraw. It must be a bank account
+                        in <strong>your own name</strong> — payouts to a third-party account cannot be
+                        processed. You cannot use the app until this is saved.
+                      </p>
+                    </div>
+
                     {/* Account Holder Name */}
                     <div className="space-y-1.5 min-w-0 w-full">
                       <label className="block text-xs font-semibold text-slate-800 truncate">
