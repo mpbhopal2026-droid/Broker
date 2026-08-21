@@ -11,6 +11,7 @@ import { buildLoginAlertEmailHtml, buildWelcomeEmailHtml } from '@/lib/resend';
 import { UserRole } from '@/lib/permissions';
 import { normalisePhone, maskPhone } from '@/lib/sms';
 import { geoFromHeaders } from '@/lib/geo';
+import { LEGAL_VERSIONS } from '@/lib/legal';
 
 const KNOWN_ROLES: UserRole[] = ['client', 'staff', 'admin', 'developer'];
 function normaliseRole(value: unknown): UserRole {
@@ -393,6 +394,42 @@ export async function POST(req: NextRequest) {
     if (sessionError) {
       console.error('[auth] session persist failed:', sessionError);
       return fail(500, 'Could not complete sign-in. Please try again.');
+    }
+
+    // Record the registration consents HERE, in the same request that creates
+    // the session.
+    //
+    // The sign-up page used to POST these to /api/consent and
+    // /api/legal/accept immediately after this call, which raced the cookie and
+    // 401'd. The workaround was to let those routes take a userId from the
+    // request body — which made the compliance record forgeable by anyone.
+    //
+    // Doing it here removes the race rather than working around it: the user id
+    // is the one we just authenticated, and there is no second request to fail.
+    if (Array.isArray(body?.acceptedDocuments) && body.acceptedDocuments.length > 0) {
+      const valid = body.acceptedDocuments.filter(
+        (d: unknown): d is keyof typeof LEGAL_VERSIONS =>
+          typeof d === 'string' && d in LEGAL_VERSIONS,
+      );
+
+      if (valid.length > 0) {
+        // Best-effort: a consent write must never block a sign-in that already
+        // succeeded, and the client re-sends on the next page load if it fails.
+        await db
+          .from('legal_acceptances')
+          .insert(
+            valid.map((document: keyof typeof LEGAL_VERSIONS) => ({
+              user_id: profile.id,
+              document,
+              version: LEGAL_VERSIONS[document],
+              ip_address: ip,
+              user_agent: userAgent,
+            })),
+          )
+          .then(({ error }) => {
+            if (error) console.error('[auth] legal acceptance insert failed:', error.message);
+          });
+      }
     }
 
     // Single-use: burn pending OTP codes for this user once session is established

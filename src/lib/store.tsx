@@ -160,7 +160,7 @@ interface AppContextType {
   verifyOtpAndLogin: (
     identifier: string,
     code: string,
-    extras?: { fullName?: string; phone?: string },
+    extras?: { fullName?: string; phone?: string; acceptedDocuments?: string[] },
     channel?: 'email' | 'sms'
   ) => Promise<ActionResult & { role?: UserRole; isNewAccount?: boolean; needsRegistration?: boolean }>;
   logout: () => Promise<void>;
@@ -635,7 +635,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     async (
       identifier: string,
       code: string,
-      extras?: { fullName?: string; phone?: string },
+      extras?: { fullName?: string; phone?: string; acceptedDocuments?: string[] },
       channel: 'email' | 'sms' = 'email'
     ) => {
       const res = await postJson('/api/auth/verify-otp', {

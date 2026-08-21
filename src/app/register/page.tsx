@@ -95,7 +95,13 @@ function RegisterForm() {
     }
 
     setLoading(true);
-    const result = await verifyOtpAndLogin(email, code, { fullName: fullName.trim(), phone: phone.trim() });
+    const result = await verifyOtpAndLogin(email, code, {
+      fullName: fullName.trim(),
+      phone: phone.trim(),
+      // Recorded server-side in the same request that creates the session, so
+      // the acceptance cannot race the cookie and 401.
+      acceptedDocuments: Object.keys(LEGAL_DOCUMENTS),
+    });
 
     if (!result.success) {
       setLoading(false);

@@ -41,11 +41,21 @@ export async function POST(req: NextRequest) {
     const db = getServiceClient();
     if (!db) return fail(503, 'Not available.');
 
-    const userId = user?.id || (typeof body?.userId === 'string' ? body.userId : null);
-    const email = user?.email || (typeof body?.email === 'string' ? body.email : '');
+    // Identity from the session only — see the note in legal/accept.
+    //
+    // Reading userId from the body let anyone grant OR WITHDRAW consent on
+    // another person's behalf. Withdrawal is the sharper end: consent_logs is
+    // what the DPDP Act expects you to be able to produce, and a third party
+    // being able to revoke someone's consent silently changes what you are
+    // permitted to do with their data.
+    //
+    // It also returned `success: true` when it recorded nothing, so the caller
+    // was told consent was captured when it was not.
+    const userId = user?.id ?? null;
+    const email = user?.email ?? '';
 
     if (!userId) {
-      return ok({ success: true, message: 'Consent acknowledged.' });
+      return fail(401, 'Sign in to record consent.');
     }
 
     const now = new Date().toISOString();
