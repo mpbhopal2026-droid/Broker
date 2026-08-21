@@ -14,6 +14,8 @@ import {
   Sliders,
   X,
   RefreshCw,
+  ShieldCheck,
+  ArrowRight,
 } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { formatUSD } from '@/lib/utils';
@@ -446,7 +448,39 @@ function TradePageInner() {
           </div>
         )}
 
-        {/* Strict Monochrome Solid SELL & BUY Actions */}
+        {/*
+          Live accounts do not self-execute. Orders are placed with the dealing
+          desk, which fills them in the market and records the actual fill.
+
+          Buy and sell buttons are not merely disabled here, they are absent.
+          A disabled button still tells a client that self-execution is a thing
+          this account does, and the prices printed on those buttons read as
+          dealable — they are indicative only. Showing the instruction instead
+          is what makes the model legible.
+
+          Demo keeps its buttons: it is a simulator and nothing there is real.
+        */}
+        {!isDemo ? (
+          <div className="rounded-md border border-zinc-800 bg-zinc-900 p-3 space-y-2">
+            <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-zinc-400">
+              <ShieldCheck className="w-3 h-3 text-emerald-500" />
+              <span>Broker-executed account</span>
+            </div>
+            <p className="text-xs text-zinc-300 leading-relaxed">
+              Contact your broker to execute a trade on{' '}
+              <span className="font-bold text-white">{currentInstrument.symbol}</span>. Prices shown
+              here are indicative — your fill is confirmed by the dealing desk and appears in your
+              positions once executed.
+            </p>
+            <Link
+              href="/support"
+              className="w-full py-2.5 px-3 rounded-md bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs flex items-center justify-center gap-1.5 active:scale-[0.98] transition-colors"
+            >
+              <span>Contact your broker</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        ) : (
         <div className="grid grid-cols-2 gap-2">
           {/* Left: SELL Order Button (Solid Zinc Dark Action) */}
           <button
@@ -474,6 +508,7 @@ function TradePageInner() {
             <span className="text-base font-bold tabular-nums tracking-tight">{askPrice}</span>
           </button>
         </div>
+        )}
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
