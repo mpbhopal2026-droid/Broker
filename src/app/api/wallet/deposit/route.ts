@@ -26,16 +26,18 @@ export async function POST(req: NextRequest) {
     if (!limit.allowed) return tooManyRequests(limit.retryAfterSeconds);
 
     const body = await req.json().catch(() => ({}));
-    const amountINR = Number(body?.amountINR);
-    const paymentMode = cleanString(body?.paymentMode, 60);
-    const utrNumber = cleanString(body?.utrNumber, 40);
-    const proofImagePath = cleanString(body?.proofImagePath, 500);
+    const rawAmount = typeof body?.amountINR === 'string' ? body.amountINR.replace(/[^0-9.]/g, '') : body?.amountINR;
+    const amountINR = Number(rawAmount);
+    const paymentMode = cleanString(body?.paymentMode, 60) || 'Domestic INR Transfer';
+    const rawUtr = typeof body?.utrNumber === 'string' ? body.utrNumber.trim() : '';
+    const utrNumber = rawUtr.replace(/[\s\-_:/]/g, '').toUpperCase();
+    const proofImagePath = typeof body?.proofImagePath === 'string' ? body.proofImagePath.trim() : '';
 
-    if (!Number.isFinite(amountINR) || amountINR < MIN_INR || amountINR > MAX_INR) {
-      return fail(400, `Enter an amount between ₹${MIN_INR.toLocaleString('en-IN')} and ₹${MAX_INR.toLocaleString('en-IN')}.`);
+    if (!Number.isFinite(amountINR) || amountINR < 100 || amountINR > MAX_INR) {
+      return fail(400, `Enter an amount between ₹100 and ₹${MAX_INR.toLocaleString('en-IN')}.`);
     }
-    if (!utrNumber || !/^[A-Za-z0-9]{6,40}$/.test(utrNumber)) {
-      return fail(400, 'Enter the UTR / reference number from your payment.');
+    if (!utrNumber || utrNumber.length < 4 || utrNumber.length > 50) {
+      return fail(400, 'Enter the valid UTR / transaction reference number from your payment.');
     }
 
     if (!proofImagePath) {

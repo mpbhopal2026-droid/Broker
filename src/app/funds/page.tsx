@@ -153,8 +153,8 @@ export default function MonochromeFundsPage() {
   const handleDepositSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!depositINR || depositINR <= 0) return;
-    if (!utrNumber || utrNumber.length < 8) {
-      showToast({ type: 'error', title: 'Invalid UTR', message: 'Please enter a valid 12-digit UTR.' });
+    if (!utrNumber || utrNumber.trim().length < 4) {
+      showToast({ type: 'error', title: 'Invalid UTR', message: 'Please enter a valid payment UTR or reference number.' });
       return;
     }
     if (!proofImage) {
@@ -167,11 +167,25 @@ export default function MonochromeFundsPage() {
     }
 
     setDepositLoading(true);
-    await submitDeposit(depositINR, depositMethod === 'upi' ? 'UPI QR / Apps' : 'IMPS Bank Transfer', utrNumber, proofImage);
+    const res = await submitDeposit(depositINR, depositMethod === 'upi' ? 'UPI QR / Apps' : 'IMPS Bank Transfer', utrNumber, proofImage);
     setDepositLoading(false);
-    setUtrNumber('');
-    setProofImage('');
-    setActiveTab('overview');
+
+    if (res.success) {
+      showToast({
+        type: 'success',
+        title: 'Deposit Submitted for Review',
+        message: res.message || 'Your deposit claim has been submitted. Compliance desk will verify and credit your wallet.',
+      });
+      setUtrNumber('');
+      setProofImage('');
+      setActiveTab('overview');
+    } else {
+      showToast({
+        type: 'error',
+        title: 'Deposit Submission Failed',
+        message: res.error || 'Could not submit deposit. Please check your details and try again.',
+      });
+    }
   };
 
   const handleWithdrawSubmit = async (e: React.FormEvent) => {
