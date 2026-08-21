@@ -19,12 +19,39 @@ export async function GET() {
 
     const { data, error } = await db
       .from('transactions')
-      .select('*, profiles!transactions_user_id_fkey(full_name, email)')
+      .select('*')
       .order('created_at', { ascending: false })
       .limit(200);
 
-    if (error) return fail(500, 'Could not load transactions.');
-    return ok({ transactions: (data ?? []).map(mapTransaction) });
+    if (error) {
+      console.error('[admin transactions] error querying transactions:', error);
+      return fail(500, 'Could not load transactions.');
+    }
+
+    const rawTx = data ?? [];
+    const userIds = Array.from(new Set(rawTx.map((t) => t.user_id).filter(Boolean)));
+
+    let profileMap: Record<string, { full_name?: string; email?: string }> = {};
+    if (userIds.length > 0) {
+      const { data: profiles } = await db
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', userIds);
+
+      if (profiles) {
+        profileMap = Object.fromEntries(profiles.map((p) => [p.id, { full_name: p.full_name, email: p.email }]));
+      }
+    }
+
+    const mapped = rawTx.map((tx) => {
+      const p = profileMap[tx.user_id] || {};
+      return mapTransaction({
+        ...tx,
+        profiles: p,
+      });
+    });
+
+    return ok({ transactions: mapped });
   } catch (err) {
     return handleRouteError(err);
   }

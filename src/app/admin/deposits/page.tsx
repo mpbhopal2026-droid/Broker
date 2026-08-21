@@ -21,6 +21,8 @@ import { Transaction } from '@/lib/types';
 export default function AdminDepositsPage() {
   const { currentUser, showToast } = useApp();
   const { transactions, approveDeposit, rejectDeposit, deleteTransaction, paymentSettings, getClientPaymentConfig, refreshAdminData } = useAdmin();
+  const [statusFilter, setStatusFilter] = useState<'pending' | 'completed' | 'rejected' | 'all'>('pending');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [customCreditUSD, setCustomCreditUSD] = useState<string>('');
   const [rejectReason, setRejectReason] = useState('');
@@ -38,7 +40,19 @@ export default function AdminDepositsPage() {
   };
 
   const isDeveloper = currentUser?.role === 'developer';
-  const deposits = transactions.filter((t) => t.type === 'deposit');
+  const allDeposits = transactions.filter((t) => t.type === 'deposit');
+  const pendingCount = allDeposits.filter((t) => t.status === 'pending').length;
+  const completedCount = allDeposits.filter((t) => t.status === 'completed').length;
+  const rejectedCount = allDeposits.filter((t) => t.status === 'rejected').length;
+
+  const deposits = allDeposits.filter((tx) => {
+    const matchStatus = statusFilter === 'all' ? true : tx.status === statusFilter;
+    const matchSearch =
+      (tx.userFullName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (tx.userEmail || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (tx.utrNumber || '').toLowerCase().includes(searchQuery.toLowerCase());
+    return matchStatus && matchSearch;
+  });
 
   const getRoutingInfo = (tx: Transaction) => {
     const custom = getClientPaymentConfig(tx.userId);
@@ -123,6 +137,92 @@ export default function AdminDepositsPage() {
           <div className="text-xs font-mono text-slate-500">
             Conversion Rate: 1 USD = ₹{paymentSettings.usdToInrRate} (Desk Fee: {(paymentSettings.commissionPercent ?? 0)}%)
           </div>
+        </div>
+      </div>
+
+      {/* Filter Tabs & Search Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Status Filter Tabs */}
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 self-start sm:self-auto overflow-x-auto max-w-full">
+          <button
+            type="button"
+            onClick={() => setStatusFilter('pending')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              statusFilter === 'pending'
+                ? 'bg-amber-500 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <span>Pending Review</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${statusFilter === 'pending' ? 'bg-white/20 text-white' : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400'}`}>
+              {pendingCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter('completed')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              statusFilter === 'completed'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <span>Completed</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${statusFilter === 'completed' ? 'bg-white/20 text-white' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400'}`}>
+              {completedCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter('rejected')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              statusFilter === 'rejected'
+                ? 'bg-rose-600 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <span>Rejected</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${statusFilter === 'rejected' ? 'bg-white/20 text-white' : 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400'}`}>
+              {rejectedCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter('all')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              statusFilter === 'all'
+                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <span>All Deposits</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${statusFilter === 'all' ? 'bg-black/20 dark:bg-black/10' : 'bg-slate-200 dark:bg-slate-800'}`}>
+              {allDeposits.length}
+            </span>
+          </button>
+        </div>
+
+        {/* Search Input */}
+        <div className="relative min-w-[240px]">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by client or UTR..."
+            className="w-full pl-3 pr-8 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
