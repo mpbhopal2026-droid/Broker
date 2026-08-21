@@ -29,11 +29,39 @@ import type { Quote } from './quote-provider';
  * application use — no terms problem. Real-time, and uniquely here it returns a
  * true bid/ask, so the spread is the market's rather than one we derived.
  *
- * This stays the BTC source permanently, on any plan.
+ * Three of our instruments are reachable here, two of them via proxies:
+ *
+ *   BTC/USD — BTCUSDT directly. Exact.
+ *
+ *   XAU/USD — PAXG and XAUT are gold tokens, each backed by and redeemable for
+ *             one troy ounce of allocated physical gold. That redeemability is
+ *             what keeps them pegged to spot; they trade around 0.2% apart from
+ *             each other, so both are read and averaged rather than trusting
+ *             either alone. Measured live and moving.
+ *
+ *   EUR/USD — EURUSDT. USDT holds its dollar peg tightly enough that this
+ *             matched independently-sourced EUR/USD to four decimal places
+ *             when checked (1.1700 vs 1.1699).
+ *
+ * THESE TWO ARE PROXIES, NOT THE UNDERLYING. Gold tokens carry a small premium
+ * over spot and USDT can depeg under stress. That is fine for a display feed
+ * and NOT fine for filling client orders, where a fill must be justifiable
+ * against the actual market. Use a licensed feed for execution.
+ *
+ * GBP/USD, USD/INR and WTI/USD have no Binance equivalent. GBPUSDT exists as a
+ * symbol but is delisted and returns a zero bid/ask — do not be fooled by the
+ * 200 response. Those three need a licensed provider.
  */
 const BINANCE_SYMBOLS: Record<string, string> = {
   'BTC/USD': 'BTCUSDT',
+  'EUR/USD': 'EURUSDT',
 };
+
+/** Averaged because no single gold token is authoritative. */
+const GOLD_TOKENS = ['PAXGUSDT', 'XAUTUSDT'];
+
+/** Reject a token that has drifted this far from its peers — likely depegged. */
+const GOLD_MAX_DIVERGENCE = 0.02;
 
 export interface SourcedQuote {
   mid: number;

@@ -465,19 +465,30 @@ export default function AdminKycConsolePage() {
                   No document files attached to this record.
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {inspectRecord.filePaths.map((path, idx) => (
-                    <div key={idx} className="space-y-2 p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                      <div className="flex items-center justify-between text-[11px] text-zinc-700 dark:text-zinc-300 font-bold">
-                        <span>{idx === 0 ? 'Document Front View (Photo & Name)' : 'Document Back View (Address & QR)'}</span>
-                        <span className="text-[10px] text-zinc-400 uppercase">Image #{idx + 1}</span>
+                <div className={`grid gap-4 ${inspectRecord.filePaths.length >= 3 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
+                  {inspectRecord.filePaths.map((path, idx) => {
+                    const docLabel =
+                      idx === 0
+                        ? '1. Aadhaar Front (Photo & Name)'
+                        : idx === 1
+                        ? '2. Aadhaar Back (Address & QR)'
+                        : idx === 2
+                        ? '3. PAN Card Official Document'
+                        : `Document #${idx + 1}`;
+
+                    return (
+                      <div key={idx} className="space-y-2 p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                        <div className="flex items-center justify-between text-[11px] text-zinc-700 dark:text-zinc-300 font-bold">
+                          <span className="truncate pr-2">{docLabel}</span>
+                          <span className="text-[10px] text-zinc-400 uppercase shrink-0">Image #{idx + 1}</span>
+                        </div>
+                        
+                        <div className="rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 h-64 sm:h-72 bg-white dark:bg-black flex items-center justify-center">
+                          <KycDocumentImage path={path} alt={docLabel} purpose="kyc" />
+                        </div>
                       </div>
-                      
-                      <div className="rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 h-64 sm:h-72 bg-white dark:bg-black flex items-center justify-center">
-                        <KycDocumentImage path={path} alt={`KYC Proof Document ${idx + 1}`} purpose="kyc" />
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

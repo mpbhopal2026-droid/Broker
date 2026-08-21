@@ -159,12 +159,16 @@ export default function ClientKycRealityPage() {
   const [aadhaarAutoFilled, setAadhaarAutoFilled] = useState(false);
   const [showAadhaar, setShowAadhaar] = useState(false);
   const [panNumber, setPanNumber] = useState('');
+  const [panAutoFilled, setPanAutoFilled] = useState(false);
   const [aadhaarFront, setAadhaarFront] = useState<string>('');
   const [aadhaarBack, setAadhaarBack] = useState<string>('');
+  const [panCard, setPanCard] = useState<string>('');
   const [aadhaarFrontPreview, setAadhaarFrontPreview] = useState<string>('');
   const [aadhaarBackPreview, setAadhaarBackPreview] = useState<string>('');
+  const [panCardPreview, setPanCardPreview] = useState<string>('');
   const [uploadingFront, setUploadingFront] = useState(false);
   const [uploadingBack, setUploadingBack] = useState(false);
+  const [uploadingPan, setUploadingPan] = useState(false);
 
   // Form State: 2. Double-Checked Payout Bank Details
   const [bankAccountName, setBankAccountName] = useState(currentUser?.bankAccountName ?? currentUser?.fullName ?? '');
@@ -190,10 +194,13 @@ export default function ClientKycRealityPage() {
     setAadhaarNumber('');
     setAadhaarAutoFilled(false);
     setPanNumber('');
+    setPanAutoFilled(false);
     setAadhaarFront('');
     setAadhaarBack('');
+    setPanCard('');
     setAadhaarFrontPreview('');
     setAadhaarBackPreview('');
+    setPanCardPreview('');
     setBankAccountName(currentUser?.fullName ?? '');
     setBankName('');
     setBankAccountNumber('');
@@ -228,6 +235,12 @@ export default function ClientKycRealityPage() {
           setAadhaarBackPreview(draft.aadhaarBack);
         }
       }
+      if (draft.panImage) {
+        setPanCard(draft.panImage);
+        if (draft.panImage.startsWith('data:') || draft.panImage.startsWith('http')) {
+          setPanCardPreview(draft.panImage);
+        }
+      }
       if (draft.bankAccountName) setBankAccountName(draft.bankAccountName);
       if (draft.bankName) setBankName(draft.bankName);
       if (draft.bankAccountNumber) {
@@ -243,18 +256,25 @@ export default function ClientKycRealityPage() {
   }, [getKycDraft, clearKycDraft, currentUser?.id, currentUser?.kycStatus]);
 
   // Handle Document Uploads
-  const handleUpload = async (file: File, type: 'front' | 'back') => {
+  const handleUpload = async (file: File, type: 'front' | 'back' | 'pan') => {
     const localUrl = URL.createObjectURL(file);
     if (type === 'front') {
       setAadhaarFrontPreview(localUrl);
       setUploadingFront(true);
-    } else {
+    } else if (type === 'back') {
       setAadhaarBackPreview(localUrl);
       setUploadingBack(true);
+    } else {
+      setPanCardPreview(localUrl);
+      setUploadingPan(true);
     }
 
     try {
-      const res = await uploadFile(file, 'kyc', type === 'front' ? { documentType: 'aadhaar' } : undefined);
+      const res = await uploadFile(
+        file,
+        'kyc',
+        type === 'front' ? { documentType: 'aadhaar' } : type === 'pan' ? { documentType: 'pan' } : undefined
+      );
       if (res.ok && res.path) {
         if (type === 'front') {
           setAadhaarFront(res.path);
@@ -270,15 +290,29 @@ export default function ClientKycRealityPage() {
             setAadhaarAutoFilled(false);
             showToast({
               type: 'success',
-              title: 'Front Uploaded',
+              title: 'Aadhaar Front Uploaded',
               message: res.detectionReason === 'failed-checksum'
                 ? 'We could not read the number clearly — please type it below.'
                 : 'Aadhaar front photo securely stored.',
             });
           }
-        } else {
+        } else if (type === 'back') {
           setAadhaarBack(res.path);
-          showToast({ type: 'success', title: 'Back Uploaded', message: 'Aadhaar back photo securely stored.' });
+          showToast({ type: 'success', title: 'Aadhaar Back Uploaded', message: 'Aadhaar back photo securely stored.' });
+        } else {
+          setPanCard(res.path);
+          if (res.detectedNumber) {
+            setPanNumber(res.detectedNumber);
+            setPanAutoFilled(true);
+            showToast({
+              type: 'success',
+              title: 'PAN number read from card',
+              message: 'Check it matches your card, and correct it if not.',
+            });
+          } else {
+            setPanAutoFilled(false);
+            showToast({ type: 'success', title: 'PAN Card Uploaded', message: 'PAN card photo securely stored.' });
+          }
         }
       } else {
         showToast({ type: 'error', title: 'Upload Failed', message: res.error || 'Could not upload document.' });
@@ -287,7 +321,8 @@ export default function ClientKycRealityPage() {
       showToast({ type: 'error', title: 'Upload Error', message: 'Network error uploading file.' });
     } finally {
       if (type === 'front') setUploadingFront(false);
-      else setUploadingBack(false);
+      else if (type === 'back') setUploadingBack(false);
+      else setUploadingPan(false);
     }
   };
 
@@ -302,7 +337,11 @@ export default function ClientKycRealityPage() {
       return;
     }
     if (!aadhaarFront || !aadhaarBack) {
-      showToast({ type: 'error', title: 'Photos Required', message: 'Please upload both front and back photos of your Aadhaar card.' });
+      showToast({ type: 'error', title: 'Aadhaar Photos Required', message: 'Please upload both front and back photos of your Aadhaar card.' });
+      return;
+    }
+    if (!panCard) {
+      showToast({ type: 'error', title: 'PAN Card Photo Required', message: 'Please upload a clear photo of your PAN card.' });
       return;
     }
     setCurrentStep(2);
@@ -326,7 +365,7 @@ export default function ClientKycRealityPage() {
       const res = await submitKYC(
         'aadhaar',
         aadhaarNumber.replace(/\s+/g, ''),
-        [aadhaarFront, aadhaarBack].filter(Boolean),
+        [aadhaarFront, aadhaarBack, panCard].filter(Boolean),
         {
           fullName: fullName || currentUser?.fullName || '',
           panNumber: panNumber.trim().toUpperCase(),
@@ -1003,78 +1042,134 @@ export default function ClientKycRealityPage() {
                       </p>
                     </div>
 
-                    {/* Document Photos Upload Box */}
-                    <div className="space-y-2 pt-1 min-w-0 w-full">
-                      <label className="block text-xs font-semibold text-slate-800">
-                        Aadhaar Card Photos (Front & Back) *
-                      </label>
+                    {/* Document Photos Upload Box: Aadhaar & PAN */}
+                    <div className="space-y-4 pt-1 min-w-0 w-full">
+                      {/* Section 1: Aadhaar Card Photos */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-xs font-semibold text-slate-800">
+                            1. Aadhaar Card Photos (Front & Back) *
+                          </label>
+                          <span className="text-[10px] text-slate-400 font-medium">Both sides mandatory</span>
+                        </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0 w-full">
-                        {/* Front Side */}
-                        <div className="space-y-1.5 min-w-0 w-full">
-                          <span className="text-[11px] text-slate-500 truncate block">Front Side (Photo & Details)</span>
-                          {aadhaarFront || aadhaarFrontPreview ? (
-                            <KycImagePreview
-                              previewUrl={aadhaarFrontPreview}
-                              storagePath={aadhaarFront}
-                              alt="Aadhaar Front"
-                              onRemove={() => {
-                                setAadhaarFront('');
-                                setAadhaarFrontPreview('');
-                              }}
-                            />
-                          ) : (
-                            <label className="h-32 rounded-2xl border-2 border-dashed border-slate-200 hover:border-emerald-500 bg-[#fbfcfd] hover:bg-emerald-50/20 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all p-3 text-center group min-w-0 w-full">
-                              {uploadingFront ? (
-                                <UploadSpinner />
-                              ) : (
-                                <>
-                                  <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <UploadCloud className="w-5 h-5" />
-                                  </div>
-                                  <span className="text-xs font-bold text-slate-800">Upload Front Side</span>
-                                  <span className="text-[10px] text-slate-400">JPG, PNG (Max 5MB)</span>
-                                  <input
-                                    type="file"
-                                    accept="image/*,.pdf"
-                                    className="hidden"
-                                    onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], 'front')}
-                                  />
-                                </>
-                              )}
-                            </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0 w-full">
+                          {/* Front Side */}
+                          <div className="space-y-1.5 min-w-0 w-full">
+                            <span className="text-[11px] text-slate-500 truncate block">Aadhaar Front (Photo & Name)</span>
+                            {aadhaarFront || aadhaarFrontPreview ? (
+                              <KycImagePreview
+                                previewUrl={aadhaarFrontPreview}
+                                storagePath={aadhaarFront}
+                                alt="Aadhaar Front"
+                                onRemove={() => {
+                                  setAadhaarFront('');
+                                  setAadhaarFrontPreview('');
+                                }}
+                              />
+                            ) : (
+                              <label className="h-32 rounded-2xl border-2 border-dashed border-slate-200 hover:border-emerald-500 bg-[#fbfcfd] hover:bg-emerald-50/20 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all p-3 text-center group min-w-0 w-full">
+                                {uploadingFront ? (
+                                  <UploadSpinner />
+                                ) : (
+                                  <>
+                                    <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                      <UploadCloud className="w-5 h-5" />
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-800">Upload Front Side</span>
+                                    <span className="text-[10px] text-slate-400">JPG, PNG (Max 5MB)</span>
+                                    <input
+                                      type="file"
+                                      accept="image/*,.pdf"
+                                      className="hidden"
+                                      onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], 'front')}
+                                    />
+                                  </>
+                                )}
+                              </label>
+                            )}
+                          </div>
+
+                          {/* Back Side */}
+                          <div className="space-y-1.5 min-w-0 w-full">
+                            <span className="text-[11px] text-slate-500 truncate block">Aadhaar Back (Address & QR)</span>
+                            {aadhaarBack || aadhaarBackPreview ? (
+                              <KycImagePreview
+                                previewUrl={aadhaarBackPreview}
+                                storagePath={aadhaarBack}
+                                alt="Aadhaar Back"
+                                onRemove={() => {
+                                  setAadhaarBack('');
+                                  setAadhaarBackPreview('');
+                                }}
+                              />
+                            ) : (
+                              <label className="h-32 rounded-2xl border-2 border-dashed border-slate-200 hover:border-emerald-500 bg-[#fbfcfd] hover:bg-emerald-50/20 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all p-3 text-center group min-w-0 w-full">
+                                {uploadingBack ? (
+                                  <UploadSpinner />
+                                ) : (
+                                  <>
+                                    <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                      <UploadCloud className="w-5 h-5" />
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-800">Upload Back Side</span>
+                                    <span className="text-[10px] text-slate-400">JPG, PNG (Max 5MB)</span>
+                                    <input
+                                      type="file"
+                                      accept="image/*,.pdf"
+                                      className="hidden"
+                                      onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], 'back')}
+                                    />
+                                  </>
+                                )}
+                              </label>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Section 2: PAN Card Photo */}
+                      <div className="space-y-2 pt-2 border-t border-slate-100">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-xs font-semibold text-slate-800">
+                            2. PAN Card Official Document *
+                          </label>
+                          {panAutoFilled && (
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              ✔ PAN Number Auto-Read
+                            </span>
                           )}
                         </div>
 
-                        {/* Back Side */}
-                        <div className="space-y-1.5 min-w-0 w-full">
-                          <span className="text-[11px] text-slate-500 truncate block">Back Side (Address & QR)</span>
-                          {aadhaarBack || aadhaarBackPreview ? (
-                            <KycImagePreview
-                              previewUrl={aadhaarBackPreview}
-                              storagePath={aadhaarBack}
-                              alt="Aadhaar Back"
-                              onRemove={() => {
-                                setAadhaarBack('');
-                                setAadhaarBackPreview('');
-                              }}
-                            />
+                        <div className="min-w-0 w-full">
+                          {panCard || panCardPreview ? (
+                            <div className="max-w-md">
+                              <KycImagePreview
+                                previewUrl={panCardPreview}
+                                storagePath={panCard}
+                                alt="PAN Card Document"
+                                onRemove={() => {
+                                  setPanCard('');
+                                  setPanCardPreview('');
+                                }}
+                              />
+                            </div>
                           ) : (
                             <label className="h-32 rounded-2xl border-2 border-dashed border-slate-200 hover:border-emerald-500 bg-[#fbfcfd] hover:bg-emerald-50/20 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all p-3 text-center group min-w-0 w-full">
-                              {uploadingBack ? (
+                              {uploadingPan ? (
                                 <UploadSpinner />
                               ) : (
                                 <>
                                   <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <UploadCloud className="w-5 h-5" />
+                                    <CreditCard className="w-5 h-5" />
                                   </div>
-                                  <span className="text-xs font-bold text-slate-800">Upload Back Side</span>
-                                  <span className="text-[10px] text-slate-400">JPG, PNG (Max 5MB)</span>
+                                  <span className="text-xs font-bold text-slate-800">Upload PAN Card Photo</span>
+                                  <span className="text-[10px] text-slate-400">Clear photo showing PAN number & name (JPG, PNG - Max 5MB)</span>
                                   <input
                                     type="file"
                                     accept="image/*,.pdf"
                                     className="hidden"
-                                    onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], 'back')}
+                                    onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], 'pan')}
                                   />
                                 </>
                               )}
@@ -1101,7 +1196,7 @@ export default function ClientKycRealityPage() {
                         </span>
                         <span className="flex items-center gap-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          Accepted formats: JPG, PNG
+                          Accepted formats: JPG, PNG, PDF
                         </span>
                       </div>
                     </div>
@@ -1119,7 +1214,7 @@ export default function ClientKycRealityPage() {
 
                       <button
                         type="submit"
-                        disabled={!isAadhaarValid || !isPanValid || !aadhaarFront || !aadhaarBack}
+                        disabled={!isAadhaarValid || !isPanValid || !aadhaarFront || !aadhaarBack || !panCard}
                         className="flex-1 sm:flex-initial px-8 py-3 rounded-xl bg-[#05603a] hover:bg-[#044e2f] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 active:scale-98 transition-all disabled:opacity-40 cursor-pointer shrink-0"
                       >
                         <span>Save & Continue</span>
