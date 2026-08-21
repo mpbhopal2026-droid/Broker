@@ -275,6 +275,18 @@ export interface MarketAsset {
   bid?: number;
   ask?: number;
   spread?: number;
+  /**
+   * Provenance of this specific price.
+   *
+   * Per-instrument rather than global, because the feed is now mixed: gold,
+   * BTC, EUR/USD and GBP/USD come from keyless live sources while USD/INR and
+   * WTI sit on a slow free tier. One app-wide "live" flag cannot describe that
+   * honestly, and rounding the whole board up to live is how a simulated price
+   * ends up looking like the market.
+   */
+  source?: 'live' | 'stale' | 'simulated';
+  /** ISO timestamp of the underlying tick, for showing age on stale prices. */
+  asOf?: string;
 }
 
 export interface NewsArticle {

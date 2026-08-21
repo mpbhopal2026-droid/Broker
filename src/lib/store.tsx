@@ -555,7 +555,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const body = await res.json();
         if (cancelled || !body?.ok || !Array.isArray(body.quotes)) return;
 
-        setQuoteFeed(body.feed === 'live' ? 'live' : 'simulated');
+        // 'partial' means some instruments are live and some are not, which is
+        // the normal state now. Reported as 'stale' rather than 'live' so the
+        // banner never claims more than is true — the per-instrument `source`
+        // below is what the UI should trust for any individual price.
+        setQuoteFeed(body.feed === 'live' ? 'live' : body.feed === 'partial' ? 'stale' : 'simulated');
         setMarketAssets(
           body.quotes.map((q: any) => ({
             symbol: q.symbol,
@@ -568,6 +572,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             low24h: q.low24h,
             volume24h: '—',
             tvSymbol: q.tvSymbol,
+            // Carried through rather than dropped. Without these the client
+            // cannot tell a live gold price from a simulated oil price.
+            source: q.source,
+            asOf: q.asOf,
           })),
         );
       } catch {

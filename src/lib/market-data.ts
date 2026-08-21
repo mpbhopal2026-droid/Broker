@@ -26,12 +26,25 @@ export interface InstrumentDefinition {
 }
 
 export const INSTRUMENTS: InstrumentDefinition[] = [
-  { symbol: 'XAU/USD', name: 'Gold Spot / US Dollar',   category: 'Commodities', basePrice: 2415.80, volatility: 0.010, tvSymbol: 'OANDA:XAUUSD' },
-  { symbol: 'EUR/USD', name: 'Euro / US Dollar',        category: 'Forex',       basePrice: 1.08745, volatility: 0.004, tvSymbol: 'FX:EURUSD' },
-  { symbol: 'GBP/USD', name: 'British Pound / US Dollar', category: 'Forex',     basePrice: 1.26820, volatility: 0.005, tvSymbol: 'FX:GBPUSD' },
-  { symbol: 'USD/INR', name: 'US Dollar / Indian Rupee', category: 'Forex',      basePrice: 84.1500, volatility: 0.003, tvSymbol: 'FX_IDC:USDINR' },
-  { symbol: 'BTC/USD', name: 'Bitcoin / US Dollar',     category: 'Crypto',      basePrice: 64250.0, volatility: 0.030, tvSymbol: 'BINANCE:BTCUSDT' },
-  { symbol: 'WTI/USD', name: 'WTI Crude Oil Spot',      category: 'Commodities', basePrice: 81.9550, volatility: 0.018, tvSymbol: 'TVC:USOIL' },
+  // tvSymbol must name the SAME market the price comes from.
+  //
+  // The chart and the dealing price sat on different sources: gold charted
+  // OANDA:XAUUSD (spot) while its price came from PAXG, so the two disagreed by
+  // the token premium and a client saw two gold prices on one screen. Pointing
+  // the chart at the source we actually quote makes them agree exactly. Any
+  // future change to a price source has to move its tvSymbol with it.
+  // basePrice is only the fallback anchor when every real source is
+  // unreachable, and such a quote is always labelled 'simulated'. It still has
+  // to be roughly true: these had drifted a long way from the market — gold
+  // 2415.80 against 4573, USD/INR 84.15 against 95.77 — so an outage did not
+  // just show an approximate price, it showed one 47% wrong. Re-anchored to
+  // measured values on 2026-08-21. Worth refreshing if they drift again.
+  { symbol: 'XAU/USD', name: 'Gold Spot / US Dollar',   category: 'Commodities', basePrice: 4573.90, volatility: 0.010, tvSymbol: 'BINANCE:PAXGUSDT' },
+  { symbol: 'EUR/USD', name: 'Euro / US Dollar',        category: 'Forex',       basePrice: 1.16765, volatility: 0.004, tvSymbol: 'BINANCE:EURUSDT' },
+  { symbol: 'GBP/USD', name: 'British Pound / US Dollar', category: 'Forex',     basePrice: 1.36303, volatility: 0.005, tvSymbol: 'FX:GBPUSD' },
+  { symbol: 'USD/INR', name: 'US Dollar / Indian Rupee', category: 'Forex',      basePrice: 95.7700, volatility: 0.003, tvSymbol: 'FX_IDC:USDINR' },
+  { symbol: 'BTC/USD', name: 'Bitcoin / US Dollar',     category: 'Crypto',      basePrice: 77332.0, volatility: 0.030, tvSymbol: 'BINANCE:BTCUSDT' },
+  { symbol: 'WTI/USD', name: 'WTI Crude Oil Spot',      category: 'Commodities', basePrice: 86.3000, volatility: 0.018, tvSymbol: 'TVC:USOIL' },
 ];
 
 export function findInstrument(symbol: string): InstrumentDefinition | undefined {
