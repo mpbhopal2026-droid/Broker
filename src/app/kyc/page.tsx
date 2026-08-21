@@ -123,19 +123,13 @@ function KycImagePreview({
 
 export default function ClientKycRealityPage() {
   const router = useRouter();
-  const { currentUser, submitKYC, showToast, saveKycDraft, getKycDraft, refreshSession } = useApp();
+  const { currentUser, submitKYC, showToast, saveKycDraft, getKycDraft, clearKycDraft, refreshSession } = useApp();
 
   // 1 = Identity & Aadhaar/PAN, 2 = Payout Bank Setup
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
   const [isResubmitting, setIsResubmitting] = useState<boolean>(false);
 
-  // Missing payout details must always leave a way to add them.
-  //
-  // The form only rendered for 'not_submitted'. A client sitting at 'pending'
-  // without a withdrawal account — which happens whenever an operator sets the
-  // status by hand — saw the 'under review' screen, had no form, and the gate
-  // kept sending them back here. A locked door with no handle.
   const needsWithdrawalAccount = !(currentUser?.bankAccountNumber && currentUser?.bankIfsc);
   const showOnboardingForm =
     currentUser?.kycStatus === 'not_submitted' || isResubmitting || needsWithdrawalAccount;
@@ -191,10 +185,34 @@ export default function ClientKycRealityPage() {
   const isIfscMatch = bankIfsc.trim() !== '' && bankIfsc.toUpperCase() === reBankIfsc.toUpperCase();
   const detectedBank = getBankNameFromIFSC(bankIfsc);
 
-  // Restore draft
+  const handleResetForm = () => {
+    clearKycDraft();
+    setAadhaarNumber('');
+    setAadhaarAutoFilled(false);
+    setPanNumber('');
+    setAadhaarFront('');
+    setAadhaarBack('');
+    setAadhaarFrontPreview('');
+    setAadhaarBackPreview('');
+    setBankAccountName(currentUser?.fullName ?? '');
+    setBankName('');
+    setBankAccountNumber('');
+    setReBankAccountNumber('');
+    setBankIfsc('');
+    setReBankIfsc('');
+    setUserUpiId('');
+    showToast({ type: 'info', title: 'Form Cleared', message: 'All form fields have been reset.' });
+  };
+
+  // Restore draft ONLY if specifically saved for this authenticated user
   useEffect(() => {
+    // If not submitted yet, always start completely clean
+    if (currentUser?.kycStatus === 'not_submitted') {
+      clearKycDraft();
+      return;
+    }
     const draft = getKycDraft();
-    if (draft) {
+    if (draft && draft.userId === currentUser?.id) {
       if (draft.fullName) setFullName(draft.fullName);
       if (draft.aadhaarNumber) setAadhaarNumber(draft.aadhaarNumber);
       if (draft.panNumber) setPanNumber(draft.panNumber);
@@ -222,7 +240,7 @@ export default function ClientKycRealityPage() {
       }
       if (draft.upiId) setUserUpiId(draft.upiId);
     }
-  }, [getKycDraft]);
+  }, [getKycDraft, clearKycDraft, currentUser?.id, currentUser?.kycStatus]);
 
   // Handle Document Uploads
   const handleUpload = async (file: File, type: 'front' | 'back') => {
@@ -366,7 +384,7 @@ export default function ClientKycRealityPage() {
 
           {/* Stepper Tabs - only shown during active document submission */}
           {showOnboardingForm && (
-            <>
+            <div className="space-y-2">
               <div className="max-w-xl mx-auto flex items-center justify-center gap-3 sm:gap-4">
                 {/* Step 1 Tab */}
                 <div
@@ -424,16 +442,27 @@ export default function ClientKycRealityPage() {
                       2
                     </div>
                     <div className="text-left">
-                      <div className="text-xs sm:text-sm font-bold text-slate-800 leading-tight">
+                      <div className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">
                         Payout Bank
                       </div>
-                      <div className="text-[11px] text-slate-400">
-                        Double-Verified
+                      <div className="text-[11px] text-slate-500">
+                        Settlement Account
                       </div>
                     </div>
                   </div>
                   <Building2 className={`w-5 h-5 shrink-0 ${currentStep === 2 ? 'text-emerald-600' : 'text-slate-400'}`} />
                 </div>
+              </div>
+
+              <div className="flex justify-end max-w-xl mx-auto pt-1">
+                <button
+                  type="button"
+                  onClick={handleResetForm}
+                  className="text-[11px] font-semibold text-slate-400 hover:text-rose-600 transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Clear & Start Blank</span>
+                </button>
               </div>
 
               {/* Security Banner */}
@@ -456,7 +485,7 @@ export default function ClientKycRealityPage() {
                   <Check className="w-5 h-5 stroke-[2.5]" />
                 </div>
               </div>
-            </>
+            </div>
           )}
 
           {/* ========================================================================= */}
@@ -1123,7 +1152,7 @@ export default function ClientKycRealityPage() {
                       </p>
                     </div>
 
-                    {/* Account Holder Name */}
+                    {/* 1. Account Holder Name (First) */}
                     <div className="space-y-1.5 min-w-0 w-full">
                       <label className="block text-xs font-semibold text-slate-800 truncate">
                         Account Holder Name (as per Bank Records) *
@@ -1141,91 +1170,7 @@ export default function ClientKycRealityPage() {
                       </div>
                     </div>
 
-                    {/* Bank Name */}
-                    <div className="space-y-1.5 min-w-0 w-full">
-                      <div className="flex items-center justify-between gap-2 min-w-0">
-                        <label className="block text-xs font-semibold text-slate-800 truncate">
-                          Bank Name *
-                        </label>
-                        {detectedBank && (
-                          <span className="shrink-0 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                            Detected: {detectedBank}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all min-w-0 w-full">
-                        <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
-                        <input
-                          type="text"
-                          required
-                          value={bankName || detectedBank || ''}
-                          onChange={(e) => setBankName(e.target.value)}
-                          placeholder="e.g. HDFC Bank, State Bank of India"
-                          className="w-full min-w-0 flex-1 text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Double-Entry Account Number */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0 w-full">
-                      <div className="space-y-1.5 min-w-0 w-full">
-                        <label className="block text-xs font-semibold text-slate-800 truncate">
-                          Bank Account Number *
-                        </label>
-                        <div className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-xl px-3 py-2.5 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all min-w-0 w-full">
-                          <CreditCard className="w-4 h-4 text-slate-400 shrink-0" />
-                          <input
-                            type={showAccountNumber ? 'text' : 'password'}
-                            required
-                            value={bankAccountNumber}
-                            onChange={(e) => setBankAccountNumber(e.target.value.replace(/\D/g, ''))}
-                            placeholder="Enter account number"
-                            className="w-full min-w-0 flex-1 text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowAccountNumber(!showAccountNumber)}
-                            className="text-slate-400 hover:text-slate-600 transition-colors shrink-0"
-                          >
-                            {showAccountNumber ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1.5 min-w-0 w-full">
-                        <div className="flex items-center justify-between gap-1 min-w-0">
-                          <label className="block text-xs font-semibold text-slate-800 truncate">
-                            Confirm Account Number *
-                          </label>
-                          {reBankAccountNumber && (
-                            <span className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                              isAccountMatch ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'
-                            }`}>
-                              {isAccountMatch ? '✔ Match' : '✕ Mismatch'}
-                            </span>
-                          )}
-                        </div>
-                        <div className={`flex items-center gap-2.5 bg-white border rounded-xl px-3 py-2.5 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all min-w-0 w-full ${
-                          reBankAccountNumber
-                            ? isAccountMatch
-                              ? 'border-emerald-600'
-                              : 'border-rose-400'
-                            : 'border-slate-200'
-                        }`}>
-                          <CreditCard className="w-4 h-4 text-slate-400 shrink-0" />
-                          <input
-                            type="text"
-                            required
-                            value={reBankAccountNumber}
-                            onChange={(e) => setReBankAccountNumber(e.target.value.replace(/\D/g, ''))}
-                            placeholder="Confirm account number"
-                            className="w-full min-w-0 flex-1 text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Double-Entry IFSC Code */}
+                    {/* 2. Bank IFSC Code (Second) */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0 w-full">
                       <div className="space-y-1.5 min-w-0 w-full">
                         <div className="flex items-center justify-between gap-1 min-w-0">
@@ -1288,7 +1233,91 @@ export default function ClientKycRealityPage() {
                       </div>
                     </div>
 
-                    {/* Personal UPI ID (Optional) */}
+                    {/* 3. Bank Name (Third - Auto-detected from IFSC or Editable) */}
+                    <div className="space-y-1.5 min-w-0 w-full">
+                      <div className="flex items-center justify-between gap-2 min-w-0">
+                        <label className="block text-xs font-semibold text-slate-800 truncate">
+                          Bank Name *
+                        </label>
+                        {detectedBank && (
+                          <span className="shrink-0 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                            Auto-Detected: {detectedBank}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-3.5 py-3 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all min-w-0 w-full">
+                        <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
+                        <input
+                          type="text"
+                          required
+                          value={bankName || detectedBank || ''}
+                          onChange={(e) => setBankName(e.target.value)}
+                          placeholder="e.g. HDFC Bank, State Bank of India, ICICI Bank"
+                          className="w-full min-w-0 flex-1 text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
+                        />
+                      </div>
+                    </div>
+
+                    {/* 4. Bank Account Number (Fourth - Double Entry) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0 w-full">
+                      <div className="space-y-1.5 min-w-0 w-full">
+                        <label className="block text-xs font-semibold text-slate-800 truncate">
+                          Bank Account Number *
+                        </label>
+                        <div className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-xl px-3 py-2.5 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all min-w-0 w-full">
+                          <CreditCard className="w-4 h-4 text-slate-400 shrink-0" />
+                          <input
+                            type={showAccountNumber ? 'text' : 'password'}
+                            required
+                            value={bankAccountNumber}
+                            onChange={(e) => setBankAccountNumber(e.target.value.replace(/\D/g, ''))}
+                            placeholder="Enter account number"
+                            className="w-full min-w-0 flex-1 text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowAccountNumber(!showAccountNumber)}
+                            className="text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+                          >
+                            {showAccountNumber ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5 min-w-0 w-full">
+                        <div className="flex items-center justify-between gap-1 min-w-0">
+                          <label className="block text-xs font-semibold text-slate-800 truncate">
+                            Confirm Account Number *
+                          </label>
+                          {reBankAccountNumber && (
+                            <span className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                              isAccountMatch ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'
+                            }`}>
+                              {isAccountMatch ? '✔ Match' : '✕ Mismatch'}
+                            </span>
+                          )}
+                        </div>
+                        <div className={`flex items-center gap-2.5 bg-white border rounded-xl px-3 py-2.5 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 transition-all min-w-0 w-full ${
+                          reBankAccountNumber
+                            ? isAccountMatch
+                              ? 'border-emerald-600'
+                              : 'border-rose-400'
+                            : 'border-slate-200'
+                        }`}>
+                          <CreditCard className="w-4 h-4 text-slate-400 shrink-0" />
+                          <input
+                            type="text"
+                            required
+                            value={reBankAccountNumber}
+                            onChange={(e) => setReBankAccountNumber(e.target.value.replace(/\D/g, ''))}
+                            placeholder="Confirm account number"
+                            className="w-full min-w-0 flex-1 text-xs sm:text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none bg-transparent"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 5. Personal UPI ID (Fifth - Optional) */}
                     <div className="space-y-1.5 min-w-0 w-full">
                       <label className="block text-xs font-semibold text-slate-800 truncate">
                         Personal UPI ID (Optional for fast settlements)

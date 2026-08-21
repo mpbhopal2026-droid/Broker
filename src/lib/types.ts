@@ -380,6 +380,7 @@ export interface UserLoginLog {
 }
 
 export interface KYCDraft {
+  userId?: string;
   currentStep: number;
   fullName: string;
   email: string;

@@ -948,31 +948,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isKycGateModalOpen, setIsKycGateModalOpen] = useState(false);
   const openKycGateModal = useCallback(() => setIsKycGateModalOpen(true), []);
   const closeKycGateModal = useCallback(() => setIsKycGateModalOpen(false), []);
-
-  // KYC Draft persistence
+  // KYC Draft persistence (strictly user-scoped to prevent data bleeding between accounts)
   const saveKycDraft = useCallback((draft: Partial<KYCDraft>) => {
+    if (!currentUser?.id) return;
     try {
-      const existing = localStorage.getItem('apex_kyc_draft');
+      const key = `gf_kyc_draft_${currentUser.id}`;
+      const existing = localStorage.getItem(key);
       const current = existing ? JSON.parse(existing) : {};
-      const updated = { ...current, ...draft, updatedAt: new Date().toISOString() };
-      localStorage.setItem('apex_kyc_draft', JSON.stringify(updated));
+      const updated = { ...current, ...draft, userId: currentUser.id, updatedAt: new Date().toISOString() };
+      localStorage.setItem(key, JSON.stringify(updated));
     } catch {}
-  }, []);
+  }, [currentUser?.id]);
 
   const getKycDraft = useCallback((): KYCDraft | null => {
+    if (!currentUser?.id) return null;
     try {
-      const existing = localStorage.getItem('apex_kyc_draft');
-      return existing ? JSON.parse(existing) : null;
+      // Clear any legacy unscoped draft from previous builds
+      localStorage.removeItem('apex_kyc_draft');
+      const key = `gf_kyc_draft_${currentUser.id}`;
+      const existing = localStorage.getItem(key);
+      if (!existing) return null;
+      const parsed = JSON.parse(existing);
+      return parsed?.userId === currentUser.id ? parsed : null;
     } catch {
       return null;
     }
-  }, []);
+  }, [currentUser?.id]);
 
   const clearKycDraft = useCallback(() => {
     try {
       localStorage.removeItem('apex_kyc_draft');
+      if (currentUser?.id) {
+        localStorage.removeItem(`gf_kyc_draft_${currentUser.id}`);
+      }
     } catch {}
-  }, []);
+  }, [currentUser?.id]);
 
   // Observability & click-stream logging
   const logClientEvent = useCallback((action: string, category: 'TRADE' | 'AUTH' | 'KYC' | 'WALLET' | 'UI' | 'ERROR', details: string, metadata?: Record<string, any>) => {
