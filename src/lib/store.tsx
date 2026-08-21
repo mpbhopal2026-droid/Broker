@@ -297,7 +297,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [canTrade, setCanTrade] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const [tradeOrders] = useState<TradeOrder[]>([]);
+  // Real-money positions recorded by the dealing desk. This was a hardcoded
+  // empty array, so live positions could never appear on screen no matter what
+  // was recorded against the account.
+  const [tradeOrders, setTradeOrders] = useState<TradeOrder[]>([]);
   const [tradeSignals] = useState<TradeSignal[]>([]);
   const [marketAssets, setMarketAssets] = useState<MarketAsset[]>(DISPLAY_MARKET_ASSETS);
   const [quoteFeed, setQuoteFeed] = useState<'live' | 'stale' | 'simulated'>('simulated');
@@ -854,6 +857,56 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return next;
     });
   }, [showToast]);
+
+  // --- live positions -------------------------------------------------------
+
+  /**
+   * Pulls the client's real-money positions. They are recorded by the dealing
+   * desk, so the client only ever reads them — there is no client-side write
+   * path and the server does not offer one.
+   */
+  const refreshLiveTrades = useCallback(async () => {
+    if (!currentUser) {
+      setTradeOrders([]);
+      return;
+    }
+    try {
+      const res = await fetch('/api/me/trades', { credentials: 'same-origin' });
+      if (!res.ok) return;
+      const body = await res.json();
+      if (!Array.isArray(body?.trades)) return;
+
+      setTradeOrders(
+        body.trades.map((t: any) => ({
+          id: t.id,
+          userId: currentUser.id,
+          symbol: t.symbol,
+          pairName: t.pairName,
+          type: t.side,
+          lotSize: t.lotSize,
+          entryPrice: t.entryPrice,
+          // Falls back to the entry price only for display; P&L itself stays
+          // null when unmarked rather than silently reading as break-even.
+          currentPrice: t.markPrice ?? t.entryPrice,
+          margin: t.margin,
+          leverage: t.leverage,
+          stopLoss: t.stopLoss ?? undefined,
+          takeProfit: t.takeProfit ?? undefined,
+          pnl: t.pnl ?? 0,
+          pnlPercentage: t.pnl != null && t.margin ? (t.pnl / t.margin) * 100 : 0,
+          status: t.status,
+          openedAt: t.openedAt,
+          closedAt: t.closedAt ?? undefined,
+        })),
+      );
+    } catch {
+      /* keep the last known positions rather than blanking the portfolio */
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    void refreshLiveTrades();
+  }, [refreshLiveTrades]);
 
   // --- demo account ---------------------------------------------------------
 
