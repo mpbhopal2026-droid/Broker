@@ -1,4 +1,5 @@
 import { INSTRUMENTS, findInstrument, simulatedSnapshot } from '@/lib/market-data';
+import { fetchBinance } from '@/lib/quote-sources';
 
 /**
  * Market data seam.
@@ -159,28 +160,60 @@ export async function getQuotes(atMs: number = Date.now()): Promise<Quote[]> {
     .map((i) => simulatedQuote(i.symbol, atMs))
     .filter((q): q is Quote => q !== null);
 
-  if (!hasLiveFeed() || process.env.MARKET_DATA_PROVIDER !== 'twelvedata') {
-    return base;
-  }
+  const symbols = base.map((q) => q.symbol);
+
+  // Sources are tried in order and each only fills what the previous left.
+  //
+  //   Binance — free, official, keyless, real-time, true bid/ask. Crypto only,
+  //             so it is asked first and answers for BTC alone. It has no rate
+  //             budget to protect, and its quote is better than Twelve Data's
+  //             for that symbol, so there is no reason to spend a credit on it.
+  //
+  //   Twelve  — everything else. The only licensed source we have for forex and
+  //             commodities.
+  //
+  // Anything neither source answers for stays simulated and stays LABELLED
+  // simulated. See quote-sources.ts for why there is no free licensed
+  // real-time option for forex or commodities, and why we do not scrape one.
+  const merged = new Map<string, Partial<Quote>>();
+
+  const collect = (m: Map<string, Partial<Quote>>) => {
+    for (const [symbol, v] of m) if (!merged.has(symbol)) merged.set(symbol, v);
+  };
+
+  const missing = () => symbols.filter((s) => !merged.has(s));
 
   try {
-    const live = await fetchTwelveData(base.map((q) => q.symbol));
-
-    return base.map((q) => {
-      const l = live.get(q.symbol);
-      if (!l?.mid) return q;
-      return {
-        ...q,
-        ...l,
-        mid: l.mid,
-        ...withSpread(l.mid),
-        // Carry the adapter's own verdict through. Hardcoding 'live' here is
-        // what let a stale cached tick reach the client wearing a live label.
-        source: (l.source ?? 'live') as QuoteSource,
-        asOf: l.asOf ?? new Date(atMs).toISOString(),
-      };
-    });
+    collect(await fetchBinance(symbols));
   } catch {
-    return base;
+    // Optional source. A failure here must not take the others down.
   }
+
+  if (hasLiveFeed() && process.env.MARKET_DATA_PROVIDER === 'twelvedata') {
+    try {
+      const rest = missing();
+      // Only the symbols still outstanding — Twelve Data bills per symbol, so
+      // asking it for BTC that Binance already answered wastes a credit out of
+      // a daily budget of 800.
+      if (rest.length) collect(await fetchTwelveData(rest));
+    } catch {
+      // Out of credits, or the provider is down. Falls through to simulated,
+      // which is visibly marked rather than silently wrong.
+    }
+  }
+
+  return base.map((q) => {
+    const l = merged.get(q.symbol);
+    if (!l?.mid) return q;
+    return {
+      ...q,
+      ...l,
+      mid: l.mid,
+      ...withSpread(l.mid),
+      // Carry the adapter's own verdict through. Hardcoding 'live' here is
+      // what let a stale cached tick reach the client wearing a live label.
+      source: (l.source ?? 'live') as QuoteSource,
+      asOf: l.asOf ?? new Date(atMs).toISOString(),
+    };
+  });
 }
