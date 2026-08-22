@@ -332,7 +332,7 @@ export default function DeveloperPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 mb-1">
+          <div className="flex items-center gap-2 text-emerald-600 dark:text-[#00d674] mb-1">
             <Terminal className="w-5 h-5" />
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               Developer Command Console
@@ -350,7 +350,7 @@ export default function DeveloperPage() {
               void loadOverview();
               void loadTab(tab);
             }}
-            className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors shadow-xs active:scale-95"
+            className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors shadow-xs active:scale-95 cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Refresh Live Data</span>
@@ -398,7 +398,7 @@ export default function DeveloperPage() {
           <div className="p-4 rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 shadow-xs space-y-1">
             <div className="flex items-center justify-between text-slate-400 text-xs">
               <span>Total Accounts</span>
-              <Users className="w-4 h-4 text-purple-500" />
+              <Users className="w-4 h-4 text-slate-500 dark:text-slate-300" />
             </div>
             <div className="text-2xl font-black text-slate-900 dark:text-white">{allUsers.length || '—'}</div>
             <div className="text-[10px] text-slate-400">All registered roles</div>
@@ -421,9 +421,9 @@ export default function DeveloperPage() {
       <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-x-auto no-scrollbar whitespace-nowrap">
         <button
           onClick={() => setTab('users')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
             tab === 'users'
-              ? 'bg-white dark:bg-[#0f172a] text-purple-600 dark:text-purple-400 shadow-xs'
+              ? 'bg-white dark:bg-[#0f172a] text-emerald-600 dark:text-[#00d674] shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
@@ -433,9 +433,9 @@ export default function DeveloperPage() {
 
         <button
           onClick={() => setTab('notifications_lab')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
             tab === 'notifications_lab'
-              ? 'bg-white dark:bg-[#0f172a] text-purple-600 dark:text-purple-400 shadow-xs'
+              ? 'bg-white dark:bg-[#0f172a] text-emerald-600 dark:text-[#00d674] shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
@@ -445,7 +445,7 @@ export default function DeveloperPage() {
 
         <button
           onClick={() => setTab('emails')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
             tab === 'emails'
               ? 'bg-white dark:bg-[#0f172a] text-slate-900 dark:text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -457,7 +457,7 @@ export default function DeveloperPage() {
 
         <button
           onClick={() => setTab('logins')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
             tab === 'logins'
               ? 'bg-white dark:bg-[#0f172a] text-slate-900 dark:text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -469,7 +469,7 @@ export default function DeveloperPage() {
 
         <button
           onClick={() => setTab('sessions')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
             tab === 'sessions'
               ? 'bg-white dark:bg-[#0f172a] text-slate-900 dark:text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -481,7 +481,7 @@ export default function DeveloperPage() {
 
         <button
           onClick={() => setTab('flags')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
             tab === 'flags'
               ? 'bg-white dark:bg-[#0f172a] text-slate-900 dark:text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -493,7 +493,7 @@ export default function DeveloperPage() {
 
         <button
           onClick={() => setTab('diagnostics')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
             tab === 'diagnostics'
               ? 'bg-white dark:bg-[#0f172a] text-slate-900 dark:text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -513,7 +513,7 @@ export default function DeveloperPage() {
             placeholder={`Search in ${tab}…`}
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
-            className="w-full bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-purple-500"
+            className="w-full bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
           />
         </div>
       )}
@@ -537,20 +537,21 @@ export default function DeveloperPage() {
             ).map((rf) => {
               const Icon = rf.icon;
               const count = rf.id === 'all' ? allUsers.length : allUsers.filter((u) => u.role === rf.id).length;
+              const isActive = roleFilter === rf.id;
               return (
                 <button
                   key={rf.id}
                   onClick={() => setRoleFilter(rf.id)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 ${
-                    roleFilter === rf.id
-                      ? 'bg-purple-600 text-white shadow-xs'
-                      : 'bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer ${
+                    isActive
+                      ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
+                      : 'bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
                   <span>{rf.label}</span>
                   <span className={`ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                    roleFilter === rf.id ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                    isActive ? 'bg-white/20 dark:bg-slate-900/20 text-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
                   }`}>
                     {count}
                   </span>
@@ -589,7 +590,7 @@ export default function DeveloperPage() {
                         <div className="flex flex-col items-end gap-1">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono ${
                             u.role === 'developer'
-                              ? 'bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400'
+                              ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
                               : u.role === 'admin'
                               ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
                               : u.role === 'staff'
@@ -624,7 +625,7 @@ export default function DeveloperPage() {
                             type="button"
                             disabled={busyKey === `demo_account_enabled:${u.id}`}
                             onClick={() => toggleUserFlag('demo_account_enabled', u.id, !isDemoAllowed)}
-                            className={`px-2.5 py-1.5 rounded-xl font-bold text-xs shadow-xs active:scale-95 transition-all flex items-center gap-1 border ${
+                            className={`px-2.5 py-1.5 rounded-xl font-bold text-xs shadow-xs active:scale-95 transition-all flex items-center gap-1 border cursor-pointer ${
                               isDemoAllowed
                                 ? 'border-rose-200 dark:border-rose-900/60 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30'
                                 : 'border-emerald-200 dark:border-emerald-900/60 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
@@ -637,10 +638,10 @@ export default function DeveloperPage() {
                           <button
                             type="button"
                             onClick={() => setPromoteUser({ id: u.id, fullName: u.full_name, email: u.email, role: u.role || 'client' })}
-                            className="px-2.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs active:scale-95 transition-all flex items-center gap-1"
+                            className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs shadow-xs active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
                           >
                             <Shield className="w-3 h-3" />
-                            <span>Role</span>
+                            <span>Change Role</span>
                           </button>
                         </div>
                       </div>
@@ -688,7 +689,7 @@ export default function DeveloperPage() {
                           <td className="py-3 px-4">
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                               u.role === 'developer'
-                                ? 'bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400'
+                                ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
                                 : u.role === 'admin'
                                 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
                                 : u.role === 'staff'
@@ -733,7 +734,7 @@ export default function DeveloperPage() {
                                 type="button"
                                 disabled={busyKey === `demo_account_enabled:${u.id}`}
                                 onClick={() => toggleUserFlag('demo_account_enabled', u.id, !isDemoAllowed)}
-                                className={`px-2.5 py-1.5 rounded-xl font-bold text-xs shadow-xs active:scale-95 transition-all inline-flex items-center gap-1 border ${
+                                className={`px-2.5 py-1.5 rounded-xl font-bold text-xs shadow-xs active:scale-95 transition-all inline-flex items-center gap-1 border cursor-pointer ${
                                   isDemoAllowed
                                     ? 'border-rose-200 dark:border-rose-900/60 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30'
                                     : 'border-emerald-200 dark:border-emerald-900/60 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
@@ -747,7 +748,7 @@ export default function DeveloperPage() {
                               <button
                                 type="button"
                                 onClick={() => setPromoteUser({ id: u.id, fullName: u.full_name, email: u.email, role: u.role || 'client' })}
-                                className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs active:scale-95 transition-all inline-flex items-center gap-1"
+                                className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs shadow-xs active:scale-95 transition-all inline-flex items-center gap-1 cursor-pointer"
                               >
                                 <Shield className="w-3 h-3" />
                                 <span>Change Role</span>
@@ -1194,16 +1195,16 @@ export default function DeveloperPage() {
       {tab === 'flags' && (
         <div className="space-y-6">
           {/* Header Banner */}
-          <div className="p-6 rounded-3xl bg-gradient-to-r from-purple-900/40 via-indigo-900/30 to-slate-900/40 border border-purple-800/30 backdrop-blur-md shadow-lg space-y-2">
+          <div className="p-6 rounded-3xl bg-slate-900 dark:bg-[#111827] border border-slate-800 shadow-lg space-y-2 text-white">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-purple-600/30 text-purple-400 border border-purple-500/40">
+              <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                 <Flag className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
                   Feature Flags & Single-User Overrides
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-400">
                   Control platform capabilities globally or target individual user accounts (e.g. allow a single client to trade in Demo mode).
                 </p>
               </div>
@@ -1228,11 +1229,7 @@ export default function DeveloperPage() {
                 return (
                   <div
                     key={flag.key}
-                    className={`p-5 rounded-2xl bg-white dark:bg-[#0f172a] border shadow-xs space-y-4 transition-all ${
-                      flag.key === 'demo_account_enabled'
-                        ? 'border-purple-300 dark:border-purple-800/80 ring-1 ring-purple-500/20'
-                        : 'border-slate-200 dark:border-slate-800'
-                    }`}
+                    className="p-5 rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 shadow-xs space-y-4 transition-all"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-1">
@@ -1246,7 +1243,7 @@ export default function DeveloperPage() {
                             {flag.enabled ? 'ACTIVE (GLOBAL)' : 'DISABLED'}
                           </span>
                           {totalOverrides > 0 && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-900/60">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60">
                               {totalOverrides} User Override{totalOverrides > 1 ? 's' : ''}
                             </span>
                           )}
@@ -1260,7 +1257,7 @@ export default function DeveloperPage() {
                         type="button"
                         onClick={() => toggleFlag(flag)}
                         disabled={busyKey === flag.key}
-                        className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors shrink-0 ${
+                        className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors shrink-0 cursor-pointer ${
                           flag.enabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
                         }`}
                       >
@@ -1292,7 +1289,7 @@ export default function DeveloperPage() {
                           step="5"
                           value={flag.rolloutPercent}
                           onChange={(e) => updateRolloutPercent(flag.key, Number(e.target.value))}
-                          className="w-full accent-purple-600 cursor-pointer h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg"
+                          className="w-full accent-emerald-500 cursor-pointer h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg"
                         />
                       </div>
 
@@ -1302,9 +1299,9 @@ export default function DeveloperPage() {
                             key={pct}
                             type="button"
                             onClick={() => updateRolloutPercent(flag.key, pct)}
-                            className={`px-2 py-0.5 rounded font-mono font-bold transition-all ${
+                            className={`px-2 py-0.5 rounded font-mono font-bold transition-all cursor-pointer ${
                               flag.rolloutPercent === pct
-                                ? 'bg-purple-600 text-white shadow-2xs'
+                                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-2xs'
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white'
                             }`}
                           >
@@ -1383,7 +1380,7 @@ export default function DeveloperPage() {
                     type="button"
                     disabled={!selectedOverrideUser || busyKey.includes(selectedOverrideUser)}
                     onClick={() => toggleUserFlag(selectedFlagKey, selectedOverrideUser, true)}
-                    className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-bold text-xs shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1"
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-bold text-xs shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Allow (ON)</span>
@@ -1393,7 +1390,7 @@ export default function DeveloperPage() {
                     type="button"
                     disabled={!selectedOverrideUser || busyKey.includes(selectedOverrideUser)}
                     onClick={() => toggleUserFlag(selectedFlagKey, selectedOverrideUser, false)}
-                    className="flex-1 py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-40 text-white font-bold text-xs shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1"
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-40 text-white font-bold text-xs shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
                   >
                     <UserX className="w-3.5 h-3.5" />
                     <span>Block (OFF)</span>
@@ -1490,7 +1487,7 @@ export default function DeveloperPage() {
                                 type="button"
                                 disabled={busyKey === `${ao.flagKey}:${ao.userId}`}
                                 onClick={() => toggleUserFlag(ao.flagKey, ao.userId, !ao.enabled)}
-                                className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-semibold transition-all inline-flex items-center gap-1"
+                                className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-semibold transition-all inline-flex items-center gap-1 cursor-pointer"
                               >
                                 <span>Switch to {ao.enabled ? 'OFF' : 'ON'}</span>
                               </button>
@@ -1534,8 +1531,8 @@ export default function DeveloperPage() {
 
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
                 <div className="text-[11px] text-slate-400">Trading Engine</div>
-                <div className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <Activity className="w-4 h-4 text-purple-500" /> Demo Sandbox Active
+                <div className="text-base font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                  <Activity className="w-4 h-4 text-emerald-500" /> Demo Sandbox Active
                 </div>
               </div>
             </div>

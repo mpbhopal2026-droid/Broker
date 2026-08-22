@@ -51,7 +51,7 @@ const ROLES_INFO: Array<{
     role: 'developer',
     title: 'Platform Developer',
     badge: 'Super Console',
-    badgeColor: 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-400',
+    badgeColor: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700',
     description: 'Full observability, feature flag kill-switches, custom email testing lab, push notification dispatcher, and team role switcher.',
     icon: Terminal,
   },
@@ -107,7 +107,7 @@ export function AdminRolePromoteModal({ user, onClose, onSuccess }: AdminRolePro
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div className="min-w-0 pr-2">
             <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate">
-              <Shield className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />
+              <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span>Role & Permissions</span>
             </h3>
             <p className="text-[11px] sm:text-xs text-slate-500 font-mono mt-0.5 truncate">
@@ -117,7 +117,7 @@ export function AdminRolePromoteModal({ user, onClose, onSuccess }: AdminRolePro
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -125,13 +125,13 @@ export function AdminRolePromoteModal({ user, onClose, onSuccess }: AdminRolePro
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs flex items-center gap-2 shrink-0">
+          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs flex items-center gap-2 shrink-0 mt-3">
             <AlertTriangle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto pr-1 flex-1 py-1">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto pr-1 flex-1 py-1 mt-3">
           <div className="space-y-2">
             {ROLES_INFO.map((item) => {
               const Icon = item.icon;
@@ -144,12 +144,12 @@ export function AdminRolePromoteModal({ user, onClose, onSuccess }: AdminRolePro
                   onClick={() => setSelectedRole(item.role)}
                   className={`p-3 rounded-xl sm:rounded-2xl border transition-all cursor-pointer flex items-start gap-2.5 sm:gap-3 ${
                     isSelected
-                      ? 'bg-purple-50/50 dark:bg-purple-950/30 border-purple-500/60 shadow-xs ring-1 ring-purple-500/50'
+                      ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-500/60 shadow-xs ring-1 ring-emerald-500/50'
                       : 'bg-white dark:bg-[#131d33] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                   }`}
                 >
                   <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${
-                    isSelected ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                    isSelected ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
                   }`}>
                     <Icon className="w-4 h-4" />
                   </div>
@@ -188,14 +188,14 @@ export function AdminRolePromoteModal({ user, onClose, onSuccess }: AdminRolePro
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || selectedRole === user.role}
-              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-md shadow-purple-500/20 active:scale-95 flex items-center gap-1.5"
+              className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 disabled:opacity-50 text-white dark:text-slate-900 text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-1.5 cursor-pointer"
             >
               {loading ? (
                 <span>Updating Role…</span>
