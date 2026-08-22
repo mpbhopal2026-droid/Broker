@@ -36,6 +36,7 @@ export const AdminSidebar: React.FC = () => {
   const [isWalletWithdrawOpen, setIsWalletWithdrawOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
+  const isDeveloper = currentUser?.role === 'developer';
   const isStaff = currentUser?.role === 'staff';
 
   const countPending = (type: 'deposit' | 'withdrawal') =>
@@ -44,6 +45,20 @@ export const AdminSidebar: React.FC = () => {
   const pendingKyc = (kycRecords ?? []).filter((k) => k.status === 'pending').length || undefined;
   const pendingDeposits = countPending('deposit');
   const pendingWithdrawals = countPending('withdrawal');
+
+  const devNav = [
+    { href: '/developer', label: 'Developer Console', icon: Lock },
+    { href: '/admin', label: 'Admin Overview', icon: LayoutGrid },
+    { href: '/admin/users', label: 'Users & Portfolios', icon: Users },
+    { href: '/admin/staff', label: 'Staff Team', icon: UserCheck },
+    { href: '/admin/kyc', label: 'KYC Queue', icon: ShieldCheck, badge: pendingKyc },
+    { href: '/admin/deposits', label: 'Deposit Clearing', icon: CreditCard, badge: pendingDeposits },
+    { href: '/admin/withdrawals', label: 'Payout Queue', icon: Clock, badge: pendingWithdrawals },
+    { href: '/admin/trades', label: 'Trade Ledger', icon: Layers },
+    { href: '/admin/ledger', label: 'Double-Entry Ledger', icon: FileText },
+    { href: '/market', label: 'Market Feeds', icon: BarChart2 },
+    { href: '/admin/settings', label: 'Bank & UPI Routing', icon: Settings },
+  ];
 
   const adminNav = [
     { href: '/admin', label: 'Console Overview', icon: LayoutGrid },
@@ -68,7 +83,7 @@ export const AdminSidebar: React.FC = () => {
     { href: '/market', label: 'Market Feeds', icon: BarChart2 },
   ];
 
-  const currentNav = isStaff ? staffNav : adminNav;
+  const currentNav = isDeveloper ? devNav : isStaff ? staffNav : adminNav;
 
   return (
     <>

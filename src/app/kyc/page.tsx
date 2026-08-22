@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { uploadFile } from '@/lib/client-upload';
+import { CompactDocumentUploader } from '@/components/ui/CompactDocumentUploader';
 import {
   validateAadhaarVerhoeff,
   formatAadhaar,
@@ -1055,126 +1056,60 @@ export default function ClientKycRealityPage() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0 w-full">
                           {/* Front Side */}
-                          <div className="space-y-1.5 min-w-0 w-full">
-                            <span className="text-[11px] text-slate-500 truncate block">Aadhaar Front (Photo & Name)</span>
-                            {aadhaarFront || aadhaarFrontPreview ? (
-                              <KycImagePreview
-                                previewUrl={aadhaarFrontPreview}
-                                storagePath={aadhaarFront}
-                                alt="Aadhaar Front"
-                                onRemove={() => {
-                                  setAadhaarFront('');
-                                  setAadhaarFrontPreview('');
-                                }}
-                              />
-                            ) : (
-                              <label className="h-32 rounded-2xl border-2 border-dashed border-slate-200 hover:border-emerald-500 bg-[#fbfcfd] hover:bg-emerald-50/20 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all p-3 text-center group min-w-0 w-full">
-                                {uploadingFront ? (
-                                  <UploadSpinner />
-                                ) : (
-                                  <>
-                                    <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                      <UploadCloud className="w-5 h-5" />
-                                    </div>
-                                    <span className="text-xs font-bold text-slate-800">Upload Front Side</span>
-                                    <span className="text-[10px] text-slate-400">JPG, PNG (Max 5MB)</span>
-                                    <input
-                                      type="file"
-                                      accept="image/*,.pdf"
-                                      className="hidden"
-                                      onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], 'front')}
-                                    />
-                                  </>
-                                )}
-                              </label>
-                            )}
+                          <div className="min-w-0 w-full">
+                            <CompactDocumentUploader
+                              label="Aadhaar Front (Photo & Name)"
+                              description="Clear front side"
+                              purpose="kyc"
+                              currentPath={aadhaarFront}
+                              onUploaded={(path) => {
+                                setAadhaarFront(path);
+                                setAadhaarFrontPreview(path);
+                              }}
+                              onRemoved={() => {
+                                setAadhaarFront('');
+                                setAadhaarFrontPreview('');
+                              }}
+                            />
                           </div>
 
                           {/* Back Side */}
-                          <div className="space-y-1.5 min-w-0 w-full">
-                            <span className="text-[11px] text-slate-500 truncate block">Aadhaar Back (Address & QR)</span>
-                            {aadhaarBack || aadhaarBackPreview ? (
-                              <KycImagePreview
-                                previewUrl={aadhaarBackPreview}
-                                storagePath={aadhaarBack}
-                                alt="Aadhaar Back"
-                                onRemove={() => {
-                                  setAadhaarBack('');
-                                  setAadhaarBackPreview('');
-                                }}
-                              />
-                            ) : (
-                              <label className="h-32 rounded-2xl border-2 border-dashed border-slate-200 hover:border-emerald-500 bg-[#fbfcfd] hover:bg-emerald-50/20 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all p-3 text-center group min-w-0 w-full">
-                                {uploadingBack ? (
-                                  <UploadSpinner />
-                                ) : (
-                                  <>
-                                    <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                      <UploadCloud className="w-5 h-5" />
-                                    </div>
-                                    <span className="text-xs font-bold text-slate-800">Upload Back Side</span>
-                                    <span className="text-[10px] text-slate-400">JPG, PNG (Max 5MB)</span>
-                                    <input
-                                      type="file"
-                                      accept="image/*,.pdf"
-                                      className="hidden"
-                                      onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], 'back')}
-                                    />
-                                  </>
-                                )}
-                              </label>
-                            )}
+                          <div className="min-w-0 w-full">
+                            <CompactDocumentUploader
+                              label="Aadhaar Back (Address & QR)"
+                              description="Clear back side"
+                              purpose="kyc"
+                              currentPath={aadhaarBack}
+                              onUploaded={(path) => {
+                                setAadhaarBack(path);
+                                setAadhaarBackPreview(path);
+                              }}
+                              onRemoved={() => {
+                                setAadhaarBack('');
+                                setAadhaarBackPreview('');
+                              }}
+                            />
                           </div>
                         </div>
                       </div>
 
                       {/* Section 2: PAN Card Photo */}
                       <div className="space-y-2 pt-2 border-t border-slate-100">
-                        <div className="flex items-center justify-between">
-                          <label className="block text-xs font-semibold text-slate-800">
-                            2. PAN Card Official Document *
-                          </label>
-                          {panAutoFilled && (
-                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                              ✔ PAN Number Auto-Read
-                            </span>
-                          )}
-                        </div>
-
                         <div className="min-w-0 w-full">
-                          {panCard || panCardPreview ? (
-                            <div className="max-w-md">
-                              <KycImagePreview
-                                previewUrl={panCardPreview}
-                                storagePath={panCard}
-                                alt="PAN Card Document"
-                                onRemove={() => {
-                                  setPanCard('');
-                                  setPanCardPreview('');
-                                }}
-                              />
-                            </div>
-                          ) : (
-                            <label className="h-32 rounded-2xl border-2 border-dashed border-slate-200 hover:border-emerald-500 bg-[#fbfcfd] hover:bg-emerald-50/20 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all p-3 text-center group min-w-0 w-full">
-                              {uploadingPan ? (
-                                <UploadSpinner />
-                              ) : (
-                                <>
-                                  <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <CreditCard className="w-5 h-5" />
-                                  </div>
-                                  <span className="text-xs font-bold text-slate-800">Upload PAN Card Photo</span>
-                                  <span className="text-[10px] text-slate-400">Clear photo showing PAN number & name (JPG, PNG - Max 5MB)</span>
-                                  <input
-                                    type="file"
-                                    accept="image/*,.pdf"
-                                    className="hidden"
-                                    onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], 'pan')}
-                                  />
-                                </>
-                              )}
-                            </label>
-                          )}
+                          <CompactDocumentUploader
+                            label="2. PAN Card Official Document"
+                            description="Clear photo showing PAN number & name"
+                            purpose="kyc"
+                            currentPath={panCard}
+                            onUploaded={(path) => {
+                              setPanCard(path);
+                              setPanCardPreview(path);
+                            }}
+                            onRemoved={() => {
+                              setPanCard('');
+                              setPanCardPreview('');
+                            }}
+                          />
                         </div>
                       </div>
                     </div>

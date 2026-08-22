@@ -21,21 +21,39 @@ import {
   CreditCard,
   FileText,
   Lock,
-  Scale
+  Scale,
+  Users,
+  Building,
+  Terminal,
+  Activity
 } from 'lucide-react';
 import { useApp } from '@/lib/store';
+import { useAdmin } from '@/lib/admin-store';
 
 export const MobileBottomNav: React.FC = () => {
   const pathname = usePathname();
   const { currentUser } = useApp();
+  const { transactions, kycRecords } = useAdmin();
 
-  const isAdmin =
+  const isOperator =
     pathname.startsWith('/admin') ||
     pathname.startsWith('/developer') ||
+    pathname.startsWith('/staff') ||
     currentUser?.role === 'admin' ||
     currentUser?.role === 'staff' ||
     currentUser?.role === 'developer';
+
+  const isStaff = currentUser?.role === 'staff';
+  const isDeveloper = currentUser?.role === 'developer';
+
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const countPending = (type: 'deposit' | 'withdrawal') =>
+    (transactions ?? []).filter((t) => t.type === type && t.status === 'pending').length || undefined;
+
+  const pendingKyc = (kycRecords ?? []).filter((k) => k.status === 'pending').length || undefined;
+  const pendingDeposits = countPending('deposit');
+  const pendingWithdrawals = countPending('withdrawal');
 
   const clientMainTabs = [
     { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
@@ -44,12 +62,28 @@ export const MobileBottomNav: React.FC = () => {
     { href: '/funds', label: 'Funds', icon: Wallet },
   ];
 
-  const adminMainTabs = [
-    { href: '/admin', label: 'Overview', icon: LayoutDashboard },
-    { href: '/admin/users', label: 'Users', icon: Sliders },
-    { href: '/admin/deposits', label: 'Deposits', icon: Wallet },
-    { href: '/admin/kyc', label: 'KYC', icon: ShieldCheck },
+  const staffMainTabs = [
+    { href: '/staff', label: 'Desk', icon: LayoutDashboard },
+    { href: '/admin/deposits', label: 'Deposits', icon: CreditCard, badge: pendingDeposits },
+    { href: '/admin/withdrawals', label: 'Payouts', icon: Wallet, badge: pendingWithdrawals },
+    { href: '/admin/kyc', label: 'KYC', icon: ShieldCheck, badge: pendingKyc },
   ];
+
+  const adminMainTabs = [
+    { href: '/admin', label: 'Console', icon: LayoutDashboard },
+    { href: '/admin/deposits', label: 'Deposits', icon: CreditCard, badge: pendingDeposits },
+    { href: '/admin/withdrawals', label: 'Payouts', icon: Wallet, badge: pendingWithdrawals },
+    { href: '/admin/kyc', label: 'KYC', icon: ShieldCheck, badge: pendingKyc },
+  ];
+
+  const devMainTabs = [
+    { href: '/developer', label: 'Dev Console', icon: Lock },
+    { href: '/admin', label: 'Admin', icon: LayoutDashboard },
+    { href: '/admin/deposits', label: 'Deposits', icon: CreditCard, badge: pendingDeposits },
+    { href: '/admin/kyc', label: 'KYC', icon: ShieldCheck, badge: pendingKyc },
+  ];
+
+  const mainTabs = isDeveloper ? devMainTabs : isStaff ? staffMainTabs : isOperator ? adminMainTabs : clientMainTabs;
 
   const clientCategories = [
     {
@@ -89,7 +123,30 @@ export const MobileBottomNav: React.FC = () => {
     },
   ];
 
-  const mainTabs = isAdmin ? adminMainTabs : clientMainTabs;
+  const operatorCategories = [
+    {
+      title: 'Operational Desks',
+      items: [
+        { href: isStaff ? '/staff' : '/admin', label: isStaff ? 'Staff Operations Desk' : 'Admin Console Overview', desc: 'Main operations dashboard', icon: LayoutDashboard },
+        { href: '/admin/users', label: 'Users & Portfolios', desc: 'Client account management', icon: Users },
+        { href: '/admin/kyc', label: 'KYC Compliance Queue', desc: 'Pending document approvals', icon: ShieldCheck },
+        { href: '/admin/deposits', label: 'Deposit Clearing', desc: 'Incoming INR clearance & conversion', icon: CreditCard },
+        { href: '/admin/withdrawals', label: 'Payout Queue', desc: 'Bank settlement & IMPS', icon: Wallet },
+        { href: '/admin/trades', label: 'Trade Ledger', desc: 'Live open positions & lots', icon: ArrowUpDown },
+      ],
+    },
+    {
+      title: 'Governance & Settings',
+      items: [
+        ...(isDeveloper ? [{ href: '/developer', label: 'Developer Command Console', desc: 'Audit trail, flags & labs', icon: Terminal }] : []),
+        { href: '/admin/ledger', label: 'Double-Entry Financial Ledger', desc: 'Immutable audit statements', icon: FileText },
+        { href: '/admin/settings', label: 'Bank & UPI Routing Config', desc: 'Payment gateway switches', icon: Settings },
+        { href: '/market', label: 'Live Market Terminal', desc: 'Real-time price feeds', icon: TrendingUp },
+      ],
+    },
+  ];
+
+  const activeCategories = isOperator ? operatorCategories : clientCategories;
 
   return (
     <>
@@ -97,20 +154,28 @@ export const MobileBottomNav: React.FC = () => {
         <div className="grid grid-cols-5 h-12 items-center px-1">
           {mainTabs.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href || (item.href !== '/dashboard' && item.href !== '/admin' && pathname.startsWith(item.href));
+            const isActive =
+              item.href === '/dashboard' || item.href === '/admin' || item.href === '/staff' || item.href === '/developer'
+                ? pathname === item.href
+                : pathname.startsWith(item.href);
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center h-full transition-colors active:scale-95 ${
+                className={`flex flex-col items-center justify-center h-full transition-colors active:scale-95 relative ${
                   isActive
                     ? 'text-zinc-950 dark:text-white font-bold'
                     : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'
                 }`}
               >
-                <div className={`p-1 rounded-md transition-colors ${isActive ? 'bg-zinc-100 dark:bg-zinc-900' : ''}`}>
+                <div className={`p-1 rounded-md transition-colors relative ${isActive ? 'bg-zinc-100 dark:bg-zinc-900' : ''}`}>
                   <Icon className="w-4 h-4" />
+                  {'badge' in item && typeof item.badge === 'number' && item.badge > 0 ? (
+                    <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 text-white text-[8px] font-black flex items-center justify-center font-mono">
+                      {item.badge}
+                    </span>
+                  ) : null}
                 </div>
                 <span className="text-[9px] mt-0.5 font-mono tracking-tight">{item.label}</span>
               </Link>
@@ -147,7 +212,7 @@ export const MobileBottomNav: React.FC = () => {
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-zinc-900 dark:bg-white" />
                 <h3 className="font-mono font-bold text-xs uppercase tracking-wider text-zinc-950 dark:text-white">
-                  {isAdmin ? 'Admin Console' : 'Platform Navigation'}
+                  {isOperator ? (isDeveloper ? 'Developer Super Console' : isStaff ? 'Staff Operations Desk' : 'Administrator Console') : 'Platform Navigation'}
                 </h3>
               </div>
               <button
@@ -162,7 +227,7 @@ export const MobileBottomNav: React.FC = () => {
 
             {/* Content Sections */}
             <div className="space-y-4">
-              {clientCategories.map((cat) => (
+              {activeCategories.map((cat) => (
                 <div key={cat.title} className="space-y-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 font-mono px-1">
                     {cat.title}
