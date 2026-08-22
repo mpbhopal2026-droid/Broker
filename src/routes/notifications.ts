@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getServiceClient } from '@/lib/supabase-server';
-import { requireUser } from '@/lib/auth-server';
+import { loadSession, requireUser } from '@/lib/auth-server';
 import { ok, fail, cleanString, handleRouteError } from '@/lib/api';
 
 export const runtime = 'nodejs';
@@ -9,7 +9,10 @@ export const dynamic = 'force-dynamic';
 /** List notifications for the signed-in user, with the unread count. */
 export async function GET(req: NextRequest) {
   try {
-    const user = await requireUser();
+    const user = await loadSession();
+    if (!user) {
+      return ok({ notifications: [], unreadCount: 0 });
+    }
     const db = getServiceClient();
     if (!db) return fail(503, 'Not available.');
 

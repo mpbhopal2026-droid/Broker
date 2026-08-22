@@ -150,8 +150,8 @@ export const MobileBottomNav: React.FC = () => {
 
   return (
     <>
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-t border-zinc-200 dark:border-zinc-800 pb-safe select-none">
-        <div className="grid grid-cols-5 h-12 items-center px-1">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#070b12]/95 backdrop-blur-xl border-t border-slate-800 pb-safe select-none shadow-2xl">
+        <div className="grid grid-cols-5 h-16 items-center px-1">
           {mainTabs.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -163,21 +163,23 @@ export const MobileBottomNav: React.FC = () => {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center h-full transition-colors active:scale-95 relative ${
+                className={`flex flex-col items-center justify-center h-full transition-all active:scale-90 relative ${
                   isActive
-                    ? 'text-zinc-950 dark:text-white font-bold'
-                    : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'
+                    ? 'text-emerald-400 font-black'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <div className={`p-1 rounded-md transition-colors relative ${isActive ? 'bg-zinc-100 dark:bg-zinc-900' : ''}`}>
-                  <Icon className="w-4 h-4" />
+                <div className={`p-1.5 rounded-xl transition-all relative ${isActive ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-sm' : ''}`}>
+                  <Icon className="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[2.2]" />
                   {'badge' in item && typeof item.badge === 'number' && item.badge > 0 ? (
-                    <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 text-white text-[8px] font-black flex items-center justify-center font-mono">
+                    <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-emerald-500 text-white text-[9px] font-black flex items-center justify-center font-mono shadow-md">
                       {item.badge}
                     </span>
                   ) : null}
                 </div>
-                <span className="text-[9px] mt-0.5 font-mono tracking-tight">{item.label}</span>
+                <span className={`text-[11px] mt-0.5 font-sans tracking-tight font-bold ${isActive ? 'text-emerald-400' : 'text-slate-400'}`}>
+                  {item.label}
+                </span>
               </Link>
             );
           })}
@@ -187,12 +189,12 @@ export const MobileBottomNav: React.FC = () => {
             type="button"
             onClick={() => setMenuOpen(true)}
             aria-label="More Services"
-            className="flex flex-col items-center justify-center h-full text-zinc-400 dark:text-zinc-500 active:scale-95 transition-colors"
+            className="flex flex-col items-center justify-center h-full text-slate-400 hover:text-slate-200 active:scale-90 transition-all cursor-pointer"
           >
-            <div className="p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-900">
-              <Menu className="w-4 h-4" />
+            <div className="p-1.5 rounded-xl hover:bg-slate-800 transition-all">
+              <Menu className="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[2.2]" />
             </div>
-            <span className="text-[9px] mt-0.5 font-mono">More</span>
+            <span className="text-[11px] mt-0.5 font-sans font-bold text-slate-400">More</span>
           </button>
         </div>
       </nav>
@@ -200,18 +202,18 @@ export const MobileBottomNav: React.FC = () => {
       {/* Slide-Up Bottom Sheet Drawer */}
       {menuOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex flex-col justify-end animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex flex-col justify-end animate-in fade-in duration-150"
           onClick={() => setMenuOpen(false)}
         >
           <div
-            className="w-full bg-white dark:bg-zinc-950 rounded-t-2xl border-t border-zinc-200 dark:border-zinc-800 p-4 pb-safe max-h-[80vh] overflow-y-auto space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-150"
+            className="w-full bg-[#0f172a] rounded-t-3xl border-t border-slate-800 p-5 pb-safe max-h-[82vh] overflow-y-auto space-y-5 shadow-2xl animate-in slide-in-from-bottom duration-150 text-white"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Drawer Header Handle & Title */}
-            <div className="flex items-center justify-between pb-2.5 border-b border-zinc-100 dark:border-zinc-900">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-zinc-900 dark:bg-white" />
-                <h3 className="font-mono font-bold text-xs uppercase tracking-wider text-zinc-950 dark:text-white">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <h3 className="font-sans font-black text-xs uppercase tracking-wider text-white">
                   {isOperator ? (isDeveloper ? 'Developer Super Console' : isStaff ? 'Staff Operations Desk' : 'Administrator Console') : 'Platform Navigation'}
                 </h3>
               </div>
@@ -219,20 +221,20 @@ export const MobileBottomNav: React.FC = () => {
                 type="button"
                 onClick={() => setMenuOpen(false)}
                 aria-label="Close"
-                className="p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors"
+                className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Content Sections */}
-            <div className="space-y-4">
+            <div className="space-y-5">
               {activeCategories.map((cat) => (
-                <div key={cat.title} className="space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 font-mono px-1">
+                <div key={cat.title} className="space-y-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono px-1">
                     {cat.title}
                   </span>
-                  <div className="grid grid-cols-1 gap-1">
+                  <div className="grid grid-cols-1 gap-1.5">
                     {cat.items.map((service) => {
                       const SIcon = service.icon;
                       return (
@@ -240,18 +242,18 @@ export const MobileBottomNav: React.FC = () => {
                           key={service.href}
                           href={service.href}
                           onClick={() => setMenuOpen(false)}
-                          className="flex items-center justify-between p-2 rounded-md bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 hover:border-zinc-900 dark:hover:border-zinc-100 transition-colors"
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-[#080d14] border border-slate-800 hover:border-emerald-500/50 transition-all hover:bg-slate-800/40"
                         >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-7 h-7 rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center shrink-0 text-zinc-900 dark:text-zinc-100">
-                              <SIcon className="w-3.5 h-3.5" />
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-8 h-8 rounded-lg bg-[#0f172a] border border-slate-700 flex items-center justify-center shrink-0 text-emerald-400">
+                              <SIcon className="w-4 h-4" />
                             </div>
                             <div className="min-w-0">
-                              <p className="font-semibold text-xs text-zinc-950 dark:text-white truncate">{service.label}</p>
-                              <p className="text-[10px] text-zinc-400 truncate font-mono">{service.desc}</p>
+                              <p className="font-bold text-xs text-white truncate">{service.label}</p>
+                              <p className="text-[10px] text-slate-400 truncate font-mono">{service.desc}</p>
                             </div>
                           </div>
-                          <ChevronRight className="w-3.5 h-3.5 text-zinc-400 shrink-0 ml-2" />
+                          <ChevronRight className="w-4 h-4 text-slate-500 shrink-0 ml-2" />
                         </Link>
                       );
                     })}

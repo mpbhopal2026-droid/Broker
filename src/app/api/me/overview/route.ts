@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getServiceClient } from '@/lib/supabase-server';
-import { requireUser } from '@/lib/auth-server';
+import { loadSession, requireUser } from '@/lib/auth-server';
 import { ok, fail, handleRouteError } from '@/lib/api';
 import { LEGAL_VERSIONS, LegalDocument } from '@/lib/legal';
 import { mapTransaction, mapKycRecord, mapLedgerEntry } from '@/lib/mappers';
@@ -18,7 +18,19 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(_req: NextRequest) {
   try {
-    const user = await requireUser();
+    const user = await loadSession();
+    if (!user) {
+      return ok({
+        profile: null,
+        transactions: [],
+        ledger: [],
+        kycRecords: [],
+        pendingLegal: [],
+        consents: {},
+        canTrade: false,
+        canUseDemo: true,
+      });
+    }
     const db = getServiceClient();
     if (!db) return fail(503, 'Not available.');
 

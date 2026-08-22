@@ -123,11 +123,14 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
     return <AppSkeleton />;
   }
 
-  // Dedicated Full-Screen OctaFX Trading Terminal — zero chrome overlap
+  // Dedicated Institutional Trading Terminal — with full mobile bottom navigation
   if (isTradePage) {
     return (
-      <div className="h-screen w-full overflow-hidden bg-[#0b1018] text-white">
-        {children}
+      <div className="h-screen w-full overflow-hidden bg-[#0b1018] text-white flex flex-col justify-between">
+        <div className="flex-1 overflow-y-auto pb-16 md:pb-0">
+          {children}
+        </div>
+        <MobileBottomNav />
       </div>
     );
   }

@@ -122,6 +122,8 @@ function TradePageInner() {
   // Modals & Bottom Drawer State
   const [showGatekeeperModal, setShowGatekeeperModal] = useState(false);
   const [showPositionsDrawer, setShowPositionsDrawer] = useState(false);
+  const [showBrokerModal, setShowBrokerModal] = useState(false);
+  const [pendingOrderIntent, setPendingOrderIntent] = useState<{ side: 'BUY' | 'SELL'; lot: number; price: string | number; margin: number } | null>(null);
   const [drawerTab, setDrawerTab] = useState<'open' | 'closed'>('open');
   const [closingId, setClosingId] = useState<string | null>(null);
 
@@ -135,12 +137,24 @@ function TradePageInner() {
 
   // Execution Handler
   const handleExecuteOrder = async (side: 'BUY' | 'SELL') => {
-    if (!isDemo && balance <= 0) {
-      setShowGatekeeperModal(true);
+    const calculatedMargin = parseFloat(((lotSize * livePrice) / 100).toFixed(2)) || 10.00;
+
+    if (!isDemo) {
+      // Live Trading Lock: Present Broker Clearance & Dealing Desk Routing Popup
+      setPendingOrderIntent({
+        side,
+        lot: lotSize,
+        price: side === 'BUY' ? askPrice : bidPrice,
+        margin: calculatedMargin,
+      });
+      setShowBrokerModal(true);
       return;
     }
 
-    const calculatedMargin = parseFloat(((lotSize * livePrice) / 100).toFixed(2)) || 10.00;
+    if (balance <= 0) {
+      setShowGatekeeperModal(true);
+      return;
+    }
 
     if (!isDemo && freeMargin < calculatedMargin) {
       showToast({
@@ -458,35 +472,13 @@ function TradePageInner() {
           dealable — they are indicative only. Showing the instruction instead
           is what makes the model legible.
 
-          Demo keeps its buttons: it is a simulator and nothing there is real.
-        */}
-        {!isDemo ? (
-          <div className="rounded-md border border-zinc-800 bg-zinc-900 p-3 space-y-2">
-            <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-zinc-400">
-              <ShieldCheck className="w-3 h-3 text-emerald-500" />
-              <span>Broker-executed account</span>
-            </div>
-            <p className="text-xs text-zinc-300 leading-relaxed">
-              Contact your broker to execute a trade on{' '}
-              <span className="font-bold text-white">{currentInstrument.symbol}</span>. Prices shown
-              here are indicative — your fill is confirmed by the dealing desk and appears in your
-              positions once executed.
-            </p>
-            <Link
-              href="/support"
-              className="w-full py-2.5 px-3 rounded-md bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs flex items-center justify-center gap-1.5 active:scale-[0.98] transition-colors"
-            >
-              <span>Contact your broker</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        ) : (
+        {/* Dealable Action Buttons: BUY and SELL */}
         <div className="grid grid-cols-2 gap-2">
-          {/* Left: SELL Order Button (Solid Zinc Dark Action) */}
+          {/* Left: SELL Order Button */}
           <button
             type="button"
             onClick={() => handleExecuteOrder('SELL')}
-            className="py-2.5 px-3 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-white active:scale-[0.98] transition-colors flex flex-col items-center justify-center cursor-pointer"
+            className="py-2.5 px-3 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-white active:scale-[0.98] transition-colors flex flex-col items-center justify-center cursor-pointer shadow-sm"
           >
             <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-zinc-400">
               <TrendingDown className="w-3 h-3 text-rose-400" />
@@ -495,11 +487,11 @@ function TradePageInner() {
             <span className="text-base font-bold tabular-nums tracking-tight">{bidPrice}</span>
           </button>
 
-          {/* Right: BUY Order Button (Solid White Action) */}
+          {/* Right: BUY Order Button */}
           <button
             type="button"
             onClick={() => handleExecuteOrder('BUY')}
-            className="py-2.5 px-3 rounded-md bg-white hover:bg-zinc-200 text-zinc-950 active:scale-[0.98] transition-colors flex flex-col items-center justify-center cursor-pointer"
+            className="py-2.5 px-3 rounded-md bg-white hover:bg-zinc-200 text-zinc-950 active:scale-[0.98] transition-colors flex flex-col items-center justify-center cursor-pointer shadow-sm"
           >
             <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-zinc-600">
               <TrendingUp className="w-3 h-3 text-emerald-600" />
@@ -508,7 +500,6 @@ function TradePageInner() {
             <span className="text-base font-bold tabular-nums tracking-tight">{askPrice}</span>
           </button>
         </div>
-        )}
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
@@ -621,6 +612,86 @@ function TradePageInner() {
                   ))
                 )
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BROKER ROUTING & LIVE TRADE LOCK POPUP MODAL */}
+      {showBrokerModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in"
+          onClick={() => setShowBrokerModal(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-[#0f172a] border border-slate-800 p-5 space-y-4 shadow-2xl text-white animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Live Trading Lock & Broker Clearance</h3>
+                  <span className="text-[10px] text-slate-400 font-mono">Dealing Desk Execution</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBrokerModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {pendingOrderIntent && (
+              <div className="p-3.5 rounded-xl bg-[#080d14] border border-slate-800 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Order Side & Volume:</span>
+                  <span className="font-black font-mono text-emerald-400">
+                    {pendingOrderIntent.side} {pendingOrderIntent.lot} Lot {currentInstrument.symbol}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Indicative Execution Price:</span>
+                  <span className="font-bold font-mono text-white">${pendingOrderIntent.price}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Required Margin:</span>
+                  <span className="font-bold font-mono text-white">${pendingOrderIntent.margin.toFixed(2)} USD</span>
+                </div>
+              </div>
+            )}
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Real-time market rates and charts are streaming live. In institutional dealing desk mode, live order fills are routed and confirmed with your assigned broker desk.
+            </p>
+
+            <div className="space-y-2 pt-1">
+              <Link
+                href="/support"
+                className="w-full py-3 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md active:scale-98"
+              >
+                <span>Dispatch Order to Dealing Desk</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowBrokerModal(false);
+                  setAccountMode('demo');
+                  showToast({
+                    type: 'info',
+                    title: 'Demo Simulator Ready',
+                    message: 'Switched to $10,000 demo margin practice.',
+                  });
+                }}
+                className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition-all border border-slate-700 cursor-pointer"
+              >
+                Practice with $10,000 Demo Balance
+              </button>
             </div>
           </div>
         </div>

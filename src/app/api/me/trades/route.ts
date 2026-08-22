@@ -1,4 +1,4 @@
-import { requireUser } from '@/lib/auth-server';
+import { loadSession, requireUser } from '@/lib/auth-server';
 import { getServiceClient } from '@/lib/supabase-server';
 import { ok, fail, handleRouteError } from '@/lib/api';
 import { getQuotes } from '@/lib/quote-provider';
@@ -20,7 +20,10 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET() {
   try {
-    const user = await requireUser();
+    const user = await loadSession();
+    if (!user) {
+      return ok({ trades: [] });
+    }
     const db = getServiceClient();
     if (!db) return fail(503, 'Database unavailable.');
 

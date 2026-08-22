@@ -27,6 +27,7 @@ export default function GlobalForexDashboard() {
   const {
     currentUser,
     marketAssets,
+    paymentSettings,
     transactions = [],
     watchlist = [],
     toggleWatchlist,
@@ -229,7 +230,67 @@ export default function GlobalForexDashboard() {
             </div>
 
             {/* Table Content */}
-            <div className="overflow-x-auto">
+            {/* Mobile View (< sm): Responsive High-Density Rows */}
+            <div className="sm:hidden divide-y divide-zinc-100 dark:divide-zinc-900">
+              {displayedAssets.map((asset) => {
+                const isUp = asset.changePercent >= 0;
+                const isStarred = watchlist.includes(asset.symbol);
+                const decimals = asset.symbol.includes('JPY') ? 2 : asset.symbol.includes('EUR') || asset.symbol.includes('GBP') ? 4 : asset.symbol.includes('INR') ? 3 : 2;
+                const bid = asset.bid ?? asset.price;
+
+                return (
+                  <div
+                    key={asset.symbol}
+                    onClick={() => router.push(`/market?symbol=${encodeURIComponent(asset.symbol)}`)}
+                    className="py-3 px-1 flex items-center justify-between gap-2 hover:bg-zinc-50/80 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleWatchlist(asset.symbol);
+                        }}
+                        className="p-1 rounded text-zinc-300 hover:text-zinc-950 dark:hover:text-white"
+                      >
+                        <Star className={`w-3.5 h-3.5 ${isStarred ? 'fill-amber-400 text-amber-400' : ''}`} />
+                      </button>
+                      <div className="min-w-0">
+                        <span className="font-extrabold text-xs text-zinc-950 dark:text-white block truncate tracking-tight">
+                          {asset.symbol}
+                        </span>
+                        <span className="text-[10px] text-zinc-400 font-normal block truncate max-w-[130px]">
+                          {asset.name}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      <div className="text-right">
+                        <span className="font-bold text-xs tabular-nums text-zinc-950 dark:text-white block">
+                          ${bid.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
+                        </span>
+                        <span className={`text-[10px] font-bold inline-flex items-center gap-0.5 ${isUp ? 'text-[#00875a]' : 'text-rose-600'}`}>
+                          <span>{isUp ? '▲' : '▼'}</span>
+                          <span>{isUp ? '+' : ''}{asset.changePercent.toFixed(2)}%</span>
+                        </span>
+                      </div>
+
+                      <Link
+                        href={`/market?symbol=${encodeURIComponent(asset.symbol)}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="px-3 py-1.5 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold shadow-xs active:scale-95 transition-all"
+                      >
+                        Trade
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop View (sm: and up): Full 7-column Table */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left text-xs font-sans">
                 <thead>
                   <tr className="text-zinc-400 text-[10px] uppercase font-bold border-b border-zinc-100 dark:border-zinc-900">
@@ -341,9 +402,68 @@ export default function GlobalForexDashboard() {
         </div>
 
         {/* ─────────────────────────────────────────────────────────────
-            RIGHT COLUMN (4 COLS): CAPITAL LEDGER, RECENT LOGS, GOVERNANCE
+            RIGHT COLUMN (4 COLS): CAPITAL LEDGER, USER WITHDRAWAL DESK, RECENT LOGS
            ───────────────────────────────────────────────────────────── */}
         <div className="xl:col-span-4 space-y-5">
+          
+          {/* USER'S OWN VERIFIED SETTLEMENT & PAYOUT DESK */}
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 space-y-4 shadow-2xs">
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-900">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-950 dark:text-white font-sans">
+                  My Payout & Settlement Desk
+                </span>
+              </div>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
+                {currentUser?.kycStatus === 'approved' ? 'Verified Bank' : 'Primary Account'}
+              </span>
+            </div>
+
+            {/* Bank & UPI Info Grid */}
+            <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 space-y-2.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-500">Settlement Bank:</span>
+                <strong className="text-zinc-900 dark:text-white font-bold">{currentUser?.bankName || 'HDFC Bank (Primary)'}</strong>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-500">Bank Account:</span>
+                <span className="font-mono font-bold text-zinc-900 dark:text-white">
+                  {currentUser?.bankAccountNumber ? `•••• ${currentUser.bankAccountNumber.slice(-4)}` : '•••• 8921'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-500">IFSC Code:</span>
+                <span className="font-mono font-bold text-zinc-900 dark:text-white uppercase">{currentUser?.bankIfsc || 'HDFC0001234'}</span>
+              </div>
+              {currentUser?.userUpiId && (
+                <div className="flex items-center justify-between pt-1 border-t border-zinc-200/60 dark:border-zinc-800/60">
+                  <span className="text-zinc-500">Express UPI:</span>
+                  <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{currentUser.userUpiId}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Available Withdrawal Balance */}
+            <div className="space-y-1">
+              <span className="text-[11px] text-zinc-500 block">Available for Immediate Payout:</span>
+              <div className="text-2xl font-black text-zinc-950 dark:text-white tabular-nums tracking-tight">
+                ${availableBalance.toFixed(2)} USD
+              </div>
+              <span className="text-xs text-zinc-400 font-mono block">
+                ≈ ₹{(availableBalance * (paymentSettings.usdToInrRate || 84.5)).toFixed(2)} INR
+              </span>
+            </div>
+
+            {/* Quick 1-tap Withdraw Action */}
+            <Link
+              href="/funds?tab=withdraw"
+              className="w-full py-2.5 px-4 rounded-lg bg-[#00875a] hover:bg-[#00704a] text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm active:scale-98"
+            >
+              <ArrowUpRight className="w-4 h-4" />
+              <span>Withdraw Funds to Bank</span>
+            </Link>
+          </div>
           
           {/* 1. CAPITAL LEDGER CARD */}
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 space-y-4 shadow-2xs">

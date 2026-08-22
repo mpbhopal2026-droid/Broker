@@ -214,38 +214,98 @@ export default function MarketsDiscoveryPage() {
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════
-            MARKETS ASSET TABLE
+            MARKETS ASSET LIST (Adaptive Mobile Rows + Desktop Table)
            ═══════════════════════════════════════════════════════════════ */}
-        <div className="overflow-x-auto">
+        {/* Mobile View (< sm): Responsive High-Density Rows */}
+        <div className="sm:hidden divide-y divide-zinc-100 dark:divide-zinc-900">
+          {filteredAssets.map((asset) => {
+            const isUp = asset.changePercent >= 0;
+            const isStarred = watchlist.includes(asset.symbol);
+            const decimals = asset.symbol.includes('JPY') ? 2 : asset.symbol.includes('EUR') || asset.symbol.includes('GBP') ? 4 : asset.symbol.includes('INR') ? 3 : 2;
+            const bid = asset.bid ?? asset.price;
+
+            return (
+              <div
+                key={asset.symbol}
+                onClick={() => router.push(`/market?symbol=${encodeURIComponent(asset.symbol)}`)}
+                className="py-3 px-1 flex items-center justify-between gap-2 hover:bg-zinc-50/80 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleWatchlist(asset.symbol);
+                    }}
+                    className="p-1 rounded text-zinc-300 hover:text-zinc-950 dark:hover:text-white"
+                  >
+                    <Star className={`w-3.5 h-3.5 ${isStarred ? 'fill-amber-400 text-amber-400' : ''}`} />
+                  </button>
+                  <div className="min-w-0">
+                    <span className="font-extrabold text-xs text-zinc-950 dark:text-white block truncate tracking-tight">
+                      {asset.symbol}
+                    </span>
+                    <span className="text-[10px] text-zinc-400 font-normal block truncate max-w-[130px]">
+                      {asset.name}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <div className="text-right">
+                    <span className="font-bold text-xs tabular-nums text-zinc-950 dark:text-white block">
+                      ${bid.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
+                    </span>
+                    <span className={`text-[10px] font-bold inline-flex items-center gap-0.5 ${isUp ? 'text-[#00875a]' : 'text-rose-600'}`}>
+                      <span>{isUp ? '▲' : '▼'}</span>
+                      <span>{isUp ? '+' : ''}{asset.changePercent.toFixed(2)}%</span>
+                    </span>
+                  </div>
+
+                  <Link
+                    href={`/market?symbol=${encodeURIComponent(asset.symbol)}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="px-3 py-1.5 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold shadow-xs active:scale-95 transition-all"
+                  >
+                    Trade
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop View (sm: and up): Full 7-column Table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left text-xs font-sans">
             <thead>
               <tr className="text-zinc-400 text-[10px] uppercase font-bold border-b border-zinc-100 dark:border-zinc-900">
-                <th className="py-3 px-3 w-8"></th>
-                <th className="py-3 px-3">Instrument</th>
-                <th className="py-3 px-3">Description</th>
-                <th className="py-3 px-3">Bid Price</th>
-                <th className="py-3 px-3">Ask Price</th>
-                <th className="py-3 px-3">Spread</th>
-                <th className="py-3 px-3">24h Change</th>
-                <th className="py-3 px-3 text-right">Actions</th>
+                <th className="py-2.5 px-3 w-6"></th>
+                <th className="py-2.5 px-3">Instrument</th>
+                <th className="py-2.5 px-3">Description</th>
+                <th className="py-2.5 px-3">Bid Price</th>
+                <th className="py-2.5 px-3">Ask Price</th>
+                <th className="py-2.5 px-3">Spread</th>
+                <th className="py-2.5 px-3">24h Change</th>
+                <th className="py-2.5 px-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
               {filteredAssets.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="text-center py-12 text-zinc-400 text-xs">
-                    No instruments found matching "{searchQuery}".
+                    No instruments found matching &quot;{searchQuery}&quot;.
                   </td>
                 </tr>
               ) : (
                 filteredAssets.map((asset) => {
                   const isUp = asset.changePercent >= 0;
                   const isStarred = watchlist.includes(asset.symbol);
-                  const decimals = asset.symbol.includes('JPY') ? 2 : asset.symbol.includes('EUR') || asset.symbol.includes('GBP') ? 5 : asset.symbol.includes('INR') ? 3 : 2;
+                  const decimals = asset.symbol.includes('JPY') ? 2 : asset.symbol.includes('EUR') || asset.symbol.includes('GBP') ? 4 : asset.symbol.includes('INR') ? 3 : 2;
 
                   const bid = asset.bid ?? asset.price;
                   const ask = asset.ask ?? asset.price + (asset.spread || 0.0002);
-                  const spreadPips = (asset.spread ? (asset.spread * (decimals === 5 ? 10000 : 100)).toFixed(1) : '0.2') + ' p';
+                  const spreadPips = ((ask - bid) * (asset.symbol.includes('JPY') ? 100 : 10000)).toFixed(1);
 
                   return (
                     <tr
@@ -253,7 +313,7 @@ export default function MarketsDiscoveryPage() {
                       onClick={() => router.push(`/market?symbol=${encodeURIComponent(asset.symbol)}`)}
                       className="hover:bg-zinc-50/80 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer group"
                     >
-                      {/* Watchlist Star */}
+                      {/* Watchlist Toggle */}
                       <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => toggleWatchlist(asset.symbol)}
@@ -264,10 +324,8 @@ export default function MarketsDiscoveryPage() {
                       </td>
 
                       {/* Instrument Symbol */}
-                      <td className="py-3 px-3">
-                        <strong className="text-zinc-950 dark:text-white font-bold block text-xs tracking-wide">
-                          {asset.symbol}
-                        </strong>
+                      <td className="py-3 px-3 font-bold text-zinc-950 dark:text-white tracking-wide">
+                        {asset.symbol}
                       </td>
 
                       {/* Description */}
@@ -286,10 +344,8 @@ export default function MarketsDiscoveryPage() {
                       </td>
 
                       {/* Spread */}
-                      <td className="py-3 px-3">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
-                          {spreadPips}
-                        </span>
+                      <td className="py-3 px-3 text-zinc-400 font-mono text-[11px]">
+                        {spreadPips} pips
                       </td>
 
                       {/* 24h Change */}
@@ -300,21 +356,21 @@ export default function MarketsDiscoveryPage() {
                         </span>
                       </td>
 
-                      {/* Actions: [ Details & Trade ] (Mint Pill) and [ Chart ↗ ] (White Pill) */}
+                      {/* Actions */}
                       <td className="py-3 px-3 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="inline-flex items-center gap-1.5">
                           <Link
                             href={`/market?symbol=${encodeURIComponent(asset.symbol)}`}
-                            className="px-3 py-1 rounded-md bg-[#e6f4ea] dark:bg-emerald-950/60 text-[#00875a] dark:text-emerald-400 hover:bg-[#d4edd9] dark:hover:bg-emerald-900/80 border border-[#b7e4c7] dark:border-emerald-800 text-xs font-bold transition-colors shadow-2xs"
+                            className="px-3 py-1 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-semibold transition-colors"
                           >
-                            Details & Trade
+                            Trade
                           </Link>
 
                           <a
                             href={`/trade?symbol=${encodeURIComponent(asset.symbol)}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-2.5 py-1 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-950 dark:hover:text-white text-xs font-semibold inline-flex items-center gap-1 transition-colors"
+                            className="px-2 py-1 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-semibold inline-flex items-center gap-1 transition-colors"
                             title="Open Real-Time Chart in New Tab"
                           >
                             <span>Chart</span>
