@@ -112,7 +112,7 @@ export const AppHeader: React.FC = () => {
       <div className="flex items-center justify-between gap-3">
         
         {/* Left: Mobile Brand */}
-        <Link href={isOperator ? '/admin' : '/dashboard'} className="md:hidden flex items-center overflow-hidden shrink-0">
+        <Link href={currentUser?.role === 'staff' ? '/staff' : isOperator ? '/admin' : '/dashboard'} className="md:hidden flex items-center overflow-hidden shrink-0">
           <BrandLogo size="sm" isAdmin={isOperator} />
         </Link>
 

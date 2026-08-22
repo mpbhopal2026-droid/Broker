@@ -55,21 +55,17 @@ export const AdminSidebar: React.FC = () => {
     { href: '/admin/trades', label: 'Trade Ledger', icon: Layers },
     { href: '/admin/ledger', label: 'Double-Entry Ledger', icon: FileText },
     { href: '/market', label: 'Market Feeds', icon: BarChart2 },
-    { href: '/admin/audit-logs', label: 'Audit Trail', icon: Lock },
     { href: '/admin/settings', label: 'Bank & UPI Routing', icon: Settings },
   ];
 
   const staffNav = [
-    { href: '/admin', label: 'Operations Desk', icon: LayoutGrid },
+    { href: '/staff', label: 'Operations Desk', icon: LayoutGrid },
     { href: '/admin/users', label: 'Users & Portfolios', icon: Users },
-    { href: '/admin/staff', label: 'Staff Team', icon: UserCheck },
     { href: '/admin/kyc', label: 'KYC Queue', icon: ShieldCheck, badge: pendingKyc },
     { href: '/admin/deposits', label: 'Deposit Clearing', icon: CreditCard, badge: pendingDeposits },
     { href: '/admin/withdrawals', label: 'Payout Queue', icon: Clock, badge: pendingWithdrawals },
     { href: '/admin/trades', label: 'Trade Ledger', icon: Layers },
-    { href: '/admin/ledger', label: 'Double-Entry Ledger', icon: FileText },
     { href: '/market', label: 'Market Feeds', icon: BarChart2 },
-    { href: '/admin/settings', label: 'Bank & UPI Routing', icon: Settings },
   ];
 
   const currentNav = isStaff ? staffNav : adminNav;
@@ -87,7 +83,7 @@ export const AdminSidebar: React.FC = () => {
           
           {/* Brand Header */}
           <div className="px-1 flex items-center justify-between">
-            <Link href="/admin" className="overflow-hidden">
+            <Link href={isStaff ? '/staff' : '/admin'} className="overflow-hidden">
               <BrandLogo isCollapsed={isCollapsed} size="sm" isAdmin={true} />
             </Link>
 
@@ -104,10 +100,10 @@ export const AdminSidebar: React.FC = () => {
           <div className="space-y-0.5">
             {!isCollapsed && (
               <div className="px-2 pb-1 text-[10px] uppercase font-bold text-zinc-400 flex items-center justify-between">
-                <span>{isStaff ? 'Staff Operator Desk' : 'Administrator Desk'}</span>
+                <span>{isStaff ? 'Staff Operations Desk' : 'Administrator Desk'}</span>
                 {isStaff && (
                   <span className="px-1.5 py-0.2 rounded text-[8px] font-bold uppercase bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300">
-                    Staff
+                    Staff Duty
                   </span>
                 )}
               </div>
@@ -117,7 +113,9 @@ export const AdminSidebar: React.FC = () => {
               const isActive =
                 item.href === '/admin'
                   ? pathname === '/admin'
-                  : pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
+                  : item.href === '/staff'
+                  ? pathname === '/staff'
+                  : pathname === item.href || (item.href !== '/admin' && item.href !== '/staff' && pathname.startsWith(item.href));
 
               return (
                 <Link

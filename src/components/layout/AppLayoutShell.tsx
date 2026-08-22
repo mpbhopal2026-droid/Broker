@@ -48,17 +48,12 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
   // Operator areas get the admin sidebar. Presentation only — access is enforced
   // in middleware and again in every route handler.
   const isOperator = currentUser?.role === 'admin' || currentUser?.role === 'staff' || currentUser?.role === 'developer';
-  const isAdminArea = isOperator || pathname.startsWith('/admin') || pathname.startsWith('/developer');
+  const isAdminArea = isOperator || pathname.startsWith('/admin') || pathname.startsWith('/developer') || pathname.startsWith('/staff');
   const needsVerification = !isOperator && VERIFIED_ONLY_ROUTES.some((r) => pathname.startsWith(r));
   // Three gates, all required before the app opens:
   //   1. Register       — name, mobile, email
   //   2. Identity       — Aadhaar and PAN uploaded
   //   3. Withdrawal a/c — where their money comes back to
-  //
-  // The third was not enforced. The gate only read kycStatus, so anyone
-  // approved manually by an operator walked in with no payout account on file —
-  // and that only surfaces later, when they try to withdraw and cannot, which
-  // is the worst possible moment to discover it.
   const kycSubmitted = currentUser?.kycStatus === 'approved' || currentUser?.kycStatus === 'pending';
   const hasWithdrawalAccount = Boolean(
     currentUser?.bankAccountNumber && currentUser?.bankIfsc,
@@ -73,26 +68,19 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
       return;
     }
 
-    // A signed-in user must never be left sitting on the login screen.
-    //
-    // This is the bug behind "the OTP works but nothing happens". After a
-    // successful verify the page calls router.push('/dashboard'); if the
-    // session context has not propagated by the time this effect runs on the
-    // new path, the guard above sees isAuthenticated === false and bounces
-    // straight back to /login. Session state then arrives — and nothing moved
-    // them off, because the equivalent middleware rule was removed. They end up
-    // parked on the login form while actually signed in, which reads as the
-    // login being broken.
     if (isAuthenticated && isAuthPage) {
-      if (isOperator) router.replace('/admin');
+      if (currentUser?.role === 'staff') router.replace('/staff');
+      else if (isOperator) router.replace('/admin');
       else if (!hasSubmittedKyc) router.replace('/kyc');
       else router.replace('/dashboard');
       return;
     }
 
-    // Authenticated users on root "/" should immediately go to /dashboard (or /admin for operators)
+    // Authenticated users on root "/" should immediately go to /dashboard (or /staff /admin for operators)
     if (isAuthenticated && pathname === '/') {
-      if (isOperator) {
+      if (currentUser?.role === 'staff') {
+        router.replace('/staff');
+      } else if (isOperator) {
         router.replace('/admin');
       } else if (!hasSubmittedKyc) {
         router.replace('/kyc');
@@ -102,9 +90,10 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
       return;
     }
 
-    // Role Isolation: Operators only access the Admin & Developer Console
-    if (isAuthenticated && isOperator && !pathname.startsWith('/admin') && !pathname.startsWith('/developer') && !isAuthPage) {
-      router.replace('/admin');
+    // Role Isolation: Operators only access Admin, Developer, and Staff Consoles
+    if (isAuthenticated && isOperator && !pathname.startsWith('/admin') && !pathname.startsWith('/developer') && !pathname.startsWith('/staff') && !pathname.startsWith('/market') && !isAuthPage) {
+      if (currentUser?.role === 'staff') router.replace('/staff');
+      else router.replace('/admin');
       return;
     }
 

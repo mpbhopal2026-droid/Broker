@@ -35,6 +35,7 @@ export function isAdminDeployment(): boolean {
 const ADMIN_ALLOWED_PREFIXES = [
   '/admin',
   '/developer',
+  '/staff',
   '/api/admin',
   '/api/developer',
   '/api/auth',      // admins must be able to sign in
@@ -48,7 +49,7 @@ const ADMIN_ALLOWED_PREFIXES = [
 ];
 
 /** Paths the CLIENT deployment must never serve. */
-const ADMIN_ONLY_PREFIXES = ['/admin', '/developer', '/api/admin', '/api/developer'];
+const ADMIN_ONLY_PREFIXES = ['/admin', '/developer', '/staff', '/api/admin', '/api/developer'];
 
 export function isPathAllowedForRole(pathname: string, role: AppRole): boolean {
   if (role === 'admin') {

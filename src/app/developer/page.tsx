@@ -32,7 +32,7 @@ interface Health {
   ledgerDrift: Array<{ user_id: string; email: string; drift: number }>;
 }
 
-type Tab = 'users' | 'sessions' | 'notifications_lab' | 'emails' | 'logins' | 'actions' | 'flags' | 'diagnostics';
+type Tab = 'users' | 'audit_trail' | 'notifications_lab' | 'emails' | 'logins' | 'sessions' | 'flags' | 'diagnostics';
 type RoleFilter = 'all' | 'client' | 'staff' | 'admin' | 'developer';
 
 export default function DeveloperPage() {
@@ -44,6 +44,8 @@ export default function DeveloperPage() {
   const [emails, setEmails] = useState<any[]>([]);
   const [logins, setLogins] = useState<any[]>([]);
   const [actions, setActions] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [selectedAuditLog, setSelectedAuditLog] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -104,12 +106,28 @@ export default function DeveloperPage() {
         }
         return;
       }
+      if (next === 'audit_trail') {
+        const res = await fetch('/api/admin/audit-logs?limit=300', { credentials: 'same-origin' });
+        const body = await res.json();
+        setAuditLogs(
+          (body?.logs ?? []).map((r: any) => ({
+            id: r.id,
+            timestamp: r.timestamp,
+            user: r.actorName || 'System',
+            userEmail: r.actorEmail || '—',
+            userRole: r.actorRole || 'system',
+            action: r.eventType,
+            details: r.metadata ? (typeof r.metadata === 'object' ? JSON.stringify(r.metadata) : String(r.metadata)) : '',
+            ip: r.ipAddress ?? '',
+          }))
+        );
+        return;
+      }
       const res = await fetch(`/api/developer?view=${next}&limit=200`, { credentials: 'same-origin' });
       const body = await res.json();
       if (next === 'users') setAllUsers(body.users ?? []);
       if (next === 'emails') setEmails(body.emails ?? []);
       if (next === 'logins') setLogins(body.logins ?? []);
-      if (next === 'actions') setActions(body.actions ?? []);
     } catch {
       /* keep previous view */
     }
@@ -297,6 +315,15 @@ export default function DeveloperPage() {
     return matchesRole && matchesSearch;
   });
 
+  const filteredAuditLogs = auditLogs.filter(
+    (a) =>
+      a.user?.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      a.userEmail?.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      a.action?.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      a.details?.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      a.ip?.includes(searchFilter)
+  );
+
   const filteredEmails = emails.filter(
     (e) =>
       e.recipient?.toLowerCase().includes(searchFilter.toLowerCase()) ||
@@ -339,7 +366,7 @@ export default function DeveloperPage() {
             </h1>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Multi-tier role management, custom email/push notification lab, transactional logs, and system kill-switches.
+            Multi-tier role management, CERT-In statutory audit trail, custom email/push notification lab, transactional logs, and system kill-switches.
           </p>
         </div>
 
@@ -432,6 +459,18 @@ export default function DeveloperPage() {
         </button>
 
         <button
+          onClick={() => setTab('audit_trail')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+            tab === 'audit_trail'
+              ? 'bg-white dark:bg-[#0f172a] text-emerald-600 dark:text-[#00d674] shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Lock className="w-4 h-4 text-emerald-500" />
+          <span>Audit Trail ({auditLogs.length})</span>
+        </button>
+
+        <button
           onClick={() => setTab('notifications_lab')}
           className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
             tab === 'notifications_lab'
@@ -463,7 +502,7 @@ export default function DeveloperPage() {
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
-          <Lock className="w-4 h-4 text-emerald-500" />
+          <ShieldCheck className="w-4 h-4 text-emerald-500" />
           <span>Auth & Sessions</span>
         </button>
 
@@ -505,7 +544,7 @@ export default function DeveloperPage() {
       </div>
 
       {/* Search Input for active tab */}
-      {(tab === 'users' || tab === 'emails' || tab === 'logins' || tab === 'actions') && (
+      {(tab === 'users' || tab === 'audit_trail' || tab === 'emails' || tab === 'logins') && (
         <div className="relative w-full max-w-sm">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
@@ -763,6 +802,173 @@ export default function DeveloperPage() {
               </table>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB: SYSTEM AUDIT TRAIL (CERT-In STATUTORY IMMUTABLE LOGS) */}
+      {/* ========================================================================= */}
+      {tab === 'audit_trail' && (
+        <div className="space-y-4">
+          <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Immutable System Audit Trail
+                  </h3>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    Append-only security log • CERT-In 180-day forensic compliance
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                  {filteredAuditLogs.length} Events Recorded
+                </span>
+              </div>
+            </div>
+
+            {/* Audit Logs Table */}
+            <div className="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
+              <table className="w-full text-left text-xs font-mono">
+                <thead className="bg-slate-50 dark:bg-[#080d14] text-slate-500 border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase font-sans font-bold">
+                  <tr>
+                    <th className="py-3 px-4">Timestamp</th>
+                    <th className="py-3 px-4">Actor</th>
+                    <th className="py-3 px-4">Action Event</th>
+                    <th className="py-3 px-4">Event Payload / Details</th>
+                    <th className="py-3 px-4 text-right">IP Address</th>
+                    <th className="py-3 px-4 text-center">Inspect</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {filteredAuditLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-slate-400 text-xs font-mono">
+                        No audit records matching search criteria.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredAuditLogs.map((log) => (
+                      <tr key={log.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                        <td className="py-3 px-4 text-slate-400 text-[11px] whitespace-nowrap">
+                          {formatDate(log.timestamp)}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-slate-900 dark:text-white font-sans">{log.user}</div>
+                          <div className="text-[10px] text-slate-400 font-mono truncate max-w-[140px]">{log.userEmail}</div>
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+                            {log.action}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-slate-600 dark:text-slate-300 font-sans text-xs max-w-xs truncate">
+                          {log.details || '—'}
+                        </td>
+                        <td className="py-3 px-4 text-slate-400 text-right font-mono text-[11px] whitespace-nowrap">
+                          {log.ip || '—'}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedAuditLog(log)}
+                            className="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+                            title="Inspect Audit Event Payload"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Audit Event Payload Inspector Modal */}
+          {selectedAuditLog && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+              <div className="w-full max-w-xl rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-scale-in">
+                <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-emerald-500" />
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Audit Event Details</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAuditLog(null)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="p-5 space-y-3 font-mono text-xs max-h-[70vh] overflow-y-auto">
+                  <div className="grid grid-cols-2 gap-2 text-[11px] p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                    <div>
+                      <span className="text-slate-400 block">Actor:</span>
+                      <strong className="text-slate-900 dark:text-white font-sans">{selectedAuditLog.user}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block">Email:</span>
+                      <strong className="text-slate-900 dark:text-white">{selectedAuditLog.userEmail}</strong>
+                    </div>
+                    <div className="mt-1">
+                      <span className="text-slate-400 block">Timestamp:</span>
+                      <span className="text-slate-700 dark:text-slate-300">{formatDate(selectedAuditLog.timestamp)}</span>
+                    </div>
+                    <div className="mt-1">
+                      <span className="text-slate-400 block">IP Origin:</span>
+                      <span className="text-slate-700 dark:text-slate-300">{selectedAuditLog.ip || 'Internal'}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-400 block text-[11px] mb-1 font-bold">Action Event:</span>
+                    <span className="px-2.5 py-1 rounded-lg text-xs font-bold uppercase bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+                      {selectedAuditLog.action}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-400 block text-[11px] mb-1 font-bold">Metadata Payload:</span>
+                    <pre className="p-3 rounded-xl bg-slate-950 text-emerald-400 border border-slate-800 text-[11px] whitespace-pre-wrap break-all overflow-x-auto">
+                      {selectedAuditLog.details
+                        ? JSON.stringify(
+                            (() => {
+                              try {
+                                return JSON.parse(selectedAuditLog.details);
+                              } catch {
+                                return selectedAuditLog.details;
+                              }
+                            })(),
+                            null,
+                            2
+                          )
+                        : '// No additional metadata recorded for this action.'}
+                    </pre>
+                  </div>
+                </div>
+
+                <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAuditLog(null)}
+                    className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    Close Inspector
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

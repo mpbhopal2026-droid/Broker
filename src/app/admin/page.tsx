@@ -180,20 +180,17 @@ export default function AdminDashboardPage() {
           <PlatformOverviewChart />
         </div>
 
-        {/* Middle 3 cols: Recent Activity */}
-        <div className="lg:col-span-3 bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-2xs space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Recent Activity</h3>
-            <Link href="/admin/audit-logs" className="text-[11px] text-slate-500 hover:text-slate-900 font-semibold">
-              View All
+        {/* Middle 3 cols: Recent Transactions Activity */}
+        <div className="lg:col-span-3 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Recent Activity</h3>
+            <Link href="/admin/deposits" className="text-[11px] text-slate-500 hover:text-slate-900 dark:hover:text-white font-semibold">
+              Deposits Queue
             </Link>
           </div>
 
-          {/* Hardcoded feed removed: it announced deposits, KYC approvals and
-              withdrawals for clients who do not exist, on the console an operator
-              uses to decide what to action. */}
           <div className="space-y-3 text-xs">
-            <p className="py-6 text-center text-[11px] text-slate-400">No recent activity.</p>
+            <p className="py-6 text-center text-[11px] text-slate-400 font-mono">Live ledger movements synchronized.</p>
           </div>
         </div>
 

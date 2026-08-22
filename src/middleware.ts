@@ -24,7 +24,7 @@ const CLIENT_ROUTES = [
   '/transactions', '/funds', '/portfolio', '/orders', '/trade', '/market',
   '/markets', '/watchlist', '/settings', '/notifications', '/support',
 ];
-const ADMIN_ROUTES = ['/admin', '/developer'];
+const ADMIN_ROUTES = ['/admin', '/developer', '/staff'];
 const AUTH_ROUTES = ['/login', '/register'];
 
 export async function middleware(req: NextRequest) {
