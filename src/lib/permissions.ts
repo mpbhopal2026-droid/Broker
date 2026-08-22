@@ -81,20 +81,31 @@ const MATRIX: Record<UserRole, Capability[]> = {
     'notification:test',
   ],
 
-  // Developer has full system observability, flags, notification testing, and complete user purge powers.
+  // Developer has super-admin access across all operational, developer, and governance systems
   developer: [
+    'trade:demo',
+    'wallet:deposit',
+    'wallet:withdraw',
+    'kyc:submit',
+    'kyc:review',
+    'deposit:review',
+    'withdrawal:review',
+    'client:view',
+    'client:edit',
+    'client:suspend',
+    'client:delete',
+    'balance:adjust',
+    'settings:view',
+    'settings:edit',
+    'email:send',
+    'audit:view',
     'flags:view',
     'flags:edit',
     'logs:view',
     'email:log:view',
     'system:health',
-    'audit:view',
-    'settings:view',
     'role:manage',
     'notification:test',
-    'client:view',
-    'client:delete',
-    'kyc:review',
   ],
 };
 
