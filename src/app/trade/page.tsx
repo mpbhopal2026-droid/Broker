@@ -16,6 +16,8 @@ import {
   RefreshCw,
   ShieldCheck,
   ArrowRight,
+  Send,
+  CheckCircle2,
 } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { formatUSD } from '@/lib/utils';
@@ -124,8 +126,41 @@ function TradePageInner() {
   const [showPositionsDrawer, setShowPositionsDrawer] = useState(false);
   const [showBrokerModal, setShowBrokerModal] = useState(false);
   const [pendingOrderIntent, setPendingOrderIntent] = useState<{ side: 'BUY' | 'SELL'; lot: number; price: string | number; margin: number } | null>(null);
+  const [isRequestingUnlock, setIsRequestingUnlock] = useState(false);
+  const [unlockRequested, setUnlockRequested] = useState(false);
   const [drawerTab, setDrawerTab] = useState<'open' | 'closed'>('open');
   const [closingId, setClosingId] = useState<string | null>(null);
+
+  const handleRequestAdminUnlock = async () => {
+    setIsRequestingUnlock(true);
+    try {
+      const res = await fetch('/api/me/trade-unlock-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ symbol: currentInstrument.symbol }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.success) {
+        setUnlockRequested(true);
+        showToast({
+          type: 'success',
+          title: 'Unlock Request Dispatched',
+          message: 'Admin & Dealing Desk have been notified to review and unlock your account.',
+        });
+      } else {
+        showToast({
+          type: 'error',
+          title: 'Request Failed',
+          message: data?.error || 'Could not send unlock request. Please try again.',
+        });
+      }
+    } catch (err: any) {
+      showToast({ type: 'error', title: 'Network Error', message: err?.message || 'Could not connect.' });
+    } finally {
+      setIsRequestingUnlock(false);
+    }
+  };
 
   // Stepper increment/decrement
   const handleStepLot = (delta: number) => {
@@ -617,66 +652,96 @@ function TradePageInner() {
         </div>
       )}
 
-      {/* BROKER ROUTING & LIVE TRADE LOCK POPUP MODAL */}
+      {/* BROKER ROUTING & LIVE TRADE LOCK POPUP MODAL (Clean White Theme) */}
       {showBrokerModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in"
           onClick={() => setShowBrokerModal(false)}
         >
           <div
-            className="w-full max-w-md rounded-2xl bg-[#0f172a] border border-slate-800 p-5 space-y-4 shadow-2xl text-white animate-scale-in"
+            className="w-full max-w-md rounded-3xl bg-white border border-slate-200 p-6 space-y-4 shadow-2xl text-slate-900 animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                  <ShieldCheck className="w-4 h-4" />
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-[#e6f4ea] text-[#00875a] border border-[#b7e4c7]">
+                  <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white">Live Trading Lock & Broker Clearance</h3>
-                  <span className="text-[10px] text-slate-400 font-mono">Dealing Desk Execution</span>
+                  <h3 className="text-sm font-black text-slate-900">Live Trading Clearance & Lock</h3>
+                  <span className="text-[10px] text-slate-500 font-mono">Institutional Dealing Desk Routing</span>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowBrokerModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {pendingOrderIntent && (
-              <div className="p-3.5 rounded-xl bg-[#080d14] border border-slate-800 space-y-2">
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Order Side & Volume:</span>
-                  <span className="font-black font-mono text-emerald-400">
+                  <span className="text-slate-500 font-medium">Requested Order:</span>
+                  <span className="font-black font-mono text-[#00875a]">
                     {pendingOrderIntent.side} {pendingOrderIntent.lot} Lot {currentInstrument.symbol}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Indicative Execution Price:</span>
-                  <span className="font-bold font-mono text-white">${pendingOrderIntent.price}</span>
+                  <span className="text-slate-500 font-medium">Indicative Live Price:</span>
+                  <span className="font-bold font-mono text-slate-900">${pendingOrderIntent.price}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Required Margin:</span>
-                  <span className="font-bold font-mono text-white">${pendingOrderIntent.margin.toFixed(2)} USD</span>
+                  <span className="text-slate-500 font-medium">Required Margin:</span>
+                  <span className="font-bold font-mono text-slate-900">${pendingOrderIntent.margin.toFixed(2)} USD</span>
                 </div>
               </div>
             )}
 
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Real-time market rates and charts are streaming live. In institutional dealing desk mode, live order fills are routed and confirmed with your assigned broker desk.
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Real-time market charts and rates are streaming live. Live trade execution is locked until reviewed and authorized by the Administrator & Dealing Desk.
             </p>
 
-            <div className="space-y-2 pt-1">
+            <div className="space-y-2.5 pt-1">
+              {/* Primary Action: Send Request to Admin to Unlock Trading */}
+              <button
+                type="button"
+                disabled={isRequestingUnlock || unlockRequested}
+                onClick={handleRequestAdminUnlock}
+                className={`w-full py-3.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 cursor-pointer ${
+                  unlockRequested
+                    ? 'bg-[#e6f4ea] text-[#00875a] border border-[#b7e4c7] cursor-default'
+                    : 'bg-[#00875a] hover:bg-[#00704a] text-white'
+                }`}
+              >
+                {isRequestingUnlock ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                    <span>Sending Unlock Request to Admin…</span>
+                  </>
+                ) : unlockRequested ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-[#00875a]" />
+                    <span>✅ Unlock Request Sent to Admin Desk</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    <span>Send Request to Admin to Unlock Trading</span>
+                  </>
+                )}
+              </button>
+
               <Link
                 href="/support"
-                className="w-full py-3 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md active:scale-98"
+                className="w-full py-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-all text-center"
               >
-                <span>Dispatch Order to Dealing Desk</span>
-                <ArrowRight className="w-4 h-4" />
+                <span>Contact Dealing Desk Officer</span>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
               </Link>
+
               <button
                 type="button"
                 onClick={() => {
@@ -685,10 +750,10 @@ function TradePageInner() {
                   showToast({
                     type: 'info',
                     title: 'Demo Simulator Ready',
-                    message: 'Switched to $10,000 demo margin practice.',
+                    message: 'Switched to $10,000 demo practice margin.',
                   });
                 }}
-                className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition-all border border-slate-700 cursor-pointer"
+                className="w-full py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-600 font-bold text-xs transition-all border border-slate-200 cursor-pointer"
               >
                 Practice with $10,000 Demo Balance
               </button>

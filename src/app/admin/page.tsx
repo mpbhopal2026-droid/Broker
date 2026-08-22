@@ -31,6 +31,7 @@ import { AdminReviewWithdrawalModal } from '@/components/admin/modals/AdminRevie
 import { AdminAddUserModal } from '@/components/admin/modals/AdminAddUserModal';
 import { AdminManualAdjustmentModal } from '@/components/admin/modals/AdminManualAdjustmentModal';
 import { AdminBroadcastModal } from '@/components/admin/modals/AdminBroadcastModal';
+import { TradeUnlockManager } from '@/components/admin/TradeUnlockManager';
 import { Transaction } from '@/lib/types';
 
 export default function AdminDashboardPage() {
@@ -175,8 +176,9 @@ export default function AdminDashboardPage() {
       {/* Middle Section: Platform Overview (6 cols), Recent Activity (3 cols), Quick Actions (3 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         
-        {/* Left 6 cols: Platform Overview Multi-line Chart */}
-        <div className="lg:col-span-6">
+        {/* Left 6 cols: Live Trade Unlock Desk (Top Upper-Left) + Platform Overview Chart */}
+        <div className="lg:col-span-6 space-y-5">
+          <TradeUnlockManager />
           <PlatformOverviewChart />
         </div>
 

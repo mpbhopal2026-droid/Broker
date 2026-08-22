@@ -7,21 +7,21 @@ import {
   LayoutDashboard,
   TrendingUp,
   CandlestickChart,
-  Briefcase,
   Wallet,
-  Menu,
-  X,
   ShieldCheck,
   User,
   LifeBuoy,
   Settings,
-  ArrowUpDown,
-  Sliders,
-  ChevronRight,
   CreditCard,
   FileText,
   Lock,
   Scale,
+  LogOut,
+  X,
+  ChevronRight,
+  Sparkles,
+  ExternalLink,
+  Sliders,
   Users,
   Building,
   Terminal,
@@ -32,7 +32,7 @@ import { useAdmin } from '@/lib/admin-store';
 
 export const MobileBottomNav: React.FC = () => {
   const pathname = usePathname();
-  const { currentUser } = useApp();
+  const { currentUser, logout } = useApp();
   const { transactions, kycRecords } = useAdmin();
 
   const isOperator =
@@ -46,7 +46,7 @@ export const MobileBottomNav: React.FC = () => {
   const isStaff = currentUser?.role === 'staff';
   const isDeveloper = currentUser?.role === 'developer';
 
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [profileHubOpen, setProfileHubOpen] = useState(false);
 
   const countPending = (type: 'deposit' | 'withdrawal') =>
     (transactions ?? []).filter((t) => t.type === type && t.status === 'pending').length || undefined;
@@ -85,72 +85,22 @@ export const MobileBottomNav: React.FC = () => {
 
   const mainTabs = isDeveloper ? devMainTabs : isStaff ? staffMainTabs : isOperator ? adminMainTabs : clientMainTabs;
 
-  const clientCategories = [
-    {
-      title: 'Trading & Markets',
-      items: [
-        { href: '/dashboard', label: 'Overview', desc: 'Summary & balance', icon: LayoutDashboard },
-        { href: '/trade', label: 'Trading Desk', desc: 'Live terminal execution', icon: CandlestickChart },
-        { href: '/markets', label: 'Quotes & Rates', desc: 'Forex, metals & crypto', icon: TrendingUp },
-        { href: '/portfolio', label: 'Net Portfolio', desc: 'Positions & margin utilization', icon: Briefcase },
-        { href: '/orders', label: 'Order History', desc: 'Filled & closed positions', icon: ArrowUpDown },
-      ],
-    },
-    {
-      title: 'Banking & Ledger',
-      items: [
-        { href: '/funds?tab=deposit', label: 'Add Funds (Deposit)', desc: 'Instant UPI & bank routing', icon: Wallet },
-        { href: '/funds?tab=withdraw', label: 'Withdraw Payout', desc: 'Domestic bank settlement', icon: CreditCard },
-        { href: '/transactions', label: 'Financial Ledger', desc: 'Statements and receipts', icon: FileText },
-      ],
-    },
-    {
-      title: 'Account & Compliance',
-      items: [
-        { href: '/verification', label: 'Identity Verification', desc: 'Aadhaar & PAN verification', icon: ShieldCheck },
-        { href: '/profile', label: 'Profile Settings', desc: 'User profile & payout bank', icon: User },
-        { href: '/profile/security', label: 'Security & Access', desc: 'Active sessions & password', icon: Lock },
-        { href: '/settings', label: 'Preferences', desc: 'Display & settings', icon: Settings },
-      ],
-    },
-    {
-      title: 'Support & Legal',
-      items: [
-        { href: '/help', label: 'Customer Support', desc: 'Support desk & tickets', icon: LifeBuoy },
-        { href: '/grievance', label: 'Grievance Redressal', desc: 'Compliance officer', icon: Scale },
-        { href: '/legal/client-agreement', label: 'Client Agreement', desc: 'Terms & statutory disclosures', icon: FileText },
-      ],
-    },
-  ];
+  // Compute initials for the profile avatar tab
+  const getInitials = (name?: string) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
 
-  const operatorCategories = [
-    {
-      title: 'Operational Desks',
-      items: [
-        { href: isStaff ? '/staff' : '/admin', label: isStaff ? 'Staff Operations Desk' : 'Admin Console Overview', desc: 'Main operations dashboard', icon: LayoutDashboard },
-        { href: '/admin/users', label: 'Users & Portfolios', desc: 'Client account management', icon: Users },
-        { href: '/admin/kyc', label: 'KYC Compliance Queue', desc: 'Pending document approvals', icon: ShieldCheck },
-        { href: '/admin/deposits', label: 'Deposit Clearing', desc: 'Incoming INR clearance & conversion', icon: CreditCard },
-        { href: '/admin/withdrawals', label: 'Payout Queue', desc: 'Bank settlement & IMPS', icon: Wallet },
-        { href: '/admin/trades', label: 'Trade Ledger', desc: 'Live open positions & lots', icon: ArrowUpDown },
-      ],
-    },
-    {
-      title: 'Governance & Settings',
-      items: [
-        ...(isDeveloper ? [{ href: '/developer', label: 'Developer Command Console', desc: 'Audit trail, flags & labs', icon: Terminal }] : []),
-        { href: '/admin/ledger', label: 'Double-Entry Financial Ledger', desc: 'Immutable audit statements', icon: FileText },
-        { href: '/admin/settings', label: 'Bank & UPI Routing Config', desc: 'Payment gateway switches', icon: Settings },
-        { href: '/market', label: 'Live Market Terminal', desc: 'Real-time price feeds', icon: TrendingUp },
-      ],
-    },
-  ];
-
-  const activeCategories = isOperator ? operatorCategories : clientCategories;
+  const userInitials = getInitials(currentUser?.fullName);
 
   return (
     <>
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#070b12]/95 backdrop-blur-xl border-t border-slate-800 pb-safe select-none shadow-2xl">
+      {/* ═══════════════════════════════════════════════════════════════
+          MOBILE BOTTOM NAVBAR (Crisp White / Light Theme, 64px Height)
+         ═══════════════════════════════════════════════════════════════ */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200/90 pb-safe select-none shadow-[0_-8px_30px_rgba(0,0,0,0.06)]">
         <div className="grid grid-cols-5 h-16 items-center px-1">
           {mainTabs.map((item) => {
             const Icon = item.icon;
@@ -163,104 +113,260 @@ export const MobileBottomNav: React.FC = () => {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center h-full transition-all active:scale-90 relative ${
+                className={`flex flex-col items-center justify-center h-full transition-all active:scale-95 relative ${
                   isActive
-                    ? 'text-emerald-400 font-black'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'text-[#00875a] font-bold'
+                    : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
-                <div className={`p-1.5 rounded-xl transition-all relative ${isActive ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-sm' : ''}`}>
+                <div className={`p-1.5 rounded-xl transition-all relative ${isActive ? 'bg-[#e6f4ea] text-[#00875a] shadow-xs' : ''}`}>
                   <Icon className="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[2.2]" />
                   {'badge' in item && typeof item.badge === 'number' && item.badge > 0 ? (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-emerald-500 text-white text-[9px] font-black flex items-center justify-center font-mono shadow-md">
+                    <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-[#00875a] text-white text-[9px] font-black flex items-center justify-center font-mono shadow-xs">
                       {item.badge}
                     </span>
                   ) : null}
                 </div>
-                <span className={`text-[11px] mt-0.5 font-sans tracking-tight font-bold ${isActive ? 'text-emerald-400' : 'text-slate-400'}`}>
+                <span className={`text-[11px] mt-0.5 font-sans tracking-tight ${isActive ? 'text-[#00875a] font-black' : 'text-slate-600 font-bold'}`}>
                   {item.label}
                 </span>
               </Link>
             );
           })}
 
-          {/* More Menu Trigger */}
+          {/* 5th Tab: Client Profile Avatar / Hub Trigger */}
           <button
             type="button"
-            onClick={() => setMenuOpen(true)}
-            aria-label="More Services"
-            className="flex flex-col items-center justify-center h-full text-slate-400 hover:text-slate-200 active:scale-90 transition-all cursor-pointer"
+            onClick={() => setProfileHubOpen(true)}
+            aria-label="Account Profile & Settings"
+            className="flex flex-col items-center justify-center h-full text-slate-600 hover:text-slate-900 active:scale-95 transition-all cursor-pointer"
           >
-            <div className="p-1.5 rounded-xl hover:bg-slate-800 transition-all">
-              <Menu className="w-5 h-5 sm:w-5.5 sm:h-5.5 stroke-[2.2]" />
+            <div className="p-1 rounded-xl hover:bg-slate-100 transition-all flex items-center justify-center">
+              <div className="w-7 h-7 rounded-lg bg-[#00875a] text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                {userInitials}
+              </div>
             </div>
-            <span className="text-[11px] mt-0.5 font-sans font-bold text-slate-400">More</span>
+            <span className="text-[11px] mt-0.5 font-sans font-bold text-slate-600">Profile</span>
           </button>
         </div>
       </nav>
 
-      {/* Slide-Up Bottom Sheet Drawer */}
-      {menuOpen && (
+      {/* ═══════════════════════════════════════════════════════════════
+          CLIENT PROFILE & ACCOUNT HUB (Slide-Up Clean White Sheet)
+         ═══════════════════════════════════════════════════════════════ */}
+      {profileHubOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex flex-col justify-end animate-in fade-in duration-150"
-          onClick={() => setMenuOpen(false)}
+          className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex flex-col justify-end animate-in fade-in duration-150"
+          onClick={() => setProfileHubOpen(false)}
         >
           <div
-            className="w-full bg-[#0f172a] rounded-t-3xl border-t border-slate-800 p-5 pb-safe max-h-[82vh] overflow-y-auto space-y-5 shadow-2xl animate-in slide-in-from-bottom duration-150 text-white"
+            className="w-full bg-white rounded-t-3xl border-t border-slate-200 p-5 pb-safe max-h-[85vh] overflow-y-auto space-y-5 shadow-2xl animate-in slide-in-from-bottom duration-150 text-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Drawer Header Handle & Title */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <h3 className="font-sans font-black text-xs uppercase tracking-wider text-white">
-                  {isOperator ? (isDeveloper ? 'Developer Super Console' : isStaff ? 'Staff Operations Desk' : 'Administrator Console') : 'Platform Navigation'}
-                </h3>
+            {/* Header: User Profile Card */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-11 h-11 rounded-2xl bg-[#00875a] text-white font-black text-sm flex items-center justify-center shrink-0 shadow-md">
+                  {userInitials}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-sm text-slate-900 truncate">
+                    {currentUser?.fullName || 'Client Account'}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-mono truncate">
+                    {currentUser?.email || currentUser?.phone || 'Verified Trader'}
+                  </p>
+                </div>
               </div>
+
               <button
                 type="button"
-                onClick={() => setMenuOpen(false)}
+                onClick={() => setProfileHubOpen(false)}
                 aria-label="Close"
-                className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="p-2 rounded-xl bg-slate-100 text-slate-500 hover:text-slate-900 hover:bg-slate-200 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Content Sections */}
-            <div className="space-y-5">
-              {activeCategories.map((cat) => (
-                <div key={cat.title} className="space-y-1.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono px-1">
-                    {cat.title}
-                  </span>
-                  <div className="grid grid-cols-1 gap-1.5">
-                    {cat.items.map((service) => {
-                      const SIcon = service.icon;
-                      return (
-                        <Link
-                          key={service.href}
-                          href={service.href}
-                          onClick={() => setMenuOpen(false)}
-                          className="flex items-center justify-between p-2.5 rounded-xl bg-[#080d14] border border-slate-800 hover:border-emerald-500/50 transition-all hover:bg-slate-800/40"
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-8 h-8 rounded-lg bg-[#0f172a] border border-slate-700 flex items-center justify-center shrink-0 text-emerald-400">
-                              <SIcon className="w-4 h-4" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-bold text-xs text-white truncate">{service.label}</p>
-                              <p className="text-[10px] text-slate-400 truncate font-mono">{service.desc}</p>
-                            </div>
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-slate-500 shrink-0 ml-2" />
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+            {/* KYC Status Pill */}
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-[#f8fafc] border border-slate-200/80">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className={`w-4 h-4 ${currentUser?.kycStatus === 'approved' ? 'text-[#00875a]' : 'text-amber-500'}`} />
+                <span className="text-xs font-bold text-slate-800">Identity Verification (KYC)</span>
+              </div>
+              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase ${
+                currentUser?.kycStatus === 'approved'
+                  ? 'bg-[#e6f4ea] text-[#00875a]'
+                  : currentUser?.kycStatus === 'pending'
+                  ? 'bg-amber-50 text-amber-700'
+                  : 'bg-rose-50 text-rose-700'
+              }`}>
+                {currentUser?.kycStatus === 'approved' ? 'Verified' : currentUser?.kycStatus === 'pending' ? 'In Review' : 'Action Required'}
+              </span>
             </div>
+
+            {/* Account & Banking Controls */}
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 font-sans px-1">
+                Account & Banking
+              </span>
+              <div className="grid grid-cols-1 gap-1.5">
+                <Link
+                  href="/funds?tab=withdraw"
+                  onClick={() => setProfileHubOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-[#f8fafc] border border-slate-200/80 hover:border-[#00875a]/50 hover:bg-[#e6f4ea]/20 transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-[#00875a] shadow-2xs">
+                      <CreditCard className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs text-slate-900">Settlement Bank & UPI Details</p>
+                      <p className="text-[10px] text-slate-500 font-mono">Manage verified payout accounts</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-900 transition-colors" />
+                </Link>
+
+                <Link
+                  href="/verification"
+                  onClick={() => setProfileHubOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-[#f8fafc] border border-slate-200/80 hover:border-[#00875a]/50 hover:bg-[#e6f4ea]/20 transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-[#00875a] shadow-2xs">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs text-slate-900">Identity Documents (Aadhaar/PAN)</p>
+                      <p className="text-[10px] text-slate-500 font-mono">Compliance & document status</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-900 transition-colors" />
+                </Link>
+
+                <Link
+                  href="/transactions"
+                  onClick={() => setProfileHubOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-[#f8fafc] border border-slate-200/80 hover:border-[#00875a]/50 hover:bg-[#e6f4ea]/20 transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-[#00875a] shadow-2xs">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs text-slate-900">Account Statements & Ledger</p>
+                      <p className="text-[10px] text-slate-500 font-mono">Download official tax statements</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-900 transition-colors" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Security & Preferences */}
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 font-sans px-1">
+                Security & Preferences
+              </span>
+              <div className="grid grid-cols-1 gap-1.5">
+                <Link
+                  href="/profile/security"
+                  onClick={() => setProfileHubOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-[#f8fafc] border border-slate-200/80 hover:border-[#00875a]/50 hover:bg-[#e6f4ea]/20 transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 shadow-2xs">
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs text-slate-900">Security & Active Sessions</p>
+                      <p className="text-[10px] text-slate-500 font-mono">Passwordless login & device access</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-900 transition-colors" />
+                </Link>
+
+                <Link
+                  href="/settings"
+                  onClick={() => setProfileHubOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-[#f8fafc] border border-slate-200/80 hover:border-[#00875a]/50 hover:bg-[#e6f4ea]/20 transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 shadow-2xs">
+                      <Settings className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs text-slate-900">App Preferences</p>
+                      <p className="text-[10px] text-slate-500 font-mono">Notifications & display settings</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-900 transition-colors" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Support & Legal */}
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 font-sans px-1">
+                Help & Governance
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  href="/help"
+                  onClick={() => setProfileHubOpen(false)}
+                  className="p-3 rounded-2xl bg-[#f8fafc] border border-slate-200/80 hover:border-[#00875a]/50 text-center transition-all block"
+                >
+                  <LifeBuoy className="w-4 h-4 mx-auto text-[#00875a] mb-1" />
+                  <span className="font-bold text-xs text-slate-900 block">Support Desk</span>
+                  <span className="text-[10px] text-slate-500">24/7 Assistance</span>
+                </Link>
+
+                <Link
+                  href="/grievance"
+                  onClick={() => setProfileHubOpen(false)}
+                  className="p-3 rounded-2xl bg-[#f8fafc] border border-slate-200/80 hover:border-[#00875a]/50 text-center transition-all block"
+                >
+                  <Scale className="w-4 h-4 mx-auto text-slate-700 mb-1" />
+                  <span className="font-bold text-xs text-slate-900 block">Grievance</span>
+                  <span className="text-[10px] text-slate-500">Statutory Redressal</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Operator Area Link (Staff / Admin / Developer) */}
+            {isOperator && (
+              <div className="pt-1">
+                <Link
+                  href={isDeveloper ? '/developer' : isStaff ? '/staff' : '/admin'}
+                  onClick={() => setProfileHubOpen(false)}
+                  className="w-full p-3 rounded-2xl bg-slate-900 text-white flex items-center justify-between font-bold text-xs shadow-md"
+                >
+                  <div className="flex items-center gap-2">
+                    <Terminal className="w-4 h-4 text-emerald-400" />
+                    <span>{isDeveloper ? 'Developer Super Console' : isStaff ? 'Staff Operations Desk' : 'Administrator Console'}</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </Link>
+              </div>
+            )}
+
+            {/* Logout Action */}
+            <div className="pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={async () => {
+                  setProfileHubOpen(false);
+                  await logout();
+                }}
+                className="w-full py-3 rounded-2xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Log Out of Account</span>
+              </button>
+            </div>
+
           </div>
         </div>
       )}
