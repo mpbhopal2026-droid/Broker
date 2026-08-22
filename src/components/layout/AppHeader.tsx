@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AccountModeSwitch } from '@/components/trading/AccountModeSwitch';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -23,6 +23,44 @@ export const AppHeader: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+
+  const notificationRef = useRef<HTMLDivElement>(null);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Auto-close notification panel, search and user dropdown on outside click or escape
+  useEffect(() => {
+    const handleOutsideInteraction = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      if (notificationRef.current && !notificationRef.current.contains(target)) {
+        setNotificationsOpen(false);
+      }
+      if (userDropdownRef.current && !userDropdownRef.current.contains(target)) {
+        setUserDropdownOpen(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(target)) {
+        setIsSearchOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setNotificationsOpen(false);
+        setUserDropdownOpen(false);
+        setIsSearchOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideInteraction);
+    document.addEventListener('touchstart', handleOutsideInteraction);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideInteraction);
+      document.removeEventListener('touchstart', handleOutsideInteraction);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   /**
    * The bell was a placeholder that always read "No new alerts" and never
@@ -117,7 +155,7 @@ export const AppHeader: React.FC = () => {
         </Link>
 
         {/* Center/Desktop: Search Trigger Input */}
-        <div className="hidden md:flex items-center flex-1 max-w-md relative">
+        <div ref={searchRef} className="hidden md:flex items-center flex-1 max-w-md relative">
           <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
@@ -178,10 +216,10 @@ export const AppHeader: React.FC = () => {
           )}
 
           {/* Notification Bell */}
-          <div className="relative">
+          <div ref={notificationRef} className="relative">
             <button
               onClick={() => setNotificationsOpen(!notificationsOpen)}
-              className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors"
+              className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
               aria-label="Notifications"
             >
               <Bell className="w-4 h-4" />
@@ -194,7 +232,7 @@ export const AppHeader: React.FC = () => {
 
             {notificationsOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setNotificationsOpen(false)} />
+                <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setNotificationsOpen(false)} />
                 <div className="absolute right-0 mt-1.5 w-72 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl p-3 z-50 text-xs space-y-2">
                   <div className="flex justify-between items-center pb-2 border-b border-zinc-100 dark:border-zinc-900">
                     <span className="font-bold text-zinc-950 dark:text-white uppercase tracking-wider text-[11px]">Notifications</span>
@@ -202,7 +240,7 @@ export const AppHeader: React.FC = () => {
                       <button
                         type="button"
                         onClick={markAllRead}
-                        className="text-[10px] font-bold text-emerald-600 hover:underline"
+                        className="text-[10px] font-bold text-emerald-600 hover:underline cursor-pointer"
                       >
                         Mark all read
                       </button>
@@ -267,7 +305,7 @@ export const AppHeader: React.FC = () => {
           </div>
 
           {/* Account Profile Dropdown (Circular Forest Green Avatar) */}
-          <div className="relative">
+          <div ref={userDropdownRef} className="relative">
             <button
               onClick={() => setUserDropdownOpen(!userDropdownOpen)}
               className="flex items-center gap-1 p-0.5 rounded-full hover:ring-2 hover:ring-zinc-200 dark:hover:ring-zinc-800 transition-all"
