@@ -40,7 +40,7 @@ export default function MonochromeFundsPage() {
 
   const [activeTab, setActiveTab] = useState<'overview' | 'deposit' | 'withdraw'>(initialTab);
   const [depositMethod, setDepositMethod] = useState<'upi' | 'bank'>('upi');
-  const [depositUSD, setDepositUSD] = useState<number>(200);
+  const [depositINR, setDepositINR] = useState<number>(10000);
   const [utrNumber, setUtrNumber] = useState('');
   const [proofImage, setProofImage] = useState<string>('');
   const [copiedKey, setCopiedKey] = useState('');
@@ -81,7 +81,6 @@ export default function MonochromeFundsPage() {
   }, []);
 
   const exchangeRate = paymentSettings.usdToInrRate || 90.0;
-  const depositINR = Math.round(depositUSD * exchangeRate);
 
   const activeBankName = customPayment?.bankName || paymentSettings.bankName || 'HDFC Bank Ltd';
   const activeAccountHolder = customPayment?.accountHolder || paymentSettings.accountHolder || 'Global Forex Custody';
@@ -367,92 +366,97 @@ export default function MonochromeFundsPage() {
         </div>
       )}
 
-      {/* TAB 2: DEPOSIT */}
+      {/* TAB 2: DEPOSIT (INR-Based Deposit Gateway) */}
       {activeTab === 'deposit' && (
-        <form onSubmit={handleDepositSubmit} className="p-4 sm:p-5 rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-4">
-          <div className="pb-2.5 border-b border-zinc-100 dark:border-zinc-900 flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white">
-              Fund Account (USD → INR Direct Gateway)
-            </span>
-            <span className="text-[10px] text-zinc-500 tabular-nums">Rate: $1.00 = ₹{exchangeRate.toFixed(2)} INR</span>
-          </div>
-
-          {/* Currency Converter */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase text-zinc-400 block">Desired Deposit (USD)</label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs font-bold">$</span>
-                <input
-                  type="number"
-                  min="20"
-                  step="10"
-                  value={depositUSD}
-                  onChange={(e) => setDepositUSD(Math.max(0, parseFloat(e.target.value) || 0))}
-                  className="w-full bg-zinc-50 focus:bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md pl-7 pr-3 py-2 text-sm font-bold tabular-nums text-zinc-950 dark:text-white focus:outline-none focus:border-zinc-950 dark:focus:border-zinc-100"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase text-zinc-400 block">Payable in Domestic INR</label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-xs font-bold">₹</span>
-                <input
-                  type="text"
-                  readOnly
-                  value={depositINR.toLocaleString('en-IN')}
-                  className="w-full bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-md pl-7 pr-3 py-2 text-sm font-bold tabular-nums text-zinc-950 dark:text-white cursor-not-allowed"
-                />
-              </div>
+        <form onSubmit={handleDepositSubmit} className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-5 shadow-sm">
+          <div className="pb-3 border-b border-zinc-100 dark:border-zinc-900 flex items-center justify-between">
+            <div>
+              <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-zinc-950 dark:text-white">
+                Add Capital via Instant INR Deposit
+              </h2>
+              <p className="text-[11px] text-zinc-500 mt-0.5">
+                Pay in domestic Indian Rupees (INR). Dealing Desk verifies and credits equivalent USD balance.
+              </p>
             </div>
           </div>
 
-          {/* Preset Chips */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {[50, 100, 200, 500, 1000, 2000].map((amt) => (
-              <button
-                key={amt}
-                type="button"
-                onClick={() => setDepositUSD(amt)}
-                className={`px-2.5 py-1 rounded text-xs font-bold tabular-nums transition-colors ${
-                  depositUSD === amt
-                    ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950'
-                    : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800'
-                }`}
-              >
-                ${amt}
-              </button>
-            ))}
+          {/* Direct INR Amount Input */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 block">
+              Deposit Amount in INR (₹) *
+            </label>
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 font-bold text-base">₹</span>
+              <input
+                type="number"
+                min="500"
+                step="500"
+                required
+                value={depositINR || ''}
+                onChange={(e) => setDepositINR(Math.max(0, parseFloat(e.target.value) || 0))}
+                placeholder="e.g. 10000"
+                className="w-full bg-zinc-50 focus:bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl pl-9 pr-4 py-3 text-base font-bold tabular-nums text-zinc-950 dark:text-white focus:outline-none focus:border-[#00875a] transition-all"
+              />
+            </div>
+
+            {/* Quick Preset INR Chips */}
+            <div className="flex items-center gap-2 flex-wrap pt-1">
+              {[2000, 5000, 10000, 25000, 50000, 100000].map((amt) => (
+                <button
+                  key={amt}
+                  type="button"
+                  onClick={() => setDepositINR(amt)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold tabular-nums transition-all cursor-pointer ${
+                    depositINR === amt
+                      ? 'bg-[#00875a] text-white shadow-xs'
+                      : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 hover:border-slate-300'
+                  }`}
+                >
+                  ₹{amt.toLocaleString('en-IN')}
+                </button>
+              ))}
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-[#e6f4ea] text-[#00875a] border border-[#b7e4c7] text-[11px] font-medium leading-relaxed mt-2 flex items-start gap-2">
+              <span className="text-sm shrink-0">ℹ️</span>
+              <span>
+                Your deposit is made in domestic INR. Upon UTR confirmation by the Dealing Desk, the adjusted USD capital will be deposited directly into your live trading balance.
+              </span>
+            </div>
           </div>
 
-          {/* Routing Details Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-900">
+          {/* Payment Method / Routing Details Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-zinc-100 dark:border-zinc-900">
             {/* QR Card */}
-            <div className="p-3 rounded-md bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center text-center space-y-2">
-              <UpiQr upiLink={upiLink} size={150} />
+            <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center text-center space-y-2.5">
+              <UpiQr upiLink={upiLink} size={160} />
               <div className="space-y-0.5">
-                <span className="text-[10px] text-zinc-400 block uppercase">Scan via PhonePe, GPay, Paytm</span>
-                <span className="text-xs font-bold text-zinc-950 dark:text-white tabular-nums">Pay Exactly ₹{depositINR.toLocaleString('en-IN')}</span>
+                <span className="text-[10px] text-zinc-400 block uppercase font-bold">Scan via PhonePe, GPay, Paytm</span>
+                <span className="text-sm font-black text-zinc-950 dark:text-white tabular-nums">
+                  Pay Exactly ₹{depositINR > 0 ? depositINR.toLocaleString('en-IN') : '0'}
+                </span>
+              </div>
+              <div className="w-full pt-1 sm:hidden">
+                <UpiPayButtons params={upiParams} />
               </div>
             </div>
 
-            {/* Bank Fields */}
-            <div className="space-y-2 text-xs">
-              <div className="p-2.5 rounded bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
-                <div className="flex justify-between items-center text-[10px] text-zinc-400 uppercase">
+            {/* Bank & UPI VPA Fields */}
+            <div className="space-y-2.5 text-xs">
+              <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                <div className="flex justify-between items-center text-[10px] text-zinc-400 uppercase font-bold">
                   <span>UPI VPA Address</span>
-                  <button type="button" onClick={() => copyToClipboard(activeUpiId, 'UPI ID')} className="text-zinc-950 dark:text-white font-bold hover:underline">
+                  <button type="button" onClick={() => copyToClipboard(activeUpiId, 'UPI ID')} className="text-[#00875a] font-bold hover:underline cursor-pointer">
                     {copiedKey === 'UPI ID' ? '✓ Copied' : 'Copy'}
                   </button>
                 </div>
                 <div className="font-bold text-zinc-950 dark:text-white text-xs">{activeUpiId}</div>
               </div>
 
-              <div className="p-2.5 rounded bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
-                <div className="flex justify-between items-center text-[10px] text-zinc-400 uppercase">
+              <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                <div className="flex justify-between items-center text-[10px] text-zinc-400 uppercase font-bold">
                   <span>Account Number & IFSC</span>
-                  <button type="button" onClick={() => copyToClipboard(`${activeAccountNumber} / ${activeIfsc}`, 'Account & IFSC')} className="text-zinc-950 dark:text-white font-bold hover:underline">
+                  <button type="button" onClick={() => copyToClipboard(`${activeAccountNumber} / ${activeIfsc}`, 'Account & IFSC')} className="text-[#00875a] font-bold hover:underline cursor-pointer">
                     {copiedKey === 'Account & IFSC' ? '✓ Copied' : 'Copy'}
                   </button>
                 </div>
@@ -463,9 +467,11 @@ export default function MonochromeFundsPage() {
           </div>
 
           {/* Proof Submission */}
-          <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-900">
+          <div className="space-y-3 pt-3 border-t border-zinc-100 dark:border-zinc-900">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase text-zinc-400 block">Bank Transaction ID / UTR (12 Digits) *</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 block">
+                Bank Transaction ID / UTR (12 Digits) *
+              </label>
               <input
                 type="text"
                 required
@@ -473,13 +479,13 @@ export default function MonochromeFundsPage() {
                 value={utrNumber}
                 onChange={(e) => setUtrNumber(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
                 placeholder="e.g. 423910592819"
-                className="w-full bg-zinc-50 focus:bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-xs font-bold tabular-nums text-zinc-950 dark:text-white focus:outline-none focus:border-zinc-950 dark:focus:border-zinc-100 tracking-wider"
+                className="w-full bg-zinc-50 focus:bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm font-bold tabular-nums text-zinc-950 dark:text-white focus:outline-none focus:border-[#00875a] tracking-wider"
               />
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-[10px] font-bold uppercase">
-                <span className="text-zinc-400">Payment Receipt Screenshot *</span>
+              <div className="flex items-center justify-between text-[11px] font-bold uppercase">
+                <span className="text-zinc-500">Payment Receipt Screenshot *</span>
                 <span className={proofImage ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}>
                   {proofImage ? '✓ Screenshot Attached' : 'Mandatory Requirement'}
                 </span>
@@ -489,78 +495,105 @@ export default function MonochromeFundsPage() {
                 accept="image/*,application/pdf"
                 required
                 onChange={handleFileUpload}
-                className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs text-zinc-600 dark:text-zinc-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-bold file:bg-[#00875a] file:text-white"
+                className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-600 dark:text-zinc-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#00875a] file:text-white cursor-pointer"
               />
-              {!proofImage && (
-                <p className="text-[10px] text-amber-600 dark:text-amber-400">
-                  Please attach a clear payment screenshot or UPI receipt to verify your deposit.
-                </p>
-              )}
             </div>
           </div>
 
           <button
             type="submit"
-            disabled={depositLoading || !utrNumber || !proofImage}
-            className="w-full py-2.5 px-3 rounded-xl bg-[#00875a] text-white hover:bg-[#00704a] disabled:opacity-40 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+            disabled={depositLoading || !utrNumber || !proofImage || depositINR <= 0}
+            className="w-full py-3.5 px-4 rounded-2xl bg-[#00875a] text-white hover:bg-[#00704a] disabled:opacity-40 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md active:scale-98"
           >
-            {depositLoading ? 'Dispatching to Clearing Desk…' : 'Submit Deposit for Clearance'}
+            {depositLoading ? 'Dispatching to Clearing Desk…' : `Submit ₹${depositINR > 0 ? depositINR.toLocaleString('en-IN') : '0'} Deposit for Clearance`}
           </button>
         </form>
       )}
 
       {/* TAB 3: WITHDRAW */}
       {activeTab === 'withdraw' && (
-        <form onSubmit={handleWithdrawSubmit} className="p-4 sm:p-5 rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-4">
-          <div className="pb-2.5 border-b border-zinc-100 dark:border-zinc-900">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white">
-              Withdrawal Request (Direct Domestic Wire)
-            </span>
+        <form onSubmit={handleWithdrawSubmit} className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-5 shadow-sm">
+          <div className="pb-3 border-b border-zinc-100 dark:border-zinc-900 flex items-center justify-between">
+            <div>
+              <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-zinc-950 dark:text-white">
+                Withdrawal Settlement (Direct Domestic Bank Payout)
+              </h2>
+              <p className="text-[11px] text-zinc-500 mt-0.5">
+                Funds are disbursed to your verified bank account via IMPS/RTGS within 15–30 minutes.
+              </p>
+            </div>
+          </div>
+
+          {/* Available Capital Reference Banner */}
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
+            <div>
+              <span className="text-[10px] font-bold uppercase text-slate-400 block">Available Capital for Payout</span>
+              <span className="text-base font-black font-mono text-slate-900 dark:text-white">
+                {formatUSD(currentUser?.walletBalance || 0)}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setWithdrawUSD(currentUser?.walletBalance || 0)}
+              className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-[#00875a] hover:bg-[#e6f4ea] transition-all cursor-pointer"
+            >
+              Max All
+            </button>
           </div>
 
           {!isKycApproved ? (
-            <div className="p-3 rounded-md bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs space-y-2 text-center">
-              <AlertCircle className="w-5 h-5 text-zinc-950 dark:text-white mx-auto" />
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs space-y-2 text-center">
+              <AlertCircle className="w-5 h-5 text-amber-500 mx-auto" />
               <p className="text-zinc-600 dark:text-zinc-400 font-sans">
                 Approved KYC is required prior to withdrawal settlement.
               </p>
               <button
                 type="button"
                 onClick={() => window.location.href = '/kyc'}
-                className="px-3 py-1.5 rounded-md bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-bold text-xs"
+                className="px-4 py-2 rounded-xl bg-[#00875a] text-white font-bold text-xs shadow-xs cursor-pointer"
               >
                 Complete KYC Verification →
               </button>
             </div>
           ) : (
             <>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase text-zinc-400 block">Amount in USD (Min $20)</label>
-                <input
-                  type="number"
-                  min="20"
-                  max={currentUser?.walletBalance || 0}
-                  value={withdrawUSD}
-                  onChange={(e) => setWithdrawUSD(parseFloat(e.target.value) || 0)}
-                  className="w-full bg-zinc-50 focus:bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-sm font-bold tabular-nums text-zinc-950 dark:text-white focus:outline-none focus:border-zinc-950 dark:focus:border-zinc-100"
-                />
-                <span className="text-[10px] text-zinc-500 tabular-nums">≈ ₹{(withdrawUSD * exchangeRate).toLocaleString('en-IN')} INR Payout</span>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 block">
+                    Withdrawal Amount in USD (Min $20) *
+                  </label>
+                  <span className="text-[11px] font-bold text-[#00875a] font-mono">
+                    ≈ ₹{((withdrawUSD || 0) * exchangeRate).toLocaleString('en-IN')} INR Payout
+                  </span>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 font-bold text-base">$</span>
+                  <input
+                    type="number"
+                    min="20"
+                    max={currentUser?.walletBalance || 0}
+                    value={withdrawUSD || ''}
+                    onChange={(e) => setWithdrawUSD(parseFloat(e.target.value) || 0)}
+                    placeholder="e.g. 200"
+                    className="w-full bg-zinc-50 focus:bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl pl-9 pr-4 py-3 text-base font-bold tabular-nums text-zinc-950 dark:text-white focus:outline-none focus:border-[#00875a] transition-all"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-900 text-xs">
-                <div className="p-2.5 rounded bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-                  <span className="text-[10px] text-zinc-400 block uppercase">Destination Payout Bank</span>
-                  <p className="font-bold text-zinc-950 dark:text-white">{payoutBankName || currentUser?.bankName || 'Verified Bank'}</p>
-                  <p className="text-[10px] text-zinc-500 tabular-nums">{payoutAccNumber || currentUser?.bankAccountNumber} · {payoutIfsc || currentUser?.bankIfsc}</p>
+              <div className="space-y-2.5 pt-2 border-t border-zinc-100 dark:border-zinc-900 text-xs">
+                <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                  <span className="text-[10px] text-zinc-400 block uppercase font-bold">Verified Destination Bank Account</span>
+                  <p className="font-bold text-zinc-950 dark:text-white text-xs">{payoutBankName || currentUser?.bankName || 'Verified Domestic Bank'}</p>
+                  <p className="text-[11px] text-zinc-500 font-mono">{payoutAccNumber || currentUser?.bankAccountNumber} · {payoutIfsc || currentUser?.bankIfsc}</p>
                 </div>
               </div>
 
               <button
                 type="submit"
-                disabled={withdrawLoading || withdrawUSD > (currentUser?.walletBalance || 0)}
-                className="w-full py-2.5 px-3 rounded-md bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-40 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                disabled={withdrawLoading || !withdrawUSD || withdrawUSD > (currentUser?.walletBalance || 0)}
+                className="w-full py-3.5 px-4 rounded-2xl bg-[#00875a] text-white hover:bg-[#00704a] disabled:opacity-40 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md active:scale-98"
               >
-                {withdrawLoading ? 'Processing Request…' : 'Authorize Withdrawal Settlement'}
+                {withdrawLoading ? 'Processing Request…' : `Request Payout of ₹${((withdrawUSD || 0) * exchangeRate).toLocaleString('en-IN')}`}
               </button>
             </>
           )}

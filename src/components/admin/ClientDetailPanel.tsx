@@ -188,11 +188,42 @@ export const ClientDetailPanel: React.FC<{ client: UserProfile; onClose: () => v
 
   // 2. Save KYC Override
   const handleSaveKyc = async () => {
+    if (kycStatus === 'approved') {
+      const hasUpi = routingUpiId.trim().length > 0;
+      const hasBank = routingAccountNumber.trim().length > 0 && routingIfsc.trim().length > 0;
+      if (!hasUpi && !hasBank) {
+        showToast({
+          type: 'error',
+          title: 'Deposit Route Required',
+          message: 'Compulsory: Enter a dedicated UPI ID or Bank Account Details for this client before approving KYC.',
+        });
+        return;
+      }
+
+      // Save deposit route automatically
+      const config: ClientPaymentConfig = {
+        userId: client.id,
+        isCustom: true,
+        bankName: routingBankName.trim() || 'Assigned Settlement Bank',
+        accountHolder: routingAccountHolder.trim() || client.fullName || 'Custody Desk',
+        accountNumber: routingAccountNumber.trim(),
+        ifscCode: routingIfsc.trim().toUpperCase(),
+        upiId: routingUpiId.trim(),
+        qrImageUrl: routingQrUrl.trim(),
+        notes: routingNotes.trim() || 'Assigned during KYC approval',
+      };
+      await setClientPaymentConfig(config);
+    }
+
     setSavingKyc(true);
     const res = await manualVerifyUserKyc(client.id, kycStatus, kycNotes);
     setSavingKyc(false);
     if (res.success) {
-      showToast({ type: 'success', title: 'KYC Status Updated', message: `Compliance status set to ${kycStatus.toUpperCase()}.` });
+      showToast({
+        type: 'success',
+        title: 'KYC & Deposit Route Saved',
+        message: `Compliance status set to ${kycStatus.toUpperCase()} and dedicated deposit routing configured.`,
+      });
     } else {
       showToast({ type: 'error', title: 'KYC Update Failed', message: res.error || 'Could not update KYC status.' });
     }
@@ -646,6 +677,90 @@ export const ClientDetailPanel: React.FC<{ client: UserProfile; onClose: () => v
                   ))}
                 </div>
 
+                {/* Compulsory Deposit Routing Assignment when approving KYC */}
+                {kycStatus === 'approved' && (
+                  <div className="p-3.5 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                      <div>
+                        <h4 className="font-bold text-xs text-blue-950 dark:text-blue-200 uppercase tracking-tight">
+                          Dedicated Deposit Route Assignment (Compulsory) *
+                        </h4>
+                        <p className="text-[10px] text-blue-700 dark:text-blue-300">
+                          Each verified client must be assigned their dedicated deposit payment account (not platform default).
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase text-blue-900 dark:text-blue-200 block">
+                        Assigned Deposit UPI ID / VPA *
+                      </label>
+                      <input
+                        type="text"
+                        value={routingUpiId}
+                        onChange={(e) => setRoutingUpiId(e.target.value)}
+                        placeholder="e.g. brokerdesk101@okhdfcbank"
+                        className="w-full bg-white dark:bg-[#0f172a] border border-blue-200 dark:border-blue-800 rounded-lg p-2 text-xs font-mono text-zinc-950 dark:text-white focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase text-blue-900 dark:text-blue-200 block">
+                          Deposit Bank Name
+                        </label>
+                        <input
+                          type="text"
+                          value={routingBankName}
+                          onChange={(e) => setRoutingBankName(e.target.value)}
+                          placeholder="e.g. HDFC Bank Ltd"
+                          className="w-full bg-white dark:bg-[#0f172a] border border-blue-200 dark:border-blue-800 rounded-lg p-2 text-xs text-zinc-950 dark:text-white focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase text-blue-900 dark:text-blue-200 block">
+                          Account Holder Name
+                        </label>
+                        <input
+                          type="text"
+                          value={routingAccountHolder}
+                          onChange={(e) => setRoutingAccountHolder(e.target.value)}
+                          placeholder="e.g. Global Forex Custody"
+                          className="w-full bg-white dark:bg-[#0f172a] border border-blue-200 dark:border-blue-800 rounded-lg p-2 text-xs text-zinc-950 dark:text-white focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase text-blue-900 dark:text-blue-200 block">
+                          Account Number
+                        </label>
+                        <input
+                          type="text"
+                          value={routingAccountNumber}
+                          onChange={(e) => setRoutingAccountNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                          placeholder="e.g. 502000889211"
+                          className="w-full bg-white dark:bg-[#0f172a] border border-blue-200 dark:border-blue-800 rounded-lg p-2 text-xs font-mono text-zinc-950 dark:text-white focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase text-blue-900 dark:text-blue-200 block">
+                          IFSC Code
+                        </label>
+                        <input
+                          type="text"
+                          value={routingIfsc}
+                          onChange={(e) => setRoutingIfsc(e.target.value.toUpperCase())}
+                          placeholder="e.g. HDFC0001234"
+                          className="w-full bg-white dark:bg-[#0f172a] border border-blue-200 dark:border-blue-800 rounded-lg p-2 text-xs font-mono uppercase text-zinc-950 dark:text-white focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
                     Compliance Officer Review Remarks
@@ -666,7 +781,7 @@ export const ClientDetailPanel: React.FC<{ client: UserProfile; onClose: () => v
                     className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md shadow-emerald-500/20 active:scale-95 flex items-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {savingKyc ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                    <span>Apply KYC Override</span>
+                    <span>{kycStatus === 'approved' ? 'Approve KYC & Save Deposit Route' : 'Apply KYC Override'}</span>
                   </button>
                 </div>
               </div>

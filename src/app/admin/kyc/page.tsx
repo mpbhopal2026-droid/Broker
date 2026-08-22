@@ -578,11 +578,21 @@ export default function AdminKycConsolePage() {
                 <button
                   type="button"
                   disabled={actionLoading}
-                  onClick={() => handleApprove(inspectRecord.id)}
+                  onClick={() => {
+                    const target = inspectedUser || {
+                      id: inspectRecord.userId,
+                      fullName: inspectRecord.userFullName,
+                      email: inspectRecord.userEmail,
+                      kycStatus: inspectRecord.status,
+                      walletBalance: 0,
+                      role: 'client',
+                    };
+                    setManualVerifyUser(target as UserProfile);
+                  }}
                   className="py-2.5 px-5 rounded-xl bg-[#05603a] hover:bg-[#044e2f] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-emerald-950/20 active:scale-98 cursor-pointer disabled:opacity-50"
                 >
                   <Check className="w-4 h-4 stroke-[2.5]" />
-                  <span>Authorize Tier-1 Clearance</span>
+                  <span>Authorize Clearance & Setup Deposit Route →</span>
                 </button>
               </div>
 
