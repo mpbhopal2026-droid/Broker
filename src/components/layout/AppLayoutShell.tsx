@@ -127,7 +127,7 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
   if (isTradePage) {
     return (
       <div className="h-screen w-full overflow-hidden bg-[#0b1018] text-white flex flex-col justify-between">
-        <div className="flex-1 overflow-y-auto pb-16 md:pb-0">
+        <div className="flex-1 overflow-y-auto pb-20 md:pb-0">
           {children}
         </div>
         <MobileBottomNav />
@@ -136,13 +136,13 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
   }
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-screen w-full overflow-x-hidden">
       {isAdminArea ? <AdminSidebar /> : <AppSidebar />}
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 max-w-full">
         <AppHeader />
         <DemoModeBanner />
-        <main className="flex-1 pb-16 md:pb-8 p-3 sm:p-6 min-w-0 overflow-x-hidden">
+        <main className="flex-1 pb-24 md:pb-8 p-3 sm:p-6 min-w-0 max-w-full overflow-x-hidden">
           {needsVerification ? <VerificationGate>{children}</VerificationGate> : children}
         </main>
         <MobileBottomNav />

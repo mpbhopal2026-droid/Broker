@@ -890,8 +890,8 @@ function InstrumentDetailPageContent() {
 
       </div>
 
-      {/* Mobile Sticky Quick Order Dock (Visible on Mobile/Tablet) */}
-      <div className="lg:hidden fixed bottom-12 inset-x-0 z-30 bg-white/95 dark:bg-black/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 p-2.5 px-4 shadow-xl flex items-center justify-between gap-3">
+      {/* Mobile Sticky Quick Order Dock (Positioned cleanly above bottom navbar) */}
+      <div className="lg:hidden fixed bottom-16 inset-x-0 z-30 bg-white/95 dark:bg-black/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 p-2.5 px-4 shadow-xl flex items-center justify-between gap-3">
         <div className="flex flex-col text-left leading-tight">
           <span className="text-[10px] text-zinc-400 font-sans uppercase font-bold">{instrument.symbol}</span>
           <span className="text-xs font-bold tabular-nums text-zinc-950 dark:text-white">
